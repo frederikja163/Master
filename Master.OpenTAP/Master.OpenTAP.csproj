@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+    <PropertyGroup>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <TargetFramework>net9</TargetFramework>
+        <DebugWith>TUI</DebugWith>
+        <OpenTapPackageDefinitionPath>package.xml</OpenTapPackageDefinitionPath>
+        <CreateOpenTapPackage>false</CreateOpenTapPackage>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="OpenTAP" Version="9.29.1"/>
+    </ItemGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <CreateOpenTapPackage>true</CreateOpenTapPackage>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(DebugWith)' == 'TUI' AND '$(Configuration)' == 'Debug'">
+        <OpenTapPackageReference Include="TUI" version="1"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(DebugWith)' == 'Editor' AND '$(Configuration)' == 'Debug'">
+        <OpenTapPackageReference Include="Editor" version="9"/>
+    </ItemGroup>
+
+</Project>
