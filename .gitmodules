@@ -1,0 +1,3 @@
+[submodule "Parquet"]
+	path = Parquet
+	url = git@github.com:opentap/Parquet.git

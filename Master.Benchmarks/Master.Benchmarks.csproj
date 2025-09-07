@@ -8,12 +8,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Master.OpenTAP\Master.OpenTAP.csproj" />
-      <ProjectReference Include="..\Master\Master.csproj" />
+        <PackageReference Include="Parquet.Net" Version="5.2.0" />
+        <ProjectReference Include="..\Master.OpenTAP\Master.OpenTAP.csproj" />
+        <ProjectReference Include="..\Master\Master.csproj" />
+        <ProjectReference Include="..\Parquet\Parquet\Parquet.csproj" />
+        <PackageReference Include="OpenTAP" Version="9.29.1"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+        <OpenTapPackageReference Include="Demonstration" version="9.0.7"/>
+        <OpenTapPackageReference Include="CSV" version="9.14.2"/>
+        <OpenTapPackageReference Include="SQLite and PostgreSQL" version="9.6.0"/>
+        <OpenTapPackageReference Include="Spreadsheet" version="2.1.0"/>
     </ItemGroup>
-
 </Project>
