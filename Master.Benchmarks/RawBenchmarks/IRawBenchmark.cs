@@ -2,6 +2,5 @@
 
 public interface IRawBenchmark
 {
-    public Data Data { get; set; }
-    public void Write();
+    public void Write(string path, Data data);
 }

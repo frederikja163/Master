@@ -6,25 +6,26 @@ namespace Master.Benchmarks.RawBenchmarks;
 
 internal sealed class RawParquet : IRawBenchmark
 {
-    public Data Data { get; set; }
-
-    public void Write()
+    public void Write(string filePath, Data data)
     {
         Task.Run(async () =>
         {
             ParquetSchema schema = new(
-                Data.ColumnNames.Zip(Data.Columns)
+                data.ColumnNames.Zip(data.Columns)
                     .Select(tuple => new DataField(tuple.First, tuple.Second.GetType().GetElementType()!))
             );
 
-            await using Stream stream = File.OpenWrite(Config.FilePath);
+            await using Stream stream = File.OpenWrite(filePath);
 
             await using ParquetWriter writer = await ParquetWriter.CreateAsync(schema, stream);
 
-            using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
-            foreach ((DataField field, Array data) in schema.Fields.Cast<DataField>().Zip(Data.Columns))
+            for (int i = 0; i < data.Repeats; i++)
             {
-                await groupWriter.WriteColumnAsync(new DataColumn(field, data));
+                using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
+                foreach ((DataField field, Array values) in schema.Fields.Cast<DataField>().Zip(data.Columns))
+                {
+                    await groupWriter.WriteColumnAsync(new DataColumn(field, values));
+                }
             }
         }).Wait();
     }

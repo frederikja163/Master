@@ -6,10 +6,12 @@ public sealed class Data
     private List<string> _columnNames = [];
 
     public int Count { get; }
-
-    public Data(int count)
+    public int Repeats { get; }
+    
+    public Data(int count, int repeats = 1)
     {
         Count = count;
+        Repeats = repeats;
     }
 
     public IEnumerable<Array> Columns => _columns;
@@ -36,6 +38,13 @@ public sealed class Data
         return this;
     }
 
+    public Data PopulateRandomGuidStrings()
+    {
+        UniqueColumnName("GuidStrings");
+        _columns.Add(Enumerable.Range(0, Count).Select(_ => Guid.NewGuid().ToString()).ToArray());
+        return this;
+    }
+
     private string UniqueColumnName(string name)
     {
         if (!_columnNames.Contains(name))
@@ -56,6 +65,6 @@ public sealed class Data
 
     public override string ToString()
     {
-        return $"{Count} {string.Join(", ", _columnNames)}";
+        return $"{Count}x{Repeats} {string.Join(", ", _columnNames)}";
     }
 }

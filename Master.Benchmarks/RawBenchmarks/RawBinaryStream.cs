@@ -2,17 +2,15 @@
 
 internal sealed class RawBinaryStream : IRawBenchmark
 {
-    public Data Data { get; set; }
-
-    public void Write()
+    public void Write(string filePath, Data data)
     {
-        using Stream stream = File.OpenWrite(Config.FilePath);
-        using BinaryWriter writer = new(stream);
-        foreach (Array column in Data.Columns)
+        using ExtendedBinaryWriter writer = new ExtendedBinaryWriter(filePath);
+        for (int i = 0; i < data.Repeats; i++)
         {
-            byte[] result = new byte[column.Length * sizeof(int)];
-            Buffer.BlockCopy(column, 0, result, 0, result.Length);
-            writer.Write(result);
+            foreach (Array array in data.Columns)
+            {
+                writer.Write(array);
+            }
         }
     }
 

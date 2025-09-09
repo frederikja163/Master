@@ -4,16 +4,15 @@ namespace Master.Benchmarks;
 
 internal sealed class BinaryResultListener : ResultListener
 {
+    [Display("File path")]
+    public string FilePath { get; set; } = "Results";
+    
     public override void OnResultPublished(Guid stepRunId, ResultTable resultTable)
     {
-        using Stream stream = File.OpenWrite(Config.FilePath);
-        using BinaryWriter writer = new(stream);
+        using ExtendedBinaryWriter writer = new ExtendedBinaryWriter(FilePath);
         foreach (ResultColumn column in resultTable.Columns)
         {
-            Array data = column.Data;
-            byte[] result = new byte[data.Length * sizeof(int)];
-            Buffer.BlockCopy(data, 0, result, 0, result.Length);
-            writer.Write(result);
+            writer.Write(column.Data);
         }
     }
 
