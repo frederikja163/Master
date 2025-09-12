@@ -3,6 +3,7 @@ using BenchmarkDotNet.Attributes;
 using Keysight.OpenTap.Plugins.Csv;
 using Keysight.OpenTap.Plugins.ResultListeners;
 using Master.Benchmarks.BenchmarkDotnetConfig;
+using Master.Benchmarks.OpenTAP;
 using Master.Benchmarks.RawBenchmarks;
 using OpenTap;
 using OpenTap.Plugins.Parquet;
@@ -21,7 +22,6 @@ public class AllBenchmarks
             File.Delete(Config.FilePath);
         }
     }
-    
     
     [ParamsSource(nameof(GetData))] public Data Data { get; set; }
 

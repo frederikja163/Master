@@ -1,6 +1,6 @@
 ﻿using OpenTap;
 
-namespace Master.Benchmarks;
+namespace Master.Benchmarks.OpenTAP;
 
 public sealed class ResultStep : TestStep
 {

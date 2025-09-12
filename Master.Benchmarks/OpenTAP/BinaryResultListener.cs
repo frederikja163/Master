@@ -1,6 +1,6 @@
 ﻿using OpenTap;
 
-namespace Master.Benchmarks;
+namespace Master.Benchmarks.OpenTAP;
 
 internal sealed class BinaryResultListener : ResultListener
 {
