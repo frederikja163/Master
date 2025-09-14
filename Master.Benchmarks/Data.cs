@@ -16,6 +16,22 @@ public sealed class Data
 
     public IEnumerable<Array> Columns => _columns;
     public IEnumerable<string> ColumnNames => _columnNames;
+
+    public IEnumerable<IEnumerable<object>> RowMayor()
+    {
+        for (int i = 0; i < Count; i++)
+        {
+            yield return GetRow(i);
+        }
+
+        IEnumerable<object> GetRow(int i)
+        {
+            for (int j = 0; j < _columns.Count; j++)
+            {
+                yield return _columns[j].GetValue(i) ?? throw new IndexOutOfRangeException();
+            }
+        }
+    }
     
     public Data PopulateRandomInts()
     {

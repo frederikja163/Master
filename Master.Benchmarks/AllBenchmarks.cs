@@ -14,7 +14,7 @@ namespace Master.Benchmarks;
 [Config(typeof(BenchmarkConfig))]
 public class AllBenchmarks
 {
-    [GlobalSetup]
+    [IterationSetup]
     public void Setup()
     {
         if (File.Exists(Config.FilePath))
@@ -27,8 +27,9 @@ public class AllBenchmarks
 
     public IEnumerable<Data> GetData()
     {
-        yield return new Data(100_000, 10).PopulateOrderedInts();
-        yield return new Data(1_000_000, 1).PopulateOrderedInts();
+        yield return new Data(1000, 1).PopulateOrderedInts();
+        // yield return new Data(10_000, 10).PopulateOrderedInts();
+        // yield return new Data(10_000, 1).PopulateOrderedInts();
     }
     
     [Benchmark]
@@ -43,6 +44,8 @@ public class AllBenchmarks
         yield return new RawBinaryStream();
         yield return new RawParquet();
         yield return new RawCsv();
+        yield return new RawAvro();
+        yield return new RawSqlite();
     }
     
     [Benchmark]
