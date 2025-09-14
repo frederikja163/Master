@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using System.Data;
+using System.Data.SQLite;
 
 namespace Master.Benchmarks.RawBenchmarks;
 
@@ -15,7 +16,7 @@ internal sealed class RawSqlite : IRawBenchmark
         connection.Open();
 
         using (SQLiteCommand command = new SQLiteCommand(
-                   $"CREATE TABLE results({string.Join(",", data.ColumnNames.Zip(data.Columns.Select(GetArrayType)).Select(CreateField))});",
+                   $"CREATE TABLE results({string.Join(",", data.ColumnNames.Zip(data.Columns.Select(GetColumnType)).Select(CreateField))});",
                    connection))
         {
             command.ExecuteNonQuery();
@@ -23,19 +24,36 @@ internal sealed class RawSqlite : IRawBenchmark
 
         for (int i = 0; i < data.Repeats; i++)
         {
+            string names = string.Join(",", data.ColumnNames);
+            string values = string.Join(",", data.ColumnNames.Select(n => $"${n}"));
+            
+            using SQLiteCommand command = new SQLiteCommand($"INSERT INTO results ({names}) VALUES ({values})", connection);
+
+            SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
+                .Select(t => command.Parameters.Add($"${t.First}", t.Second)).ToArray();
+            
             foreach (IEnumerable<object> row in data.RowMayor())
             {
-                using SQLiteCommand command = new SQLiteCommand(
-                    $"INSERT INTO results ({string.Join(",", data.ColumnNames)}) VALUES ({string.Join(",",row)})",
-                    connection);
+                foreach ((object value, SQLiteParameter parameter)  in row.Zip(parameters))
+                {
+                    parameter.Value = value;
+                }
                 command.ExecuteNonQuery();
             }
         }
-        static string GetArrayType(Array array)
+        static string GetColumnType(Array array)
         {
             Type type = array.GetType().GetElementType() ?? throw new ArgumentException(null, nameof(array));
             return type == typeof(int) ? "INT" :
                 type == typeof(string) ? "TEXT" :
+                throw new NotImplementedException();
+        }
+
+        static DbType GetParamType(Array array)
+        {
+            Type type = array.GetType().GetElementType() ?? throw new ArgumentNullException(null, nameof(array));
+            return type == typeof(int) ? DbType.Int32 :
+                type == typeof(string) ? DbType.String :
                 throw new NotImplementedException();
         }
 
