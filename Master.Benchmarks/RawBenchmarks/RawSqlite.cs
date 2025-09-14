@@ -27,6 +27,7 @@ internal sealed class RawSqlite : IRawBenchmark
             string names = string.Join(",", data.ColumnNames);
             string values = string.Join(",", data.ColumnNames.Select(n => $"${n}"));
             
+            using SQLiteTransaction transaction = connection.BeginTransaction();
             using SQLiteCommand command = new SQLiteCommand($"INSERT INTO results ({names}) VALUES ({values})", connection);
 
             SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
@@ -40,6 +41,7 @@ internal sealed class RawSqlite : IRawBenchmark
                 }
                 command.ExecuteNonQuery();
             }
+            transaction.Commit();
         }
         static string GetColumnType(Array array)
         {
