@@ -43,6 +43,7 @@ internal sealed class RawAvro : IRawBenchmark
             Type type = array.GetType().GetElementType() ?? throw new ArgumentException(null, nameof(array));
             return type == typeof(int) ? "int" :
                 type == typeof(string) ? "string" :
+                type == typeof(float) ? "float" :
                 throw new NotImplementedException();
         }
 

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Keysight.OpenTap.Plugins.Csv;
 using Keysight.OpenTap.Plugins.ResultListeners;
 using Master.Benchmarks.BenchmarkDotnetConfig;
@@ -7,13 +6,14 @@ using Master.Benchmarks.OpenTAP;
 using Master.Benchmarks.RawBenchmarks;
 using OpenTap;
 using OpenTap.Plugins.Parquet;
-using Spreadsheet;
 
 namespace Master.Benchmarks;
 
 [Config(typeof(BenchmarkConfig))]
 public class AllBenchmarks
 {
+    private readonly TimeSpan _timeout = TimeSpan.FromMinutes(1);
+    
     [IterationSetup]
     public void Setup()
     {
@@ -27,16 +27,36 @@ public class AllBenchmarks
 
     public IEnumerable<Data> GetData()
     {
-        yield return new Data(1000, 1).PopulateOrderedInts();
-        // yield return new Data(10_000, 10).PopulateOrderedInts();
-        // yield return new Data(10_000, 1).PopulateOrderedInts();
+        yield return new Data(10_000, 1_000).PopulateOrderedInts().PopulateRandomInts();
+        yield return new Data(10_000, 100).PopulateOrderedInts().PopulateRandomInts();
+        yield return new Data(10_000, 10).PopulateOrderedInts().PopulateRandomInts();
+        yield return new Data(10_000, 1).PopulateOrderedInts().PopulateRandomInts();
+        yield return new Data(10_000, 1_000).PopulateOrderedInts();
+        yield return new Data(10_000, 100).PopulateOrderedInts();
+        yield return new Data(10_000, 10).PopulateOrderedInts();
+        yield return new Data(10_000, 1).PopulateOrderedInts();
+        yield return new Data(10_000, 1_000).PopulateRandomInts();
+        yield return new Data(10_000, 100).PopulateRandomInts();
+        yield return new Data(10_000, 10).PopulateRandomInts();
+        yield return new Data(10_000, 1).PopulateRandomInts();
+        yield return new Data(10_000, 1_000).PopulateRandomFloats();
+        yield return new Data(10_000, 100).PopulateRandomFloats();
+        yield return new Data(10_000, 10).PopulateRandomFloats();
+        yield return new Data(10_000, 1).PopulateRandomFloats();
+        yield return new Data(10_000, 1_000).PopulateRandomGuidStrings();
+        yield return new Data(10_000, 100).PopulateRandomGuidStrings();
+        yield return new Data(10_000, 10).PopulateRandomGuidStrings();
+        yield return new Data(10_000, 1).PopulateRandomGuidStrings();
     }
     
     [Benchmark]
     [ArgumentsSource(nameof(GetImplementations))]
     public void WriteRaw(IRawBenchmark implementation)
     {
-        implementation?.Write(Config.FilePath, Data);
+        RunWithTimeout(() =>
+        {
+            implementation?.Write(Config.FilePath, Data);
+        }, _timeout);
     }
 
     public IEnumerable<IRawBenchmark> GetImplementations()
@@ -52,22 +72,25 @@ public class AllBenchmarks
     [ArgumentsSource(nameof(GetResultListeners))]
     public void WriteOpenTAP(ResultListener implementation)
     {
-        TestPlan plan = new();
-        RepeatStep repeatStep = new RepeatStep()
+        RunWithTimeout(() =>
         {
-            Repeat = Data.Repeats,
-        };
-        plan.ChildTestSteps.Add(repeatStep);
-        repeatStep.ChildTestSteps.Add(new ResultStep()
-        {
-            Data = Data
-        });
-        TestPlanRun planRun = plan.Execute([implementation]);
-        planRun.WaitForResults();
-        while (plan.IsRunning)
-        {
-            
-        }
+            TestPlan plan = new();
+            RepeatStep repeatStep = new RepeatStep()
+            {
+                Repeat = Data.Repeats,
+            };
+            plan.ChildTestSteps.Add(repeatStep);
+            repeatStep.ChildTestSteps.Add(new ResultStep()
+            {
+                Data = Data
+            });
+            TestPlanRun planRun = plan.Execute([implementation]);
+            planRun.WaitForResults();
+            while (plan.IsRunning)
+            {
+
+            }
+        }, _timeout);
     }
 
     public IEnumerable<ResultListener> GetResultListeners()
@@ -93,5 +116,14 @@ public class AllBenchmarks
         //     Path = new MacroString() { Text = Config.FilePath },
         //     OpenFile = false,
         // };
+    }
+
+    private static void RunWithTimeout(Action action, TimeSpan timeout)
+    {
+        Task task = Task.Run(action);
+        if (!task.Wait(timeout))
+        {
+            throw new TimeoutException();
+        }
     }
 }

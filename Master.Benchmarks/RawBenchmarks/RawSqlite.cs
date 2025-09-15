@@ -48,6 +48,7 @@ internal sealed class RawSqlite : IRawBenchmark
             Type type = array.GetType().GetElementType() ?? throw new ArgumentException(null, nameof(array));
             return type == typeof(int) ? "INT" :
                 type == typeof(string) ? "TEXT" :
+                type == typeof(float) ? "REAL" :
                 throw new NotImplementedException();
         }
 
@@ -56,6 +57,7 @@ internal sealed class RawSqlite : IRawBenchmark
             Type type = array.GetType().GetElementType() ?? throw new ArgumentNullException(null, nameof(array));
             return type == typeof(int) ? DbType.Int32 :
                 type == typeof(string) ? DbType.String :
+                type == typeof(float) ? DbType.Single :
                 throw new NotImplementedException();
         }
 
