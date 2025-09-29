@@ -23,7 +23,7 @@ public class AllBenchmarks
         }
     }
     
-    [ParamsSource(nameof(GetData))] public Data Data { get; set; }
+    [ParamsSource(nameof(GetData))] public required Data Data { get; set; }
 
     public IEnumerable<Data> GetData()
     {
@@ -86,10 +86,6 @@ public class AllBenchmarks
             });
             TestPlanRun planRun = plan.Execute([implementation]);
             planRun.WaitForResults();
-            while (plan.IsRunning)
-            {
-
-            }
         }, _timeout);
     }
 

@@ -15,7 +15,7 @@ internal sealed class RawAvro : IRawBenchmark
 
         for (int i = 0; i < data.Repeats; i++)
         {
-            foreach (IEnumerable<object> row in data.RowMayor())
+            foreach (IEnumerable<object> row in data.RowMajor())
             {
                 GenericRecord record = new GenericRecord((RecordSchema)schema);
                 foreach ((object cell, int colIndex) in row.Select((c, i) => (c, i)))

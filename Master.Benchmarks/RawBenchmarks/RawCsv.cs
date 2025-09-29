@@ -10,9 +10,9 @@ internal sealed class RawCsv : IRawBenchmark
         
         for (int i = 0; i < data.Repeats; i++)
         {
-            foreach (IEnumerable<object> row in data.RowMayor())
+            foreach (IEnumerable<object> row in data.RowMajor())
             {
-                writer.WriteLine(string.Join(",", row));
+                writer.WriteLineAsync(string.Join(",", row));
             }
         }
     }

@@ -10,7 +10,7 @@ internal sealed class BenchmarkConfig : ManualConfig
 {
     public BenchmarkConfig()
     {
-        AddJob(new Job(Job.MediumRun).WithIterationTime(TimeInterval.FromSeconds(1))
+        AddJob(new Job(Job.ShortRun).WithIterationTime(TimeInterval.FromSeconds(1))
             .WithMinInvokeCount(1)
             .WithMinIterationCount(1)
             .WithMinWarmupCount(1));

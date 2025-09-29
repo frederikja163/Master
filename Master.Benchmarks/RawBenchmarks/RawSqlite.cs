@@ -33,7 +33,7 @@ internal sealed class RawSqlite : IRawBenchmark
             SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
                 .Select(t => command.Parameters.Add($"${t.First}", t.Second)).ToArray();
             
-            foreach (IEnumerable<object> row in data.RowMayor())
+            foreach (IEnumerable<object> row in data.RowMajor())
             {
                 foreach ((object value, SQLiteParameter parameter)  in row.Zip(parameters))
                 {

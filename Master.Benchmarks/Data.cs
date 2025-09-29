@@ -17,7 +17,7 @@ public sealed class Data
     public IEnumerable<Array> Columns => _columns;
     public IEnumerable<string> ColumnNames => _columnNames;
 
-    public IEnumerable<IEnumerable<object>> RowMayor()
+    public IEnumerable<IEnumerable<object>> RowMajor()
     {
         for (int i = 0; i < Count; i++)
         {
