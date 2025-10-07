@@ -24,7 +24,7 @@ internal sealed class FileSizeDiagnoser : IDiagnoser
     public IEnumerable<Metric> ProcessResults(DiagnoserResults results)
     {
         DirectoryInfo dirInfo = new DirectoryInfo(results.BuildResult.ArtifactsPaths.ExecutablePath);
-        string folderPath = dirInfo.Parent.FullName;
+        string folderPath = dirInfo.Parent?.FullName;
         string filePath = Path.Combine(folderPath, Config.FilePath);
         FileInfo fileInfo = new FileInfo(filePath);
         yield return new Metric(new FileSizeMetric(), fileInfo.Length);
