@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Parquet/">
+    <Project Path="Parquet\Parquet.Core\Parquet.Core.csproj" Type="Classic C#" />
+    <Project Path="Parquet\Parquet\Parquet.csproj" Type="Classic C#" />
+  </Folder>
   <Project Path="Master.Benchmarks\Master.Benchmarks.csproj" Type="Classic C#" />
   <Project Path="Master.OpenTAP\Master.OpenTAP.csproj" Type="Classic C#" />
   <Project Path="Master.Tests\Master.Tests.csproj" Type="Classic C#" />

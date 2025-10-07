@@ -20,26 +20,25 @@ jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Fix tags
-        shell: bash
-        if: github.ref_type == 'tag'
-        # Fixes an issue with actions/checkout@{v2,v3,v4} - see https://github.com/actions/checkout/issues/290
-        run: git fetch --force --tags origin
+          submodules: 'true'
+      - uses: actions/setup-dotnet@v5
+        with:
+         dotnet-version: '9.0.x'
       # Build your project
       - name: Build
-        run: dotnet build -c Release
+        run: dotnet build -c Release Master.sln
       # Upload the package so it can be downloaded from GitHub, 
       # and consumed by other steps in this workflow
       - name: Upload binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tap-package
           retention-days: 7
           path: |
-            Parquet/bin/Release/netstandard2.0/*.TapPackage
+            Master.OpenTAP/bin/Release/netstandard2.0/*.TapPackage
 
   ##############
   ### TEST    ##
@@ -49,9 +48,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
-        run: dotnet test -c Release
+        uses: actions/checkout@v5
+        with:
+          submodules: 'true'
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+      - name: Test
+        run: dotnet test -c Release Master.sln
 
   ##############
   ### PUBLISH ##
@@ -75,9 +79,9 @@ jobs:
       - name: Setup OpenTAP
         uses: opentap/setup-opentap@v1.0
         with:
-          version: 9.20.0
+          version: 9.29.1
           packages: "Repository Client:beta"
       # Publish the package. This requires the package management key to be configured in the 'PUBLIC_REPO_PASS' environment variable.
       - name: Publish Packages
         working-directory: ./
-        run: tap repo upload --repository http://packages.opentap.io --token ${{ secrets.PUBLIC_REPO_PASS }} Parquet*.TapPackage
+        run: tap repo upload --repository http://packages.opentap.io --token ${{ secrets.PUBLIC_REPO_PASS }} Master*.TapPackage

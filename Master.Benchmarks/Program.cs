@@ -1,9 +1,13 @@
-﻿namespace Master.Benchmarks;
+﻿using BenchmarkDotNet.Running;
+using Keysight.OpenTap.Plugins.Csv;
+using Master.Benchmarks.RawBenchmarks;
 
-class Program
+namespace Master.Benchmarks;
+
+internal static class Program
 {
-    static void Main(string[] args)
+    internal static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        BenchmarkRunner.Run<AllBenchmarks>();
     }
 }
