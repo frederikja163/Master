@@ -18,7 +18,7 @@ jobs:
   ##############
 
   Build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
         with:
@@ -45,7 +45,7 @@ jobs:
   ##############
 
   UnitTests:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -64,7 +64,7 @@ jobs:
   Publish:
     # Only publish on the main branch or if the commit is tagged.
     if: github.ref == 'refs/heads/main' || contains(github.ref, 'refs/heads/release') || contains(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     # This step depends on the build step
     needs:
       - Build
