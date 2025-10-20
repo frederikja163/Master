@@ -23,7 +23,7 @@ public class SparkBenchmark : IRawBenchmark
     
     public void Write(string path, Data data)
     {
-        Task.Run(async () =>
+        Task.Run(() =>
         {
             StructType schema = new(
                 data.ColumnNames.Zip(data.Columns)
@@ -34,6 +34,7 @@ public class SparkBenchmark : IRawBenchmark
                 .Mode(SaveMode.Append)
                 .Format(_format)
                 .Save(Path.Combine(Directory.GetCurrentDirectory(), path));
+            return Task.CompletedTask;
         }).Wait();
     }
 
