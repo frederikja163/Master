@@ -66,6 +66,10 @@ public class AllBenchmarks
         yield return new RawCsv();
         yield return new RawAvro();
         yield return new RawSqlite();
+        yield return new SparkBenchmark("ORC");
+        yield return new SparkBenchmark("Csv");
+        yield return new SparkBenchmark("Json");
+        yield return new SparkBenchmark("Parquet");
     }
     
     [Benchmark]
