@@ -14,9 +14,11 @@ public class SparkBenchmark : IRawBenchmark
         _format = format;
         //https://spark.apache.org/docs/latest/configuration.html#compression-and-serialization
         _spark = SparkSession.Builder()
-            .Config(new SparkConf()
+            .Config(new SparkConf(loadDefaults: false)
                 .Set("spark.sql.orc.compression.codec", "none")
-                .Set("spark.ui.enabled", "false"))
+                .Set("spark.ui.enabled", "false")
+                .Set("spark.log.level", "OFF")
+                .Set("log4j2.logger.org.apache.spark.util.ShutdownHookManager", "OFF"))
             .GetOrCreate();
         
     }
@@ -30,9 +32,13 @@ public class SparkBenchmark : IRawBenchmark
                     .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!)))
             );
             var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.ToArray())), schema);
-            dataFrame.Write()
-                .Mode(SaveMode.Append)
-                .Format(_format)
+            DataFrameWriter dataFrameWriter = dataFrame.Write();
+            Console.WriteLine($"/////{Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path))} {Path.Combine(Directory.GetCurrentDirectory(), path)}");
+            if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path)))
+            {
+                dataFrameWriter = dataFrameWriter.Mode(SaveMode.Append);
+            }
+            dataFrameWriter.Format(_format) 
                 .Save(Path.Combine(Directory.GetCurrentDirectory(), path));
             return Task.CompletedTask;
         }).Wait();

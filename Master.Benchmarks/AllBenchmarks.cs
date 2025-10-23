@@ -12,7 +12,7 @@ namespace Master.Benchmarks;
 [Config(typeof(BenchmarkConfig))]
 public class AllBenchmarks
 {
-    private readonly TimeSpan _timeout = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan _timeout = TimeSpan.FromMinutes(5);
     
     [IterationSetup]
     public void Setup()
@@ -20,6 +20,11 @@ public class AllBenchmarks
         if (File.Exists(Config.FilePath))
         {
             File.Delete(Config.FilePath);
+        }
+
+        if (Directory.Exists(Config.FilePath))
+        {
+            Directory.Delete(Config.FilePath, true);
         }
     }
     
