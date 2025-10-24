@@ -2,6 +2,11 @@
 
 public sealed class Data
 {
+    private static readonly string[] NatoAlphabet = [
+        "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima",
+        "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey",
+        "X-ray", "Yankee", "Zebra"
+    ];
     private List<Array> _columns = [];
     private List<string> _columnNames = [];
 
@@ -58,6 +63,13 @@ public sealed class Data
     {
         UniqueColumnName("GuidStrings");
         _columns.Add(Enumerable.Range(0, Count).Select(_ => Guid.NewGuid().ToString()).ToArray());
+        return this;
+    }
+
+    public Data PopulateRandomNatoAlphabetStrings()
+    {
+        UniqueColumnName("NatoAlphabet");
+        _columns.Add(Random.Shared.GetItems(NatoAlphabet, Count));
         return this;
     }
 

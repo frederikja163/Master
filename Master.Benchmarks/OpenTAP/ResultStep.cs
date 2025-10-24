@@ -4,7 +4,7 @@ namespace Master.Benchmarks.OpenTAP;
 
 public sealed class ResultStep : TestStep
 {
-    public Data Data { get; set; }
+    public required Data Data { get; set; }
     
     public override void Run()
     {
