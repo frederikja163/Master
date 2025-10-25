@@ -6,6 +6,7 @@ using Master.Benchmarks.OpenTAP;
 using Master.Benchmarks.RawBenchmarks;
 using OpenTap;
 using OpenTap.Plugins.Parquet;
+using Parquet;
 
 namespace Master.Benchmarks;
 
@@ -27,10 +28,10 @@ public class AllBenchmarks
 
     public IEnumerable<Data> GetData()
     {
-        yield return new Data(10_000, 1_000).PopulateOrderedInts().PopulateRandomInts();
-        yield return new Data(10_000, 100).PopulateOrderedInts().PopulateRandomInts();
-        yield return new Data(10_000, 10).PopulateOrderedInts().PopulateRandomInts();
-        yield return new Data(10_000, 1).PopulateOrderedInts().PopulateRandomInts();
+        yield return new Data(10_000, 1_000).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new Data(10_000, 100).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new Data(10_000, 10).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new Data(10_000, 1).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
         yield return new Data(10_000, 1_000).PopulateOrderedInts();
         yield return new Data(10_000, 100).PopulateOrderedInts();
         yield return new Data(10_000, 10).PopulateOrderedInts();
@@ -66,15 +67,21 @@ public class AllBenchmarks
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
         yield return new RawBinaryStream();
-        yield return new RawParquet();
-        // yield return new RawCsv();
-        // yield return new RawAvro();
-        // yield return new RawSqlite();
+        yield return new RawParquet(CompressionMethod.Snappy);
+        yield return new RawParquet(CompressionMethod.Zstd);
+        yield return new RawParquet(CompressionMethod.Gzip);
+        yield return new RawParquet(CompressionMethod.None);
+        yield return new RawParquet(CompressionMethod.LZ4);
+        yield return new RawParquet(CompressionMethod.Lz4Raw);
+        yield return new RawParquet(CompressionMethod.Brotli);
+        yield return new RawCsv();
+        yield return new RawAvro();
+        yield return new RawSqlite();
         yield return new RawHdf5Benchmark();
     }
     
-    // [Benchmark]
-    // [ArgumentsSource(nameof(GetResultListeners))]
+    [Benchmark]
+    [ArgumentsSource(nameof(GetResultListeners))]
     public void WriteOpenTAP(ResultListener implementation)
     {
         RunWithTimeout(() =>
