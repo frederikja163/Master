@@ -14,17 +14,20 @@ internal sealed class ExtendedBinaryWriter : IDisposable
 
     public void Write(Array array)
     {
-       WriteInts(array);
        WriteStrings(array);
+       WriteValueType<int>(array);
+       WriteValueType<float>(array);
     }
 
-    private void WriteInts(Array array)
+    private unsafe void WriteValueType<T>(Array array)
+        where T : unmanaged
     {
-        if (array.GetType().GetElementType() != typeof(int))
+        var type = array.GetType().GetElementType();
+        if (type != typeof(T))
         {
             return;
         }
-        byte[] bytes = new byte[array.Length * sizeof(int)];
+        byte[] bytes = new byte[array.Length * sizeof(T)];
         Buffer.BlockCopy(array, 0, bytes, 0, bytes.Length);
         _writer.Write(bytes);
     }
