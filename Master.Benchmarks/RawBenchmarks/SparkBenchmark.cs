@@ -25,7 +25,6 @@ public class SparkBenchmark : IRawBenchmark
             );
             var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
             DataFrameWriter dataFrameWriter = dataFrame.Write();
-            Console.WriteLine($"/////{Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path))} {Path.Combine(Directory.GetCurrentDirectory(), path)}");
             if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path)))
             {
                 dataFrameWriter = dataFrameWriter.Mode(SaveMode.Append);
