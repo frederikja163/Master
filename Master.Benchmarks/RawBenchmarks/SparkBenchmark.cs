@@ -9,18 +9,10 @@ public class SparkBenchmark : IRawBenchmark
     private readonly string _format;
     private readonly SparkSession _spark;
 
-    public SparkBenchmark(string format)
+    public SparkBenchmark(string format, SparkSession spark)
     {
         _format = format;
-        //https://spark.apache.org/docs/latest/configuration.html#compression-and-serialization
-        _spark = SparkSession.Builder()
-            .Config(new SparkConf(loadDefaults: false)
-                .Set("spark.sql.orc.compression.codec", "none")
-                .Set("spark.ui.enabled", "false")
-                .Set("spark.log.level", "OFF")
-                .Set("log4j2.logger.org.apache.spark.util.ShutdownHookManager", "OFF"))
-            .GetOrCreate();
-        
+        _spark = spark;
     }
     
     public void Write(string path, Data data)
@@ -31,7 +23,7 @@ public class SparkBenchmark : IRawBenchmark
                 data.ColumnNames.Zip(data.Columns)
                     .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!)))
             );
-            var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.ToArray())), schema);
+            var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
             DataFrameWriter dataFrameWriter = dataFrame.Write();
             Console.WriteLine($"/////{Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path))} {Path.Combine(Directory.GetCurrentDirectory(), path)}");
             if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path)))
@@ -48,7 +40,15 @@ public class SparkBenchmark : IRawBenchmark
     {
         return dataType == typeof(int) ? new IntegerType() :
             dataType == typeof(string) ? new StringType() :
-            dataType == typeof(float) ? new FloatType() : throw new NotImplementedException();
+            dataType == typeof(float) ? new DoubleType() : throw new NotImplementedException("Couldn't read data type");
+    }
+    private static object ConvertValue(object v)
+    {
+        return v switch
+        {
+            float f => (double)f,
+            _ => v
+        };
     }
 
     public override string ToString()

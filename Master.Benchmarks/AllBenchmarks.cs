@@ -4,6 +4,8 @@ using Keysight.OpenTap.Plugins.ResultListeners;
 using Master.Benchmarks.BenchmarkDotnetConfig;
 using Master.Benchmarks.OpenTAP;
 using Master.Benchmarks.RawBenchmarks;
+using Microsoft.Spark;
+using Microsoft.Spark.Sql;
 using OpenTap;
 using OpenTap.Plugins.Parquet;
 
@@ -71,10 +73,27 @@ public class AllBenchmarks
         yield return new RawCsv();
         yield return new RawAvro();
         yield return new RawSqlite();
-        yield return new SparkBenchmark("ORC");
-        yield return new SparkBenchmark("Csv");
-        yield return new SparkBenchmark("Json");
-        yield return new SparkBenchmark("Parquet");
+        SparkSession spark;
+        try
+        {
+            //https://spark.apache.org/docs/latest/configuration.html#compression-and-serialization
+            spark = SparkSession.Builder()
+                .Config(new SparkConf(loadDefaults: false)
+                    .Set("spark.sql.orc.compression.codec", "none")
+                    .Set("spark.ui.enabled", "false")
+                    .Set("spark.log.level", "OFF")
+                    .Set("log4j2.logger.org.apache.spark.util.ShutdownHookManager", "OFF"))
+                .GetOrCreate();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Couldn't find a running spark instance.");
+            yield break;
+        }
+        yield return new SparkBenchmark("ORC", spark);
+        yield return new SparkBenchmark("Csv", spark);
+        yield return new SparkBenchmark("Json", spark);
+        yield return new SparkBenchmark("Parquet", spark);
     }
     
     [Benchmark]
