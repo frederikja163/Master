@@ -31,8 +31,8 @@ jobs:
         run: dotnet restore Master.sln
       - name: Fix Spark nuget package
         run: ./LinuxFixSparkNuget.sh
-      - name: Restore Dependencies
-        run: dotnet restore Master.sln
+      - name: ls
+        run: ls ~/.nuget/packages/microsoft.spark/2.3.0
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
@@ -62,8 +62,8 @@ jobs:
           dotnet-version: '9.0.x'
       - name: Restore Dependencies
         run: dotnet restore Master.sln
-      - name: Fix Spark nuget package
-        run: ./LinuxFixSparkNuget.sh
+      #- name: Fix Spark nuget package
+      #  run: ./LinuxFixSparkNuget.sh
       - name: Test
         run: dotnet test -c Release Master.sln
 
