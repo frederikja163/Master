@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
          dotnet-version: '9.0.x'
+      - name: Build
+        run: dotnet restore
       - name: Fix Spark nuget package
         run: ls ~/.nuget/packages #./LinuxFixSparkNuget.sh
       # Build your project
