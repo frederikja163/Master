@@ -7,7 +7,7 @@ set -e
 
 # Allow the version to be set via environment variable or first argument, default to 2.3.0
 SPARK_VERSION="${SPARK_VERSION:-${1:-2.3.0}}"
-PACKAGE_PATH="~/.nuget/packages/microsoft.spark/$SPARK_VERSION"
+PACKAGE_PATH="$HOME/.nuget/packages/microsoft.spark/$SPARK_VERSION"
 
 if [ ! -d "$PACKAGE_PATH" ]; then
   echo "Microsoft Spark package not found at $PACKAGE_PATH"
