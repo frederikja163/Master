@@ -32,7 +32,7 @@ jobs:
       - name: ls files
         run: ls ~/.nuget/packages/microsoft.spark/2.3.0 #./LinuxFixSparkNuget.sh
       - name: Fix Spark nuget package
-        run: ls ~/.nuget/packages/microsoft.spark/2.3.0 #./LinuxFixSparkNuget.sh
+        run: ./LinuxFixSparkNuget.sh
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
