@@ -28,7 +28,7 @@ jobs:
         with:
          dotnet-version: '9.0.x'
       - name: Build
-        run: dotnet restore
+        run: dotnet restore Master.sln
       - name: Fix Spark nuget package
         run: ls ~/.nuget/packages #./LinuxFixSparkNuget.sh
       # Build your project
