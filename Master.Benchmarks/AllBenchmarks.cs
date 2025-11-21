@@ -14,7 +14,7 @@ namespace Master.Benchmarks;
 [Config(typeof(BenchmarkConfig))]
 public class AllBenchmarks
 {
-    private readonly TimeSpan _timeout = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan _timeout = TimeSpan.FromMinutes(10);
     
     [IterationSetup]
     public void Setup()

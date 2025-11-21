@@ -1,5 +1,6 @@
 using Microsoft.Spark;
 using Microsoft.Spark.Sql;
+using Microsoft.Spark.Sql.Streaming;
 using Microsoft.Spark.Sql.Types;
 
 namespace Master.Benchmarks.RawBenchmarks;
@@ -24,13 +25,15 @@ public class SparkBenchmark : IRawBenchmark
                     .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!)))
             );
             var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
-            DataFrameWriter dataFrameWriter = dataFrame.Write();
-            if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), path)))
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), path);
+        
+            for (int i = 0; i < data.Repeats; i++)
             {
-                dataFrameWriter = dataFrameWriter.Mode(SaveMode.Append);
+                dataFrame.Write()
+                    .Mode(i == 0 ? SaveMode.Overwrite : SaveMode.Append)
+                    .Format(_format)
+                    .Save(outputPath);
             }
-            dataFrameWriter.Format(_format) 
-                .Save(Path.Combine(Directory.GetCurrentDirectory(), path));
             return Task.CompletedTask;
         }).Wait();
     }

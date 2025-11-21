@@ -18,7 +18,7 @@ jobs:
   ##############
 
   Build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
          dotnet-version: '9.0.x'
+      - name: Fix Spark nuget package
+        run: ./LinuxFixSparkNuget.sh
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
@@ -45,7 +47,7 @@ jobs:
   ##############
 
   UnitTests:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -54,6 +56,8 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
+      - name: Fix Spark nuget package
+        run: ./LinuxFixSparkNuget.sh
       - name: Test
         run: dotnet test -c Release Master.sln
 
@@ -64,7 +68,7 @@ jobs:
   Publish:
     # Only publish on the main branch or if the commit is tagged.
     if: github.ref == 'refs/heads/main' || contains(github.ref, 'refs/heads/release') || contains(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     # This step depends on the build step
     needs:
       - Build
