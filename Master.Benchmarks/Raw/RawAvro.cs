@@ -3,7 +3,7 @@ using Avro;
 using Avro.File;
 using Avro.Generic;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Raw;
 
 internal sealed class RawAvro : IRawBenchmark
 {
