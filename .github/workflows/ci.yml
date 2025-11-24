@@ -27,6 +27,7 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
          dotnet-version: '9.0.x'
+         cache: 'false'
       - name: Restore Dependencies
         run: dotnet restore Master.sln
       - name: Fix Spark nuget package
@@ -36,9 +37,9 @@ jobs:
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
-        if: always()
       - name: ls
         run: ls ~/.nuget/packages/microsoft.spark/2.3.0
+        if: always()
       # Upload the package so it can be downloaded from GitHub, 
       # and consumed by other steps in this workflow
       - name: Upload binaries
