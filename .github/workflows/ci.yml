@@ -28,20 +28,18 @@ jobs:
         with:
          dotnet-version: '9.0.x'
          cache: 'false'
+      # Download libraries from NuGet
       - name: Restore Dependencies
         run: dotnet restore Master.sln
-      #- name: Fix Spark nuget package
-      #  run: ./LinuxFixSparkNuget.sh
-      - name: ls
-        run: ls ~/.nuget/packages/microsoft.spark/2.3.0
+      # renames broken Spark library files lib\netstandard2.0 -> lib/netstandard2.0, so 
+      # it is directories instead of bad file names on linux
+      - name: Fix Spark nuget package
+        run: ./LinuxFixSparkNuget.sh
+      # required to force Master.sln to reload the packages. Otherwise, the fix won't be applied.
       - name: Restore again with no-cache
         run: dotnet restore Master.sln --no-cache --force
-      # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln --no-restore
-      - name: ls
-        run: ls ~/.nuget/packages/microsoft.spark/2.3.0
-        if: always()
       # Upload the package so it can be downloaded from GitHub, 
       # and consumed by other steps in this workflow
       - name: Upload binaries
