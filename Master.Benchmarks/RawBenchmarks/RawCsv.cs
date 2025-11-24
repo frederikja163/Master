@@ -12,7 +12,7 @@ internal sealed class RawCsv : IRawBenchmark
         {
             foreach (IEnumerable<object> row in data.RowMajor())
             {
-                writer.WriteLineAsync(string.Join(",", row));
+                writer.WriteLine(string.Join(",", row));
             }
         }
     }
