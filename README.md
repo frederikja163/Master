@@ -5,7 +5,7 @@ This is currently work in progress.
 
 ## Setting up Spark
 
-First install: **[Apache Spark 3.5.3](https://archive.apache.org/dist/spark/spark-3.5.3/)**
+First install: **[Apache Spark 3.5.3](https://archive.apache.org/dist/spark/spark-3.5.3/)** - spark-3.5.3-bin-hadoop3.tgz is recommended and ensure that it aligns with the path in `Start spark debug mode`
 
 If you are using Linux then first run `dotnet restore`, then `./LinuxFixSparkNuget.sh` to fix the Spark nuget package. Then invalidate IDE cache if necessary.
 
