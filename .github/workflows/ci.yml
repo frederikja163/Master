@@ -36,6 +36,9 @@ jobs:
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
+        if: always()
+      - name: ls
+        run: ls ~/.nuget/packages/microsoft.spark/2.3.0
       # Upload the package so it can be downloaded from GitHub, 
       # and consumed by other steps in this workflow
       - name: Upload binaries
