@@ -38,6 +38,8 @@ jobs:
         run: pwd
       - name: readlink -f ~
         run: readlink -f ~
+      - name: ls
+        run: ls -a ~/work
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
