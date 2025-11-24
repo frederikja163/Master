@@ -34,6 +34,8 @@ jobs:
         run: ./LinuxFixSparkNuget.sh
       - name: ls
         run: ls ~/.nuget/packages/microsoft.spark/2.3.0
+      - name: ls
+        run: ls -a ~/runner
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
