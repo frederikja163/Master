@@ -38,8 +38,10 @@ jobs:
         run: pwd
       - name: readlink -f ~
         run: readlink -f ~
-      - name: ls
+      - name: ls work
         run: ls -a ~/work
+      - name: ls dotnet
+        run: ls /usr/share/dotnet
       # Build your project
       - name: Build
         run: dotnet build -c Release Master.sln
