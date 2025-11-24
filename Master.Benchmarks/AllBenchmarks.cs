@@ -4,7 +4,7 @@ using Master.Benchmarks.BenchmarkDotnetConfig;
 namespace Master.Benchmarks;
 
 [Config(typeof(BenchmarkConfig))]
-public class AllBenchmarks
+public abstract class AllBenchmarks
 {
     protected TimeSpan Timeout = TimeSpan.FromMinutes(2);
     
