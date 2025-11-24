@@ -30,8 +30,8 @@ jobs:
          cache: 'false'
       - name: Restore Dependencies
         run: dotnet restore Master.sln
-      - name: Fix Spark nuget package
-        run: ./LinuxFixSparkNuget.sh
+      #- name: Fix Spark nuget package
+      #  run: ./LinuxFixSparkNuget.sh
       - name: ls
         run: ls ~/.nuget/packages/microsoft.spark/2.3.0
       - name: Restore again with no-cache
