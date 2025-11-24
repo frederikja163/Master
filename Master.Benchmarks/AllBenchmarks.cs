@@ -31,26 +31,26 @@ public class AllBenchmarks
         yield return new Data(10_000, 100).PopulateOrderedInts().PopulateRandomInts();
         yield return new Data(10_000, 10).PopulateOrderedInts().PopulateRandomInts();
         yield return new Data(10_000, 1).PopulateOrderedInts().PopulateRandomInts();
-        yield return new Data(10_000, 1_000).PopulateOrderedInts();
-        yield return new Data(10_000, 100).PopulateOrderedInts();
-        yield return new Data(10_000, 10).PopulateOrderedInts();
-        yield return new Data(10_000, 1).PopulateOrderedInts();
-        yield return new Data(10_000, 1_000).PopulateRandomInts();
-        yield return new Data(10_000, 100).PopulateRandomInts();
-        yield return new Data(10_000, 10).PopulateRandomInts();
-        yield return new Data(10_000, 1).PopulateRandomInts();
-        yield return new Data(10_000, 1_000).PopulateRandomFloats();
-        yield return new Data(10_000, 100).PopulateRandomFloats();
-        yield return new Data(10_000, 10).PopulateRandomFloats();
-        yield return new Data(10_000, 1).PopulateRandomFloats();
-        yield return new Data(10_000, 1_000).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 100).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 10).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 1).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 1_000).PopulateRandomNatoAlphabetStrings();
-        yield return new Data(10_000, 100).PopulateRandomNatoAlphabetStrings();
-        yield return new Data(10_000, 10).PopulateRandomNatoAlphabetStrings();
-        yield return new Data(10_000, 1).PopulateRandomNatoAlphabetStrings();
+        // yield return new Data(10_000, 1_000).PopulateOrderedInts();
+        // yield return new Data(10_000, 100).PopulateOrderedInts();
+        // yield return new Data(10_000, 10).PopulateOrderedInts();
+        // yield return new Data(10_000, 1).PopulateOrderedInts();
+        // yield return new Data(10_000, 1_000).PopulateRandomInts();
+        // yield return new Data(10_000, 100).PopulateRandomInts();
+        // yield return new Data(10_000, 10).PopulateRandomInts();
+        // yield return new Data(10_000, 1).PopulateRandomInts();
+        // yield return new Data(10_000, 1_000).PopulateRandomFloats();
+        // yield return new Data(10_000, 100).PopulateRandomFloats();
+        // yield return new Data(10_000, 10).PopulateRandomFloats();
+        // yield return new Data(10_000, 1).PopulateRandomFloats();
+        // yield return new Data(10_000, 1_000).PopulateRandomGuidStrings();
+        // yield return new Data(10_000, 100).PopulateRandomGuidStrings();
+        // yield return new Data(10_000, 10).PopulateRandomGuidStrings();
+        // yield return new Data(10_000, 1).PopulateRandomGuidStrings();
+        // yield return new Data(10_000, 1_000).PopulateRandomNatoAlphabetStrings();
+        // yield return new Data(10_000, 100).PopulateRandomNatoAlphabetStrings();
+        // yield return new Data(10_000, 10).PopulateRandomNatoAlphabetStrings();
+        // yield return new Data(10_000, 1).PopulateRandomNatoAlphabetStrings();
     }
     
     [Benchmark]
@@ -70,7 +70,8 @@ public class AllBenchmarks
         // yield return new RawCsv();
         // yield return new RawAvro();
         // yield return new RawSqlite();
-        yield return new RawHdf5Benchmark();
+        // yield return new RawHdf5Benchmark();
+        yield return new RawVortexWriter();
     }
     
     // [Benchmark]
