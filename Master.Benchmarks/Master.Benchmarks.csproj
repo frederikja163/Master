@@ -15,6 +15,7 @@
         <PackageReference Include="Parquet.Net" Version="5.2.0" />
         <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.11" />
         <PackageReference Include="System.Data.SQLite" Version="2.0.1" />
+        <PackageReference Include="Vortex.Net" Version="1.0.1" />
         <ProjectReference Include="..\Master.OpenTAP\Master.OpenTAP.csproj" />
         <ProjectReference Include="..\Master\Master.csproj" />
         <ProjectReference Include="..\Parquet\Parquet\Parquet.csproj" />
@@ -27,5 +28,11 @@
         <OpenTapPackageReference Include="CSV" version="9.14.2"/>
         <OpenTapPackageReference Include="SQLite and PostgreSQL" version="9.6.0"/>
         <OpenTapPackageReference Include="Spreadsheet" version="2.1.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="libvortex_ffi.so">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 </Project>

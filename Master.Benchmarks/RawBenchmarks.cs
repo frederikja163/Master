@@ -30,5 +30,13 @@ public class RawBenchmarks : AllBenchmarks
         yield return new RawAvro();
         yield return new RawSqlite();
         yield return new RawHdf5Benchmark();
+        if (OperatingSystem.IsLinux())
+        {
+            yield return new RawVortexWriter();
+        }
+        else
+        {
+            Console.WriteLine("Skipping Vortex benchmark since they are only enabled on linux.");
+        }
     }
 }
