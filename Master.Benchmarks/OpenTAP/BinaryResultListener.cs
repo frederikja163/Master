@@ -1,4 +1,5 @@
-﻿using OpenTap;
+﻿using Master.Benchmarks.Raw;
+using OpenTap;
 
 namespace Master.Benchmarks.OpenTAP;
 

@@ -3,7 +3,7 @@ using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Raw;
 
 internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
 {

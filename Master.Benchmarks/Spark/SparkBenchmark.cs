@@ -1,11 +1,10 @@
-using Microsoft.Spark;
+using Master.Benchmarks.Raw;
 using Microsoft.Spark.Sql;
-using Microsoft.Spark.Sql.Streaming;
 using Microsoft.Spark.Sql.Types;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Spark;
 
-public class SparkBenchmark : IRawBenchmark
+public class SparkBenchmark
 {
     private readonly string _format;
     private readonly SparkSession _spark;

@@ -15,6 +15,10 @@ Then you should be able to run Spark with the run profile `Start spark debug mod
 
 When it says "* .NET Backend running debug mode. Press enter to exit *", you can start the benchmarks as usual.
 
+## Benchmarks
+
+Can be run with `Master.Benchmarks` run profile and results can be found in `Master.Benchmarks/bin/Release/net9.0/BenchmarkDotNet.Artifacts/results`.
+
 # Authors
 
 Authors @Aavild and @frederikja163 for their masters project at AAU
