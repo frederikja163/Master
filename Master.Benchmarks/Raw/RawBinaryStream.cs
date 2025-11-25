@@ -1,4 +1,4 @@
-﻿namespace Master.Benchmarks.RawBenchmarks;
+﻿namespace Master.Benchmarks.Raw;
 
 internal sealed class RawBinaryStream : IRawBenchmark
 {

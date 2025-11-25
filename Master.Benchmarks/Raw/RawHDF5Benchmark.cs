@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using HDF.PInvoke;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Raw;
 
 
 internal sealed class RawHdf5Benchmark : IRawBenchmark
