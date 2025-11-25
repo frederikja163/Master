@@ -17,6 +17,7 @@ internal sealed class ExtendedBinaryWriter : IDisposable
        WriteStrings(array);
        WriteValueType<int>(array);
        WriteValueType<float>(array);
+       WriteValueType<double>(array);
     }
 
     private unsafe void WriteValueType<T>(Array array)

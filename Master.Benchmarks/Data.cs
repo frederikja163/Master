@@ -58,6 +58,13 @@ public sealed class Data
         _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextSingle()).ToArray());
         return this;
     }
+    
+    public Data PopulateRandomDoubles()
+    {
+        UniqueColumnName("RandomDouble");
+        _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextDouble()).ToArray());
+        return this;
+    }
 
     public Data PopulateRandomGuidStrings()
     {

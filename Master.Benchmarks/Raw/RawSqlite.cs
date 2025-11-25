@@ -49,6 +49,7 @@ internal sealed class RawSqlite : IRawBenchmark
             return type == typeof(int) ? "INT" :
                 type == typeof(string) ? "TEXT" :
                 type == typeof(float) ? "REAL" :
+                type == typeof(float) ? "REAL" :
                 throw new NotImplementedException();
         }
 
@@ -58,6 +59,7 @@ internal sealed class RawSqlite : IRawBenchmark
             return type == typeof(int) ? DbType.Int32 :
                 type == typeof(string) ? DbType.String :
                 type == typeof(float) ? DbType.Single :
+                type == typeof(float) ? DbType.Double :
                 throw new NotImplementedException();
         }
 

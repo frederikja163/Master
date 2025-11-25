@@ -37,6 +37,7 @@ public sealed class RawVortexWriter : IRawBenchmark
         Type type = array.GetType().GetElementType()!;
         return type == typeof(int) ? Vx.NewPrimitive(VxPType.I32, false) :
             type == typeof(float) ? Vx.NewPrimitive(VxPType.F32, false) :
+            type == typeof(double) ? Vx.NewPrimitive(VxPType.F64, false) :
             type == typeof(string) ? Vx.NewUtf8(false) : throw new NotImplementedException();
     }
 
@@ -48,6 +49,8 @@ public sealed class RawVortexWriter : IRawBenchmark
             return new VxArray((int[])array);
         if (type == typeof(float))
             return new VxArray((float[])array);
+        if (type == typeof(double))
+            return new VxArray((double[])array);
 
         if (type == typeof(string))
         {

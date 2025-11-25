@@ -41,6 +41,7 @@ public class SparkBenchmark
     {
         return dataType == typeof(int) ? new IntegerType() :
             dataType == typeof(string) ? new StringType() :
+            dataType == typeof(double) ? new DoubleType() :
             dataType == typeof(float) ? new DoubleType() : throw new NotImplementedException("Couldn't read data type");
     }
     private static object ConvertValue(object v)

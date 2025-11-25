@@ -44,6 +44,7 @@ internal sealed class RawAvro : IRawBenchmark
             return type == typeof(int) ? "int" :
                 type == typeof(string) ? "string" :
                 type == typeof(float) ? "float" :
+                type == typeof(double) ? "double" :
                 throw new NotImplementedException();
         }
 

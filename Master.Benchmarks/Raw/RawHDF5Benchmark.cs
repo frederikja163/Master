@@ -63,6 +63,11 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
             return H5T.NATIVE_FLOAT;
         }
 
+        if (type == typeof(double))
+        {
+            return H5T.NATIVE_DOUBLE;
+        }
+
         if (type == typeof(string))
         {
             long typeId = H5T.copy(H5T.C_S1);
