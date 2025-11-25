@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Data.SQLite;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Raw;
 
 internal sealed class RawSqlite : IRawBenchmark
 {

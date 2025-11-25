@@ -1,10 +1,11 @@
-﻿using Parquet;
+﻿using System.IO.Compression;
+using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Raw;
 
-internal sealed class RawParquet : IRawBenchmark
+internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
 {
     public void Write(string filePath, Data data)
     {
@@ -18,6 +19,7 @@ internal sealed class RawParquet : IRawBenchmark
             await using Stream stream = File.OpenWrite(filePath);
 
             await using ParquetWriter writer = await ParquetWriter.CreateAsync(schema, stream);
+            writer.CompressionMethod = method;
 
             for (int i = 0; i < data.Repeats; i++)
             {
@@ -32,6 +34,6 @@ internal sealed class RawParquet : IRawBenchmark
 
     public override string ToString()
     {
-        return "Parquet";
+        return $"Parquet (Compression: {method})";
     }
 }

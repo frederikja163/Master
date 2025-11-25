@@ -1,6 +1,6 @@
 using Vortex.Net;
 
-namespace Master.Benchmarks.RawBenchmarks;
+namespace Master.Benchmarks.Raw;
 
 public sealed class RawVortexWriter : IRawBenchmark
 {

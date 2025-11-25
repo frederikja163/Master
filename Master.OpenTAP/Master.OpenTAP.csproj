@@ -4,7 +4,7 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-        <TargetFramework>net9</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <DebugWith>TUI</DebugWith>
         <OpenTapPackageDefinitionPath>package.xml</OpenTapPackageDefinitionPath>
         <CreateOpenTapPackage>false</CreateOpenTapPackage>
