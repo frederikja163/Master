@@ -26,7 +26,7 @@ public abstract class AllBenchmarks
 
     public IEnumerable<Data> GetData()
     {
-        yield return new Data(10_000, 10).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings().PopulateRandomDoubles();
+        yield return new Data(10_000, 1, 0.5f).PopulateOrderedInts();
     }
     
     protected static void RunWithTimeout(Action action, TimeSpan timeout)

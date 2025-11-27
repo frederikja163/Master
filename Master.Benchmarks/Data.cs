@@ -1,4 +1,6 @@
-﻿namespace Master.Benchmarks;
+﻿using Master.Benchmarks.Extensions;
+
+namespace Master.Benchmarks;
 
 public sealed class Data
 {
@@ -12,71 +14,105 @@ public sealed class Data
 
     public int Count { get; }
     public int Repeats { get; }
+    public float Sparsity { get; }
     
-    public Data(int count, int repeats = 1)
+    public Data(int count, int repeats = 1, float sparsity = 1.0f)
     {
         Count = count;
         Repeats = repeats;
+        Sparsity = sparsity;
     }
 
     public IEnumerable<Array> Columns => _columns;
     public IEnumerable<string> ColumnNames => _columnNames;
 
-    public IEnumerable<IEnumerable<object>> RowMajor()
+    public IEnumerable<IEnumerable<object?>> RowMajor()
     {
         for (int i = 0; i < Count; i++)
         {
             yield return GetRow(i);
         }
 
-        IEnumerable<object> GetRow(int i)
+        IEnumerable<object?> GetRow(int i)
         {
             for (int j = 0; j < _columns.Count; j++)
             {
-                yield return _columns[j].GetValue(i) ?? throw new IndexOutOfRangeException();
+                yield return _columns[j].GetValue(i);
             }
         }
     }
     
-    public Data PopulateRandomInts()
+    public Data PopulateRandomInts(int columns = 1)
     {
-        UniqueColumnName("RandomInt");
-        _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.Next()).ToArray());
+        for (int i = 0; i < columns; i++)
+        {
+            UniqueColumnName("RandomInt");
+            _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.Next()).WithNullsStruct(Sparsity).ToArray());
+        }
+        
         return this;
     }
     
-    public Data PopulateOrderedInts()
+    public Data PopulateOrderedInts(int columns = 1)
     {
-        UniqueColumnName("OrderedInt");
-        _columns.Add(Enumerable.Range(0, Count).ToArray());
+        for (int i = 0; i < columns; i++)
+        {
+            UniqueColumnName("OrderedInt");
+            _columns.Add(Enumerable.Range(0, Count).WithNullsStruct(Sparsity).ToArray());
+        }
+
         return this;
     }
     
-    public Data PopulateRandomFloats()
+    public Data PopulateRandomFloats(int columns = 1)
     {
-        UniqueColumnName("RandomFloat");
-        _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextSingle()).ToArray());
+        for (int i = 0; i < columns; i++)
+        {
+            UniqueColumnName("RandomFloat");
+            _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextSingle()).WithNullsStruct(Sparsity)
+                .ToArray());
+        }
+
         return this;
     }
     
-    public Data PopulateRandomDoubles()
+    public Data PopulateRandomDoubles(int columns = 1)
     {
-        UniqueColumnName("RandomDouble");
-        _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextDouble()).ToArray());
+        for (int i = 0; i < columns; i++)
+        {
+            UniqueColumnName("RandomDouble");
+            _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextDouble()).WithNullsStruct(Sparsity)
+                .ToArray());
+        }
+
         return this;
     }
 
-    public Data PopulateRandomGuidStrings()
+    public Data PopulateRandomGuidStrings(int columns = 1)
     {
-        UniqueColumnName("GuidStrings");
-        _columns.Add(Enumerable.Range(0, Count).Select(_ => Guid.NewGuid().ToString()).ToArray());
+        for (int i = 0; i < columns; i++)
+        {
+            UniqueColumnName("GuidStrings");
+            _columns.Add(
+                Enumerable.Range(0, Count).Select(_ => Guid.NewGuid().ToString()).WithNullsClass(Sparsity).ToArray());
+        }
+
         return this;
     }
 
-    public Data PopulateRandomNatoAlphabetStrings()
+    public Data PopulateRandomNatoAlphabetStrings(int columns = 1)
     {
-        UniqueColumnName("NatoAlphabet");
-        _columns.Add(Random.Shared.GetItems(NatoAlphabet, Count));
+        for (int i = 0; i < columns; i++)
+        {
+            string[] natoAlphabet = NatoAlphabet
+                .Select<string, char[]>(s => s.ToCharArray())
+                .ForEach(Random.Shared.Shuffle)
+                .Select(ca => new string(ca)).ToArray();
+
+            UniqueColumnName("NatoAlphabet");
+            _columns.Add(Random.Shared.GetItems(natoAlphabet, Count).WithNullsClass(Sparsity).ToArray());
+        }
+
         return this;
     }
 

@@ -13,7 +13,7 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
         {
             ParquetSchema schema = new(
                 data.ColumnNames.Zip(data.Columns)
-                    .Select(tuple => new DataField(tuple.First, tuple.Second.GetType().GetElementType()!))
+                    .Select(tuple => new DataField(tuple.First, GetType(tuple), true))
             );
 
             await using Stream stream = File.OpenWrite(filePath);
@@ -30,6 +30,11 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
                 }
             }
         }).Wait();
+    }
+
+    private static Type GetType((string First, Array Second) tuple)
+    {
+        return Nullable.GetUnderlyingType(tuple.Second.GetType().GetElementType()!)!;
     }
 
     public override string ToString()
