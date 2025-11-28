@@ -26,7 +26,15 @@ public abstract class AllBenchmarks
 
     public IEnumerable<Data> GetData()
     {
-        yield return new Data(10_000, 1, 0.5f).PopulateOrderedInts();
+        bool isRows = true;
+        bool isColumns = false;
+        int totalCount = 4;
+        for (int i = 0; i < totalCount; i++)
+        {
+            int rows = isRows ? (int)Math.Pow(10, i) : 10;
+            int columns = isColumns ? (int)Math.Pow(10, totalCount - i + 1) : 100;
+            yield return new Data(10_000, rows, 1).PopulateRandomInts(columns / 10).PopulateRandomDoubles(columns / 5).PopulateRandomNatoAlphabetStrings(columns / 5).PopulateOrderedInts(columns / 10).PopulateRandomGuidStrings(columns / 5).PopulateRandomFloats(columns / 5);
+        }
     }
     
     protected static void RunWithTimeout(Action action, TimeSpan timeout)

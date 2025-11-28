@@ -136,6 +136,6 @@ public sealed class Data
 
     public override string ToString()
     {
-        return $"{Repeats}x({string.Join(", ", _columnNames.Select(s => Count + s))})";
+        return $"{Repeats*Count}x{_columns.Count}";
     }
 }
