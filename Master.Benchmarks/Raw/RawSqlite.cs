@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.SQLite;
+using Master.Benchmarks.Extensions;
 
 namespace Master.Benchmarks.Raw;
 
@@ -45,7 +46,7 @@ internal sealed class RawSqlite : IRawBenchmark
         }
         static string GetColumnType(Array array)
         {
-            Type type = array.GetType().GetElementType() ?? throw new ArgumentException(null, nameof(array));
+            Type type = array.GetType().GetElementType()?.GetUnderlyingNullableType() ?? throw new ArgumentException(null, nameof(array));
             return type == typeof(int) ? "INT" :
                 type == typeof(string) ? "TEXT" :
                 type == typeof(float) ? "REAL" :
@@ -55,7 +56,7 @@ internal sealed class RawSqlite : IRawBenchmark
 
         static DbType GetParamType(Array array)
         {
-            Type type = array.GetType().GetElementType() ?? throw new ArgumentNullException(null, nameof(array));
+            Type type = array.GetType().GetElementType().GetUnderlyingNullableType() ?? throw new ArgumentNullException(null, nameof(array));
             return type == typeof(int) ? DbType.Int32 :
                 type == typeof(string) ? DbType.String :
                 type == typeof(float) ? DbType.Single :

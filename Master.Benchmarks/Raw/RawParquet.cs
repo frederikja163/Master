@@ -1,4 +1,5 @@
 ﻿using System.IO.Compression;
+using Master.Benchmarks.Extensions;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
@@ -34,7 +35,7 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
 
     private static Type GetType((string First, Array Second) tuple)
     {
-        return Nullable.GetUnderlyingType(tuple.Second.GetType().GetElementType()!)!;
+        return tuple.Second.GetType().GetElementType()!.GetUnderlyingNullableType();
     }
 
     public override string ToString()
