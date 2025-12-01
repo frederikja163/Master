@@ -7,13 +7,26 @@ internal sealed class BinaryResultListener : ResultListener
 {
     [Display("File path")]
     public string FilePath { get; set; } = "Results";
-    
+     
+    private ExtendedBinaryWriter _writer;
+
+    public override void Close()
+    {
+        _writer = new ExtendedBinaryWriter(FilePath);
+        base.Close();
+    }
+
+    public override void Open()
+    {
+        _writer.Dispose();
+        base.Open();
+    }
+
     public override void OnResultPublished(Guid stepRunId, ResultTable resultTable)
     {
-        using ExtendedBinaryWriter writer = new ExtendedBinaryWriter(FilePath);
         foreach (ResultColumn column in resultTable.Columns)
         {
-            writer.Write(column.Data);
+            _writer.Write(column.Data);
         }
     }
 

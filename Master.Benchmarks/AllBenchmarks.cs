@@ -28,12 +28,12 @@ public abstract class AllBenchmarks
     {
         bool isRows = true;
         bool isColumns = false;
-        int totalCount = 4;
+        int totalCount = 5;
         for (int i = 0; i < totalCount; i++)
         {
             int rows = isRows ? (int)Math.Pow(10, i) : 10;
             int columns = isColumns ? (int)Math.Pow(10, totalCount - i + 1) : 100;
-            yield return new Data(10_000, rows, 1).PopulateRandomInts(columns / 10).PopulateRandomDoubles(columns / 5).PopulateRandomNatoAlphabetStrings(columns / 5).PopulateOrderedInts(columns / 10).PopulateRandomGuidStrings(columns / 5).PopulateRandomFloats(columns / 5);
+            yield return new Data(1_000, rows, 1).PopulateRandomInts(columns / 10).PopulateRandomDoubles(columns / 5).PopulateRandomNatoAlphabetStrings(columns / 5).PopulateOrderedInts(columns / 10).PopulateRandomGuidStrings(columns / 5).PopulateRandomFloats(columns / 5);
         }
     }
     

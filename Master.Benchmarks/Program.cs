@@ -8,8 +8,10 @@ internal static class Program
 {
     internal static void Main(string[] args)
     {
-        // BenchmarkRunner.Run<OpenTAPBenchmarks>();
-        BenchmarkRunner.Run<RawBenchmarks>();
-        BenchmarkRunner.Run<SparkBenchmarks>();
+        // File.Delete("file");
+        // new RawVortexWriter().Write("file", new Data(1000, 1, 0.5f).PopulateRandomDoubles(2).PopulateRandomFloats().PopulateRandomInts().PopulateRandomNatoAlphabetStrings());
+        BenchmarkRunner.Run<OpenTAPBenchmarks>();
+        // BenchmarkRunner.Run<RawBenchmarks>();
+        // BenchmarkRunner.Run<SparkBenchmarks>();
     }
 }

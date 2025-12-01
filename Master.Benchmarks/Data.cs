@@ -125,13 +125,13 @@ public sealed class Data
         }
 
         int index = 0;
-        while (_columnNames.Contains($"{name} ({index})"))
+        while (_columnNames.Contains($"{name}_{index}"))
         {
             index += 1;
         }
 
-        _columnNames.Add($"{name} ({index})");
-        return $"{name} ({index})";
+        _columnNames.Add($"{name}_{index}");
+        return $"{name}_{index}";
     }
 
     public override string ToString()
