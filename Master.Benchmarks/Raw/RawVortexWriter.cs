@@ -26,7 +26,7 @@ public sealed class RawVortexWriter : IRawBenchmark
         for (int i = 0; i < data.Repeats; i++)
         {
             VxArray[] arrays = data.Columns.Select(ArrayToVxArray).ToArray();
-            VxArray array = Vx.ArrayStructNew(type, arrays[0], (nuint)arrays.Length, IntPtr.Zero, ref error);
+            VxArray array = Vx.ArrayStructNew(type, arrays[0], (nuint)arrays.Length, (nuint)data.Count, IntPtr.Zero, ref error);
             error.Dispose();
             sink.Push(array, ref error);
             error.Dispose();

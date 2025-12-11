@@ -18,7 +18,7 @@ public sealed class Data
     
     public Data(int count, int repeats = 1, float sparsity = 1.0f)
     {
-        Count = count;
+        Count = (int)(count / sparsity);
         Repeats = repeats;
         Sparsity = sparsity;
     }
@@ -46,7 +46,7 @@ public sealed class Data
     {
         for (int i = 0; i < columns; i++)
         {
-            UniqueColumnName("RandomInt");
+            UniqueColumnName($"RandomInt_{i}");
             _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.Next()).WithNullsStruct(Sparsity).ToArray());
         }
         
@@ -57,7 +57,7 @@ public sealed class Data
     {
         for (int i = 0; i < columns; i++)
         {
-            UniqueColumnName("OrderedInt");
+            UniqueColumnName($"OrderedInt_{i}");
             _columns.Add(Enumerable.Range(0, Count).WithNullsStruct(Sparsity).ToArray());
         }
 
@@ -68,7 +68,7 @@ public sealed class Data
     {
         for (int i = 0; i < columns; i++)
         {
-            UniqueColumnName("RandomFloat");
+            UniqueColumnName($"RandomFloat_{i}");
             _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextSingle()).WithNullsStruct(Sparsity)
                 .ToArray());
         }
@@ -80,7 +80,7 @@ public sealed class Data
     {
         for (int i = 0; i < columns; i++)
         {
-            UniqueColumnName("RandomDouble");
+            UniqueColumnName($"RandomDouble_{i}");
             _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextDouble()).WithNullsStruct(Sparsity)
                 .ToArray());
         }
@@ -92,7 +92,7 @@ public sealed class Data
     {
         for (int i = 0; i < columns; i++)
         {
-            UniqueColumnName("GuidStrings");
+            UniqueColumnName($"GuidStrings_{i}");
             _columns.Add(
                 Enumerable.Range(0, Count).Select(_ => Guid.NewGuid().ToString()).WithNullsClass(Sparsity).ToArray());
         }
@@ -109,7 +109,7 @@ public sealed class Data
                 .ForEach(Random.Shared.Shuffle)
                 .Select(ca => new string(ca)).ToArray();
 
-            UniqueColumnName("NatoAlphabet");
+            UniqueColumnName($"NatoAlphabet_{i}");
             _columns.Add(Random.Shared.GetItems(natoAlphabet, Count).WithNullsClass(Sparsity).ToArray());
         }
 
@@ -136,6 +136,6 @@ public sealed class Data
 
     public override string ToString()
     {
-        return $"{Repeats*Count}x{_columns.Count}";
+        return $"{Repeats*Count}x{_columns.Count}x{Sparsity}";
     }
 }
