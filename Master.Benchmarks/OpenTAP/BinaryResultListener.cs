@@ -12,13 +12,13 @@ internal sealed class BinaryResultListener : ResultListener
 
     public override void Close()
     {
-        _writer = new ExtendedBinaryWriter(FilePath);
+        _writer.Dispose();
         base.Close();
     }
 
     public override void Open()
     {
-        _writer.Dispose();
+        _writer = new ExtendedBinaryWriter(FilePath);
         base.Open();
     }
 
