@@ -3,6 +3,7 @@ using Keysight.OpenTap.Plugins.Csv;
 using Keysight.OpenTap.Plugins.ResultListeners;
 using Master.Benchmarks.OpenTAP;
 using OpenTap;
+using OpenTap.Hdf5;
 using OpenTap.Plugins.Parquet;
 
 namespace Master.Benchmarks;
@@ -44,6 +45,10 @@ public class OpenTAPBenchmarks : AllBenchmarks
         {
             FilePath = new MacroString() { Text = Config.FilePath }
         };
+        yield return new Hdf5ResultListener()
+        {
+            FilePath = Config.FilePath
+        };
         yield return new SQLiteDatabase()
         {
             FilePath = Config.FilePath
@@ -52,10 +57,5 @@ public class OpenTAPBenchmarks : AllBenchmarks
         {
             FilePath = new MacroString() { Text = Config.FilePath }
         };
-        // yield return new SpreadsheetResultListener()
-        // {
-        //     Path = new MacroString() { Text = Config.FilePath },
-        //     OpenFile = false,
-        // };
     }
 }
