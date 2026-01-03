@@ -24,11 +24,11 @@ public class SparkBenchmark
                 data.ColumnNames.Zip(data.Columns)
                     .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!.GetUnderlyingNullableType())))
             );
-            var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), path);
         
             for (int i = 0; i < data.Repeats; i++)
             {
+                var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
                 dataFrame.Write()
                     .Mode(i == 0 ? SaveMode.Overwrite : SaveMode.Append)
                     .Format(_format)

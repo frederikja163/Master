@@ -6,7 +6,7 @@ namespace Master.Benchmarks;
 [Config(typeof(BenchmarkConfig))]
 public abstract class AllBenchmarks
 {
-    protected TimeSpan Timeout = TimeSpan.FromMinutes(2);
+    protected TimeSpan Timeout = TimeSpan.FromMinutes(60);
     
     [IterationSetup]
     public void Setup()
@@ -26,8 +26,8 @@ public abstract class AllBenchmarks
 
     public static IEnumerable<Data> GetData()
     {
-        bool isRows = true;
-        bool isColumns = false;
+        bool isRows = false;
+        bool isColumns = true;
         bool isSparsity = false;
         int totalCount = 5;
         for (int i = 0; i < totalCount; i++)
@@ -35,7 +35,13 @@ public abstract class AllBenchmarks
             int rows = isRows ? (int)Math.Pow(10, i) : 10;
             int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 100;
             float sparsity = isSparsity ? MathF.Max((float)i / totalCount, 0.1f) : 1f;
-            yield return new Data(1_000, rows, sparsity).PopulateRandomInts(columns / 10).PopulateRandomDoubles(columns / 5).PopulateRandomNatoAlphabetStrings(columns / 5).PopulateOrderedInts(columns / 10).PopulateRandomGuidStrings(columns / 5).PopulateRandomFloats(columns / 5);
+            yield return new Data(1_000, rows, sparsity)
+                .PopulateRandomInts(columns / 10)
+                .PopulateRandomDoubles(columns / 5)
+                .PopulateRandomNatoAlphabetStrings(columns / 5)
+                .PopulateOrderedInts(columns / 10)
+                .PopulateRandomGuidStrings(columns / 5)
+                .PopulateRandomFloats(columns / 5);
         }
     }
     

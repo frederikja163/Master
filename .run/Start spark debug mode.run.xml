@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Start spark debug mode" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value="~/bin/spark-3.5.3-bin-hadoop3/bin/spark-submit --class org.apache.spark.deploy.dotnet.DotnetRunner --master local ~/.nuget/packages/microsoft.spark/2.3.0/jars/microsoft-spark-3-5_2.12-2.3.0.jar debug" />
+    <option name="SCRIPT_TEXT" value="~/bin/spark-3.5.3-bin-hadoop3/bin/spark-submit --master local[4] --driver-memory 8g --conf spark.driver.extraJavaOptions=&quot; -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:InitiatingHeapOccupancyPercent=30&quot; --conf spark.sql.shuffle.partitions=4 --class org.apache.spark.deploy.dotnet.DotnetRunner ~/.nuget/packages/microsoft.spark/2.3.0/jars/microsoft-spark-3-5_2.12-2.3.0.jar debug" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
