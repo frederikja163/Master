@@ -3,27 +3,34 @@ using System.Text;
 
 namespace Master.Serializing;
 
-internal readonly struct PhysicalColumn
+internal readonly struct DataColumn
 {
     public ReadOnlyMemory<byte> Data { get; }
     public readonly LogicalType LogicalType;
     public int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
 
-    public PhysicalColumn(LogicalType logicalType, ReadOnlyMemory<byte> data, int logicalLength)
+    public static DataColumn Empty { get; } = new DataColumn(LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
+
+    public DataColumn(LogicalType logicalType, ReadOnlyMemory<byte> data, int logicalLength)
     {
         Data = data;
         LogicalType = logicalType;
         LogicalLength = logicalLength;
     }
 
-    public static PhysicalColumn Create<T>(ReadOnlySpan<T> data) where T : struct
+    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
     {
+        if (!BitConverter.IsLittleEndian)
+        {
+            throw new NotImplementedException();
+        }
+        
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
-        return new PhysicalColumn(typeof(T).ToLogicalType(), new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
+        return new DataColumn(typeof(T).ToLogicalType(), new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
     }
 
-    public static PhysicalColumn Create(ReadOnlySpan<string> data)
+    public static DataColumn Create(ReadOnlySpan<string> data)
     {
         int length = 0;
         foreach (string str in data)
@@ -35,15 +42,15 @@ internal readonly struct PhysicalColumn
         int index = 0;
         foreach (string str in data)
         {
-            BitConverter.TryWriteBytes(bytes.AsSpan().Slice(index, sizeof(int)), str.Length);
+            BitConverter.TryWriteBytes(bytes.AsSpan().Slice(index, sizeof(int)), str.Length); // TODO: Using str.length here is wrong
             index += 4;
             index += Encoding.UTF8.GetBytes(str, bytes.AsSpan().Slice(index));
         }
 
-        return new PhysicalColumn(LogicalType.String, bytes, data.Length);
+        return new DataColumn(LogicalType.String, bytes, data.Length);
     }
 
-    public static PhysicalColumn Create(ReadOnlySpan<ReadOnlyMemory<byte>> data)
+    public static DataColumn Create(ReadOnlySpan<ReadOnlyMemory<byte>> data)
     {
         int length = 0;
         foreach (ReadOnlyMemory<byte> blob in data)
@@ -61,12 +68,11 @@ internal readonly struct PhysicalColumn
             index += blob.Length;
         }
 
-        return new PhysicalColumn(LogicalType.Blob, bytes, data.Length);
+        return new DataColumn(LogicalType.Blob, bytes, data.Length);
     }
 
-    public ReadOnlySpan<T> Interpret<T>()
-        where T : struct
+    public DataColumnReader OpenReader()
     {
-        return MemoryMarshal.Cast<byte, T>(Data.Span);
+        return new DataColumnReader(this);
     }
 }

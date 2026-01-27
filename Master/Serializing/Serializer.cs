@@ -26,76 +26,72 @@ internal sealed class Serializer
     public double SamplePercentage { get; init; } = 0.1;
     public int SampleCount { get; init; } = 10;
     
-    public EncodedColumn Encode(ReadOnlySpan<string> data)
+    public MetadataColumn Encode(ReadOnlySpan<string> data)
     {
         Debug.Assert(data.Length > 0);
         
-        ReadOnlySpan<string> sample = CreateSample<string>(data);
-        EncodedColumn encodedSample = PickEncoding(PhysicalColumn.Create(sample), CascadingEncodings);
-        PhysicalColumn column = PhysicalColumn.Create(data);
-        return Encode(column, encodedSample);
+        ReadOnlySpan<string> sample = CreateSample(data);
+        MetadataColumn metadataSample = PickEncoding(DataColumn.Create(sample), CascadingEncodings);
+        DataColumn column = DataColumn.Create(data);
+        return Encode(column, metadataSample);
     }
     
-    public EncodedColumn Encode<T>(ReadOnlySpan<T> data) where T : struct
+    public MetadataColumn Encode<T>(ReadOnlySpan<T> data) where T : struct
     {
         ReadOnlySpan<T> sample = CreateSample<T>(data);
-        EncodedColumn encodedSample = PickEncoding(PhysicalColumn.Create(sample), CascadingEncodings);
-        PhysicalColumn column = PhysicalColumn.Create(data);
-        return Encode(column, encodedSample);
+        MetadataColumn metadataSample = PickEncoding(DataColumn.Create(sample), CascadingEncodings);
+        DataColumn column = DataColumn.Create(data);
+        return Encode(column, metadataSample);
     }
 
-    public PhysicalColumn Decode(EncodedColumn column)
+    public DataColumn Decode(MetadataColumn column)
     {
         if (column.Id == EncodingId.Binary)
         {
-            return PhysicalColumn.Create(column.Parameters.Span);
+            return column.Metadata;
         }
         
-        ReadOnlyMemory<byte>[] physicalColumns = column.Columns.Select(c => Decode(c).Data).ToArray();
-        return _encodingsById[column.Id].Decode(physicalColumns, column.Parameters);
+        DataColumn[] physicalColumns = column.Columns.Select(c => Decode(c)).ToArray();
+        return _encodingsById[column.Id].Decode(physicalColumns, column.Metadata);
     }
 
-    private EncodedColumn Encode(PhysicalColumn inData, EncodedColumn encodedSample)
+    private MetadataColumn Encode(DataColumn inData, MetadataColumn metadataSample)
     {
-        EncodingId id = encodedSample.Id;
+        EncodingId id = metadataSample.Id;
 
         if (id == EncodingId.Binary)
         {
-            return new EncodedColumn(inData.Data);
+            return new MetadataColumn(inData);
         }
         
         IEncoding encoding = _encodingsById[id];
-        Column outColumn = encoding.Encode(inData, encodedSample.Parameters);
-        EncodedColumn[] column = outColumn
-            .PhysicalColumns
-            .Zip(encodedSample.Columns)
+        DataColumn metadata = metadataSample.Metadata;
+        encoding.Encode(inData, ref metadata, out var columns);
+        MetadataColumn[] column = columns
+            .Zip(metadataSample.Columns)
             .Select(t => Encode(t.First, t.Second))
             .ToArray();
-        ReadOnlyMemory<byte> parameters = outColumn.Parameters;
-        return new EncodedColumn(id, parameters, column);
+        return new MetadataColumn(id, metadata, column);
     }
 
-    internal EncodedColumn PickEncoding(PhysicalColumn sample, int cascades)
+    internal MetadataColumn PickEncoding(DataColumn sample, int cascades)
     {
         if (cascades == 0)
         {
-            return new EncodedColumn(sample.Data);
+            return new MetadataColumn(sample);
         }
         int minSize = sample.PhysicalSize;
-        EncodedColumn bestEncoding = new EncodedColumn(sample.Data);
+        MetadataColumn bestEncoding = new MetadataColumn(sample);
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            Column output = encoding.Encode(sample);
-            EncodedColumn[] childColumns = output
-                .PhysicalColumns
-                .Select(d => PickEncoding(d, cascades - 1))
-                .ToArray();
-            ReadOnlyMemory<byte> parameters = output.Parameters;
-            EncodedColumn encodedColumn = new EncodedColumn(encoding.Id, parameters, childColumns);
-            int length = encodedColumn.CalculateTotalLength();
+            DataColumn metadata = DataColumn.Empty;
+            encoding.Encode(sample, ref metadata, out DataColumn[] columns);
+            MetadataColumn[] childColumns = columns.Select(d => PickEncoding(d, cascades - 1)).ToArray();
+            MetadataColumn metadataColumn = new MetadataColumn(encoding.Id, metadata, childColumns);
+            int length = metadataColumn.CalculateTotalLength();
             if (length < minSize)
             {
-                bestEncoding = encodedColumn;
+                bestEncoding = metadataColumn;
                 minSize = length;
             }
         }

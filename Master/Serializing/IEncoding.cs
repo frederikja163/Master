@@ -9,9 +9,9 @@ public enum EncodingId
 internal interface IEncoding
 {
     public EncodingId Id { get; }
-    Column Encode(PhysicalColumn physicalColumn, ReadOnlyMemory<byte>? suggestedParameters = null);
+    void Encode(DataColumn dataColumn, ref DataColumn metadata, out DataColumn[] outColumns);
 
-    PhysicalColumn Decode(ReadOnlyMemory<byte>[] data, ReadOnlyMemory<byte> parameters);
+    DataColumn Decode(DataColumn[] data, DataColumn metadata);
 
     IEnumerable<LogicalType> GetSupportedTypes();
 }

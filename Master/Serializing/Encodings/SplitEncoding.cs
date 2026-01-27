@@ -5,59 +5,49 @@ namespace Master.Serializing.Encodings;
 internal sealed class SplitEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.Split;
-    public Column Encode(PhysicalColumn physicalColumn, ReadOnlyMemory<byte>? suggestedParameters = null)
+    public void Encode(DataColumn dataColumn, ref DataColumn metadata, out DataColumn[] outColumns)
     {
-        ReadOnlySpan<byte> data = physicalColumn.Data.Span;
-        int length = physicalColumn.LogicalLength;
-        int[] lengths = new int[length];
-        byte[] bytes = new byte[physicalColumn.PhysicalSize - length * sizeof(int)];
-        int dataIndex = 0, bytesIndex = 0;
+        DataColumnReader columnReader = dataColumn.OpenReader();
+        int length = dataColumn.LogicalLength;
+        DataColumnBuilder lengthBuilder = new DataColumnBuilder();
+        DataColumnBuilder byteBuilder = new DataColumnBuilder();
         for (int i = 0; i < length; i++)
         {
-            int size = BitConverter.ToInt32(data.Slice(dataIndex, sizeof(int)));
-            dataIndex += sizeof(int);
-            lengths[i] = size;
-            
-            data.Slice(dataIndex, size).CopyTo(bytes.AsSpan().Slice(bytesIndex));
-            dataIndex += size;
-            bytesIndex += size;
+            ReadOnlySpan<byte> blob = columnReader.ReadBlob();
+            lengthBuilder.Write(blob.Length);
+            byteBuilder.Write(blob);
         }
 
-        return new Column
-        {
-            Parameters = BitConverter.GetBytes((int)physicalColumn.LogicalType),
-            PhysicalColumns =
-            [
-                PhysicalColumn.Create<int>(lengths),
-                PhysicalColumn.Create<byte>(bytes)
-            ],
-        };
+        metadata = DataColumn.Create<byte>(BitConverter.GetBytes((int)dataColumn.LogicalType));
+        outColumns =
+        [
+            lengthBuilder.Build(),
+            byteBuilder.Build(),
+        ];
     }
 
-    public PhysicalColumn Decode(ReadOnlyMemory<byte>[] data, ReadOnlyMemory<byte> parameters)
+    public DataColumn Decode(DataColumn[] data, DataColumn metadata)
     {
-        Debug.Assert(data.Length == 2);
-        ReadOnlyMemory<byte> lengths = data[0];
-        Debug.Assert(lengths.Length % 4 == 0);
-        ReadOnlyMemory<byte> bytesIn = data[1];
-        byte[] bytesOut = new byte[lengths.Length + bytesIn.Length];
+        if (data.Length != 2)
+            throw new Exception("Split encoding must have two columns.");
+        if (data[0].PhysicalSize % 4 == 0)
+            throw new Exception($"Length column length must be divisible by {sizeof(int)}.");
 
-        int inIndex = 0, outIndex = 0;
-        int logicalLength = lengths.Length / sizeof(int);
+        DataColumnReader metadataReader = metadata.OpenReader();
+        LogicalType type = (LogicalType)metadataReader.Read<int>();
+        
+        DataColumnReader lengthReader = data[0].OpenReader();
+        DataColumnReader byteReader = data[1].OpenReader();
+        int logicalLength = lengthReader.PhysicalSize / sizeof(int);
+        DataColumnBuilder builder = new DataColumnBuilder(type, lengthReader.PhysicalSize + byteReader.PhysicalSize, lengthReader.PhysicalSize / sizeof(int));
+
         for (int i = 0; i < logicalLength; i++)
         {
-            ReadOnlySpan<byte> lengthSpan = lengths.Span.Slice(i * sizeof(int), sizeof(int));
-            int length = BitConverter.ToInt32(lengthSpan);
-            lengthSpan.CopyTo(bytesOut.AsSpan(outIndex, sizeof(int)));
-            outIndex += sizeof(int);
-            
-            bytesIn.Span.Slice(inIndex, length).CopyTo(bytesOut.AsSpan(outIndex, length));
-            outIndex += length;
-            inIndex += length;
+            int length = lengthReader.Read<int>();
+            ReadOnlySpan<byte> bytes = byteReader.Read<byte>(length);
+            builder.WriteBlob(bytes);
         }
-
-        LogicalType type = (LogicalType)BitConverter.ToInt32(parameters.Span);
-        return new PhysicalColumn(type, bytesOut, logicalLength);
+        return builder.Build();
     }
 
     public IEnumerable<LogicalType> GetSupportedTypes()
