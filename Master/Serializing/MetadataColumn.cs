@@ -24,8 +24,12 @@ internal sealed class MetadataColumn
 
     public int CalculateTotalLength()
     {
-        int length = sizeof(EncodingId);
-        length += Marshal.SizeOf(Metadata);
+        if (Id == EncodingId.Binary)
+        {
+            return Metadata.LogicalLength;
+        }
+
+        int length = 0;
         foreach (MetadataColumn column in Columns)
         {
             length += column.CalculateTotalLength();

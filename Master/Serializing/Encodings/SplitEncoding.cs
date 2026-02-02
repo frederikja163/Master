@@ -5,7 +5,7 @@ namespace Master.Serializing.Encodings;
 internal sealed class SplitEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.Split;
-    public void Encode(DataColumn dataColumn, ref DataColumn metadata, out DataColumn[] outColumns)
+    public void Encode(DataColumn dataColumn, ref DataColumn metadataCol, out DataColumn[] outColumns)
     {
         DataColumnReader columnReader = dataColumn.OpenReader();
         int length = dataColumn.LogicalLength;
@@ -18,7 +18,7 @@ internal sealed class SplitEncoding : IEncoding
             byteBuilder.Write(blob);
         }
 
-        metadata = DataColumn.Create<byte>(BitConverter.GetBytes((int)dataColumn.LogicalType));
+        metadataCol = DataColumn.Create<byte>(BitConverter.GetBytes((int)dataColumn.LogicalType));
         outColumns =
         [
             lengthBuilder.Build(),

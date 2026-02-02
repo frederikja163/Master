@@ -2,7 +2,7 @@
 
 namespace Master.Serializing;
 
-internal enum LogicalType
+internal enum LogicalType : byte
 {
     SInt8,
     SInt16,
@@ -81,4 +81,38 @@ internal static class TypeHelper
         });
 
     public static LogicalType ToLogicalType(this Type type) => PhysicalTypes[type];
+
+    public static IEnumerable<LogicalType> IntegerTypes()
+    {
+        yield return LogicalType.SInt8;
+        yield return LogicalType.SInt16;
+        yield return LogicalType.SInt32;
+        yield return LogicalType.SInt64;
+        yield return LogicalType.UInt8;
+        yield return LogicalType.UInt16;
+        yield return LogicalType.UInt32;
+        yield return LogicalType.UInt64;
+    }
+    public static IEnumerable<LogicalType> FloatTypes()
+    {
+        yield return LogicalType.Float16;
+        yield return LogicalType.Float32;
+        yield return LogicalType.Float64;
+    }
+
+    public static IEnumerable<LogicalType> NumericTypes()
+    {
+        return IntegerTypes().Concat(FloatTypes());
+    }
+
+    public static IEnumerable<LogicalType> BlobTypes()
+    {
+        yield return LogicalType.Blob;
+        yield return LogicalType.String;
+    }
+
+    public static IEnumerable<LogicalType> AllTypes()
+    {
+        return NumericTypes().Concat(BlobTypes());
+    }
 }

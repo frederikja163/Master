@@ -13,6 +13,11 @@ internal ref struct DataColumnBuilder
     private int _index = 0;
     private readonly int _logicalLength = 0;
 
+    public DataColumnBuilder(int size) : this(LogicalType.UInt8, size, size)
+    {
+        
+    }
+    
     public DataColumnBuilder(LogicalType type, int size, int logicalLength)
     {
         _type = type;
