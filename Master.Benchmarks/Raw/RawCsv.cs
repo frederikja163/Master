@@ -4,7 +4,7 @@ internal sealed class RawCsv : IRawBenchmark
 {
     public void Write(string filePath, Data data)
     {
-        using Stream stream = File.OpenWrite(filePath);
+        using Stream stream = File.Create(filePath);
         using StreamWriter writer = new StreamWriter(stream);
         writer.WriteLine(string.Join(",", data.ColumnNames));
         
@@ -12,7 +12,7 @@ internal sealed class RawCsv : IRawBenchmark
         {
             foreach (IEnumerable<object> row in data.RowMajor())
             {
-                writer.WriteLine(string.Join(",", row));
+                writer.WriteLine(string.Join(",", row.Select(o => o ?? "")));
             }
         }
     }

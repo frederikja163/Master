@@ -8,7 +8,7 @@ namespace Master.Benchmarks;
 
 public class SparkBenchmarks : AllBenchmarks
 {
-    private new readonly TimeSpan Timeout = TimeSpan.FromMinutes(10);
+    private new readonly TimeSpan Timeout = TimeSpan.FromMinutes(60);
     
     [Benchmark]
     [ArgumentsSource(nameof(GetImplementations))]
@@ -31,6 +31,12 @@ public class SparkBenchmarks : AllBenchmarks
                     .Set("spark.sql.orc.compression.codec", "none")
                     .Set("spark.ui.enabled", "false")
                     .Set("spark.log.level", "OFF")
+                    .Set("spark.driver.maxResultSize", "0")
+                    .Set("spark.sql.orc.filterPushdown", "false")
+                    .Set("spark.sql.parquet.filterPushdown", "false")
+                    .Set("spark.sql.csv.filterPushdown", "false")
+                    .Set("spark.sql.json.filterPushdown", "false")
+                    .Set("spark.sql.codegen.wholeStage", "false")
                     .Set("log4j2.logger.org.apache.spark.util.ShutdownHookManager", "OFF"))
                 .GetOrCreate();
         }
