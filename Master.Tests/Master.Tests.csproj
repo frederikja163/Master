@@ -19,4 +19,8 @@
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Master\Master.csproj" />
+    </ItemGroup>
 </Project>

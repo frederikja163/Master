@@ -19,6 +19,7 @@ public class RawBenchmarks : AllBenchmarks
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
         yield return new RawBinaryStream();
+        yield return new RawCustom();
         yield return new RawParquet(CompressionMethod.Snappy);
         yield return new RawParquet(CompressionMethod.Zstd);
         yield return new RawParquet(CompressionMethod.Gzip);
