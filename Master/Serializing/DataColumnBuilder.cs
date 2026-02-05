@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -17,6 +18,14 @@ internal ref struct DataColumnBuilder
     {
         
     }
+
+    public DataColumnBuilder(LogicalType type, int size)
+    {
+        Debug.Assert(type.TryGetSize(out int typeSize));
+        _type = type;
+        _data = new byte[size];
+        _logicalLength = size / typeSize;
+    }
     
     public DataColumnBuilder(LogicalType type, int size, int logicalLength)
     {
@@ -25,10 +34,12 @@ internal ref struct DataColumnBuilder
         _logicalLength = logicalLength;
     }
 
+    public int PhysicalSize => _data.Length;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
     {
-        if ((uint)_index + size >= (uint)_data.Length)
+        if ((uint)_index + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
         Span<byte> slice = _data.AsSpan(_index, size);

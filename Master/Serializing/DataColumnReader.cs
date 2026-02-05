@@ -13,15 +13,15 @@ internal ref struct DataColumnReader
     public DataColumnReader(DataColumn dataColumn)
     {
         _data = dataColumn.Data.Span;
-        PhysicalSize = dataColumn.PhysicalSize;
     }
-    
-    public int PhysicalSize { get; }
 
+    public int PhysicalSize => _data.Length;
+    public bool AtEnd => index == _data.Length;
+    
     public void Advance(int byteCount)
     {
         int newIndex = index + byteCount;
-        if ((uint)newIndex >= _data.Length)
+        if ((uint)newIndex > _data.Length)
             throw new IndexOutOfRangeException();
         index = newIndex;
     }
@@ -49,7 +49,7 @@ internal ref struct DataColumnReader
     private ReadOnlySpan<byte> Slice(int offset, int size)
     {
         int start = index + offset;
-        if ((uint)start + size >= (uint)_data.Length)
+        if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
         ReadOnlySpan<byte> slice = _data.Slice(start, size);

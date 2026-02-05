@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Master.Serializing.Encodings;
 
@@ -9,8 +10,8 @@ internal sealed class SplitEncoding : IEncoding
     {
         DataColumnReader columnReader = dataColumn.OpenReader();
         int length = dataColumn.LogicalLength;
-        DataColumnBuilder lengthBuilder = new DataColumnBuilder();
-        DataColumnBuilder byteBuilder = new DataColumnBuilder();
+        DataColumnBuilder lengthBuilder = new DataColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
+        DataColumnBuilder byteBuilder = new DataColumnBuilder(LogicalType.UInt8, dataColumn.PhysicalSize - lengthBuilder.PhysicalSize);
         for (int i = 0; i < length; i++)
         {
             ReadOnlySpan<byte> blob = columnReader.ReadBlob();
@@ -26,14 +27,14 @@ internal sealed class SplitEncoding : IEncoding
         ];
     }
 
-    public DataColumn Decode(DataColumn[] data, DataColumn metadata)
+    public DataColumn Decode(DataColumn[] data, DataColumn metadataCol)
     {
         if (data.Length != 2)
             throw new Exception("Split encoding must have two columns.");
-        if (data[0].PhysicalSize % 4 == 0)
+        if (data[0].PhysicalSize % sizeof(int) != 0)
             throw new Exception($"Length column length must be divisible by {sizeof(int)}.");
 
-        DataColumnReader metadataReader = metadata.OpenReader();
+        DataColumnReader metadataReader = metadataCol.OpenReader();
         LogicalType type = (LogicalType)metadataReader.Read<int>();
         
         DataColumnReader lengthReader = data[0].OpenReader();
