@@ -3,13 +3,13 @@ using Master.Serializing.Encodings;
 
 namespace Master.Serializing;
 
-internal sealed class Serializer
+public sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
 
     public Serializer():
-        this(new SplitEncoding())
+        this(new SplitEncoding(), new BitPacking())
     {
         
     }
@@ -26,21 +26,10 @@ internal sealed class Serializer
     public double SamplePercentage { get; init; } = 0.1;
     public int SampleCount { get; init; } = 10;
     
-    public MetadataColumn Encode(ReadOnlySpan<string> data)
+    public MetadataColumn Encode(DataColumn column)
     {
-        Debug.Assert(data.Length > 0);
-        
-        ReadOnlySpan<string> sample = CreateSample(data);
-        MetadataColumn metadataSample = PickEncoding(DataColumn.Create(sample), CascadingEncodings);
-        DataColumn column = DataColumn.Create(data);
-        return Encode(column, metadataSample);
-    }
-    
-    public MetadataColumn Encode<T>(ReadOnlySpan<T> data) where T : struct
-    {
-        ReadOnlySpan<T> sample = CreateSample<T>(data);
-        MetadataColumn metadataSample = PickEncoding(DataColumn.Create(sample), CascadingEncodings);
-        DataColumn column = DataColumn.Create(data);
+        DataColumn sample = CreateSample(column);
+        MetadataColumn metadataSample = PickEncoding(sample, CascadingEncodings);
         return Encode(column, metadataSample);
     }
 
@@ -99,9 +88,9 @@ internal sealed class Serializer
         return bestEncoding;
     }
 
-    internal ReadOnlySpan<T> CreateSample<T>(ReadOnlySpan<T> data)
+    internal DataColumn CreateSample(DataColumn data)
     {
-        int length = data.Length;
+        int length = data.LogicalLength;
         if (length < SampleCount)
         {
             return data;
@@ -110,16 +99,19 @@ internal sealed class Serializer
         // Need to calculate sample length first, to round correctly.
         var sampleLength = (int)(length * SamplePercentage) / SampleCount;
         var totalSampleLength = sampleLength * SampleCount;
-        Span<T> sample = new T[totalSampleLength];
+        int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
+        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, true);
+        DataColumnReader reader = data.OpenReader();
         
+        int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)
         {
-            int startIndex = length / SampleCount * i;
-            int endIndex = length / SampleCount * (i + 1);
-            int index = Random.Shared.Next(startIndex, endIndex - sampleLength);
-            data.Slice(index, sampleLength).CopyTo(sample.Slice(i * sampleLength, sampleLength));
+            int index = Random.Shared.Next(0, sectionLength - sampleLength);
+            reader.AdvanceUnits(index);
+            builder.WriteRaw(reader.ReadUnits(sampleLength), sampleLength);
+            reader.AdvanceUnits(sectionLength - index - sampleLength);
         }
 
-        return sample;
+        return builder.Build();
     }
 }

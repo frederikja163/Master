@@ -7,7 +7,7 @@ public enum EncodingId
     BitPacking
 }
 
-internal interface IEncoding
+public interface IEncoding
 {
     public EncodingId Id { get; }
     void Encode(DataColumn dataColumn, ref DataColumn metadataCol, out DataColumn[] outColumns);

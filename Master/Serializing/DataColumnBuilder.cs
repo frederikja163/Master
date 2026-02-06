@@ -10,28 +10,20 @@ namespace Master;
 internal ref struct DataColumnBuilder
 {
     private readonly LogicalType _type;
-    private readonly byte[] _data = [];
+    private byte[] _data = [];
     private int _index = 0;
-    private readonly int _logicalLength = 0;
+    private int _logicalLength = 0;
+    private bool _resizeAble = false;
 
-    public DataColumnBuilder(int size) : this(LogicalType.UInt8, size, size)
+    public DataColumnBuilder(int size, bool resizeAble = false) : this(LogicalType.UInt8, size, resizeAble)
     {
-        
     }
 
-    public DataColumnBuilder(LogicalType type, int size)
-    {
-        Debug.Assert(type.TryGetSize(out int typeSize));
-        _type = type;
-        _data = new byte[size];
-        _logicalLength = size / typeSize;
-    }
-    
-    public DataColumnBuilder(LogicalType type, int size, int logicalLength)
+    public DataColumnBuilder(LogicalType type, int size, bool resizeAble = false)
     {
         _type = type;
         _data = new byte[size];
-        _logicalLength = logicalLength;
+        _resizeAble = resizeAble;
     }
 
     public int PhysicalSize => _data.Length;
@@ -39,8 +31,17 @@ internal ref struct DataColumnBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
     {
-        if ((uint)_index + size > (uint)_data.Length)
-            throw new IndexOutOfRangeException();
+        while ((uint)_index + size > (uint)_data.Length)
+        {
+            if (!_resizeAble)
+            {
+                throw new IndexOutOfRangeException();
+            }
+
+            byte[] oldData = _data;
+            _data = new byte[oldData.Length * 2];
+            Array.Copy(oldData, _data, oldData.Length);
+        }
 
         Span<byte> slice = _data.AsSpan(_index, size);
         _index += size;
@@ -50,6 +51,7 @@ internal ref struct DataColumnBuilder
     public void Write<T>(T value)
         where T : unmanaged
     {
+        _logicalLength += 1;
         Span<byte> slice = Slice(Unsafe.SizeOf<T>());
         switch (value)
         {
@@ -76,6 +78,7 @@ internal ref struct DataColumnBuilder
             Span<byte> slice = Slice(values.Length * Unsafe.SizeOf<T>());
             ReadOnlySpan<byte> bytes = MemoryMarshal.Cast<T, byte>(values);
             bytes.CopyTo(slice);
+            _logicalLength += values.Length;
             return;
         }
 
@@ -89,6 +92,7 @@ internal ref struct DataColumnBuilder
     {
         Write(blob.Length);
         Write(blob);
+        _logicalLength += 1;
     }
 
     public void WriteBlobs(ReadOnlySpan<ReadOnlyMemory<byte>> blobs)
@@ -112,8 +116,16 @@ internal ref struct DataColumnBuilder
         }
     }
 
+    public void WriteRaw(ReadOnlySpan<byte> values, int logicalLength)
+    {
+        Write(values);
+        // We add values.length in Write(values), but for writeRaw we want to override this with the provided length.
+        _logicalLength -= values.Length;
+        _logicalLength += logicalLength;
+    }
+
     public DataColumn Build()
     {
-        return new DataColumn(_type, _data, _logicalLength);
+        return new DataColumn(_type,  new ReadOnlyMemory<byte>(_data, 0, _index), _logicalLength);
     }
 }

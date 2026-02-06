@@ -2,7 +2,7 @@
 
 namespace Master.Serializing;
 
-internal enum LogicalType : byte
+public enum LogicalType : byte
 {
     SInt8,
     SInt16,
@@ -19,7 +19,7 @@ internal enum LogicalType : byte
     String,
 }
 
-internal static class TypeHelper
+public static class TypeHelper
 {
     public static Type ToCsType(this LogicalType logicalType)
         => logicalType switch

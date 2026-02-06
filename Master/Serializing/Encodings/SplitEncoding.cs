@@ -40,7 +40,7 @@ internal sealed class SplitEncoding : IEncoding
         DataColumnReader lengthReader = data[0].OpenReader();
         DataColumnReader byteReader = data[1].OpenReader();
         int logicalLength = lengthReader.PhysicalSize / sizeof(int);
-        DataColumnBuilder builder = new DataColumnBuilder(type, lengthReader.PhysicalSize + byteReader.PhysicalSize, lengthReader.PhysicalSize / sizeof(int));
+        DataColumnBuilder builder = new DataColumnBuilder(type, lengthReader.PhysicalSize + byteReader.PhysicalSize);
 
         for (int i = 0; i < logicalLength; i++)
         {

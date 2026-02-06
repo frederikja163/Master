@@ -2,7 +2,7 @@
 
 namespace Master.Serializing;
 
-internal sealed class MetadataColumn
+public sealed class MetadataColumn
 {
     public MetadataColumn(DataColumn data)
     {

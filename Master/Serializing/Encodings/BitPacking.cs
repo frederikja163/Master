@@ -10,6 +10,10 @@ internal sealed class BitPacking : IEncoding
 {
     internal struct Metadata
     {
+        public static readonly int Size = Unsafe.SizeOf<byte>() +
+                                          Unsafe.SizeOf<ulong>() +
+                                          Unsafe.SizeOf<int>() +
+                                          Unsafe.SizeOf<byte>();
         public byte PrefixLength { get; set; }
         public ulong Prefix { get; set; }
         public int LogicalLength { get; set; }
@@ -17,7 +21,7 @@ internal sealed class BitPacking : IEncoding
 
         public Metadata(DataColumn column)
         {
-            Debug.Assert(column.PhysicalSize == Unsafe.SizeOf<Metadata>());
+            Debug.Assert(column.PhysicalSize == Size);
             DataColumnReader reader = column.OpenReader();
             PrefixLength = reader.Read<byte>();
             Prefix = reader.Read<ulong>();
@@ -27,7 +31,7 @@ internal sealed class BitPacking : IEncoding
         
         public DataColumn ToDataColumn()
         {
-            DataColumnBuilder builder = new DataColumnBuilder(Unsafe.SizeOf<Metadata>());
+            DataColumnBuilder builder = new DataColumnBuilder(Size);
             builder.Write(PrefixLength);
             builder.Write(Prefix);
             builder.Write(LogicalLength);
@@ -40,7 +44,11 @@ internal sealed class BitPacking : IEncoding
     
     public void Encode(DataColumn dataColumn, ref DataColumn metadataCol, out DataColumn[] outColumns)
     {
-        Debug.Assert(dataColumn.LogicalType.TryGetSize(out int size));
+        if (!dataColumn.LogicalType.TryGetSize(out int size))
+        {
+            throw new Exception("Type must be a primitive.");
+        }
+        
         DataColumn column = size switch
         {
             1 => Encode<byte>(dataColumn, ref metadataCol),
@@ -67,7 +75,7 @@ internal sealed class BitPacking : IEncoding
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
         int length = (int)float.Ceiling(reader.PhysicalSize * packedSize / (float)size);
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.SInt32, length * size / 8, length);
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.SInt32, length * size / 8);
 
         T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
         T currentValue = default;
@@ -157,7 +165,10 @@ internal sealed class BitPacking : IEncoding
             throw new Exception($"Length of {nameof(data)} must be equal to 1");
         DataColumn dataColumn = data[0];
         Metadata metadata = new Metadata(metadataCol);
-        Debug.Assert(metadata.Type.TryGetSize(out int size));
+        if (!metadata.Type.TryGetSize(out int size))
+        {
+            throw new Exception("Type must be a primitive");
+        }
         
         DataColumn column = size switch
         {
@@ -178,7 +189,7 @@ internal sealed class BitPacking : IEncoding
         int length = metadata.LogicalLength;
         DataColumnReader reader = dataColumn.OpenReader();
         DataColumnBuilder builder =
-            new DataColumnBuilder(metadata.Type, length * size / 8, length);
+            new DataColumnBuilder(metadata.Type, length * size / 8);
 
         T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
         ulong p = metadata.Prefix << (size - metadata.PrefixLength);

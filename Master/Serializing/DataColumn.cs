@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Master.Serializing;
 
-internal readonly struct DataColumn
+public readonly struct DataColumn
 {
     public ReadOnlyMemory<byte> Data { get; }
     public readonly LogicalType LogicalType;
@@ -69,6 +69,38 @@ internal readonly struct DataColumn
         }
 
         return new DataColumn(LogicalType.Blob, bytes, data.Length);
+    }
+
+    public static DataColumn Create(Array array)
+    {
+        return array switch
+        {
+            sbyte[] values => Create<sbyte>(values),
+            short[] values => Create<short>(values),
+            int[] values => Create<int>(values),
+            long[] values => Create<long>(values),
+            byte[] values => Create<byte>(values),
+            ushort[] values => Create<ushort>(values),
+            uint[] values => Create<uint>(values),
+            ulong[] values => Create<ulong>(values),
+            Half[] values => Create<Half>(values),
+            float[] values => Create<float>(values),
+            double[] values => Create<double>(values),
+            string[] str => Create(str.AsSpan()),
+            // TODO: Handle nullable arrays.
+            // sbyte?[] values => Create<sbyte>(values),
+            // short?[] values => Create<short>(values),
+            // int?[] values => Create<int>(values),
+            // long?[] values => Create<long>(values),
+            // byte?[] values => Create<byte>(values),
+            // ushort?[] values => Create<ushort>(values),
+            // uint?[] values => Create<uint>(values),
+            // ulong?[] values => Create<ulong>(values),
+            // Half?[] values => Create<Half>(values),
+            // float?[] values => Create<float>(values),
+            // double?[] values => Create<double>(values),
+            _ => throw new ArgumentOutOfRangeException(nameof(array))
+        };
     }
 
     public DataColumnReader OpenReader()

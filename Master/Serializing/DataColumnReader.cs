@@ -5,25 +5,27 @@ using System.Text;
 
 namespace Master.Serializing;
 
-internal ref struct DataColumnReader
+public ref struct DataColumnReader
 {
     private readonly ReadOnlySpan<byte> _data;
-    private int index = 0;
+    private readonly LogicalType _logicalType;
+    private int _index = 0;
 
     public DataColumnReader(DataColumn dataColumn)
     {
         _data = dataColumn.Data.Span;
+        _logicalType = dataColumn.LogicalType;
     }
-
+    
     public int PhysicalSize => _data.Length;
-    public bool AtEnd => index == _data.Length;
+    public bool AtEnd => _index == _data.Length;
     
     public void Advance(int byteCount)
     {
-        int newIndex = index + byteCount;
+        int newIndex = _index + byteCount;
         if ((uint)newIndex > _data.Length)
             throw new IndexOutOfRangeException();
-        index = newIndex;
+        _index = newIndex;
     }
 
     public T Peek<T>(int offset = 0)
@@ -48,7 +50,7 @@ internal ref struct DataColumnReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private ReadOnlySpan<byte> Slice(int offset, int size)
     {
-        int start = index + offset;
+        int start = _index + offset;
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
@@ -114,5 +116,36 @@ internal ref struct DataColumnReader
         }
 
         return values;
+    }
+
+    public void AdvanceUnits(int count = 1)
+    {
+        if (_logicalType.TryGetSize(out int size))
+        {
+            Advance(count * size);
+            return;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            int length = Read<int>();
+            Advance(length);
+        }
+    }
+
+    public ReadOnlySpan<byte> ReadUnits(int count = 1)
+    {
+        if (_logicalType.TryGetSize(out int size))
+        {
+            return Read<byte>(count * size);
+        }
+
+        int length = 0;
+        for (int i = 0; i < count; i++)
+        {
+            length += Peek<int>() + Unsafe.SizeOf<int>();
+        }
+
+        return Read<byte>(count * size);
     }
 }

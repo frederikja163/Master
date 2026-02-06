@@ -20,22 +20,22 @@ internal sealed class EncodingTests
             SamplePercentage = samplePercentage,
         };
         int[] data = Enumerable.Range(0, dataSize).ToArray();
-        ReadOnlySpan<int> sample = serializer.CreateSample(data);
+        DataColumn sample = serializer.CreateSample(DataColumn.Create(data));
 
         int sampleLength = (int)(dataSize * samplePercentage) / sampleCount;
         int totalSampleLength = sampleLength * sampleCount;
         totalSampleLength = Math.Max(totalSampleLength, 1);
         
-        Assert.That(sample.Length, Is.EqualTo(totalSampleLength));
+        Assert.That(sample.LogicalLength, Is.EqualTo(totalSampleLength));
         sampleCount = Math.Min(sampleCount, totalSampleLength);
 
+        DataColumnReader reader = sample.OpenReader();
         for (int i = 0; i < sampleCount; i++)
         {
-            int prevValue = sample[i * sampleLength];
+            int prevValue = reader.Read<int>();
             for (int j = 1; j < sampleLength; j++)
             {
-                int index = j + i * sampleLength;
-                int value = sample[index];
+                int value = reader.Read<int>();
                 Assert.That(value, Is.EqualTo(prevValue + 1));
                 prevValue = value;
             }

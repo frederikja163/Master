@@ -9,7 +9,7 @@ internal sealed class BitPackingTests
     [TestCase(1, 10)]
     [TestCase(1, 1000)]
     [TestCase(1000, 10)]
-    public void BitPackEncodingTest(int start, int length)
+    public void BitPackEncodingRoundTripTest(int start, int length)
     {
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn dataColumn = DataColumn.Create(data.AsSpan());
