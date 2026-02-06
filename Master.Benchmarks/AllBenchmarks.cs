@@ -26,10 +26,10 @@ public abstract class AllBenchmarks
 
     public static IEnumerable<Data> GetData()
     {
-        bool isRows = false;
-        bool isColumns = true;
+        bool isRows = true;
+        bool isColumns = false;
         bool isSparsity = false;
-        int totalCount = 5;
+        int totalCount = 3;
         for (int i = 0; i < totalCount; i++)
         {
             int rows = isRows ? (int)Math.Pow(10, i) : 10;

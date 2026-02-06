@@ -16,7 +16,7 @@ internal sealed class SplitEncoding : IEncoding
         {
             ReadOnlySpan<byte> blob = columnReader.ReadBlob();
             lengthBuilder.Write(blob.Length);
-            byteBuilder.Write(blob);
+            byteBuilder.Write<byte>(blob);
         }
 
         metadataCol = DataColumn.Create<byte>(BitConverter.GetBytes((int)dataColumn.LogicalType));

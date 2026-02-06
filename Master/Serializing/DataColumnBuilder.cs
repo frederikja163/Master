@@ -51,7 +51,6 @@ internal ref struct DataColumnBuilder
     public void Write<T>(T value)
         where T : unmanaged
     {
-        _logicalLength += 1;
         Span<byte> slice = Slice(Unsafe.SizeOf<T>());
         switch (value)
         {
@@ -68,6 +67,7 @@ internal ref struct DataColumnBuilder
             case double float64: BinaryPrimitives.WriteDoubleLittleEndian(slice, float64); break;
             default: throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
         }
+        _logicalLength += 1;
     }
 
     public void Write<T>(ReadOnlySpan<T> values)

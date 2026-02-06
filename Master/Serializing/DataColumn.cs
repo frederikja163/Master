@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Master.Serializing;
@@ -71,8 +72,9 @@ public readonly struct DataColumn
         return new DataColumn(LogicalType.Blob, bytes, data.Length);
     }
 
-    public static DataColumn Create(Array array)
+    public static DataColumn Create(Array array, out DataColumn? nulls)
     {
+        nulls = null;
         return array switch
         {
             sbyte[] values => Create<sbyte>(values),
@@ -86,21 +88,64 @@ public readonly struct DataColumn
             Half[] values => Create<Half>(values),
             float[] values => Create<float>(values),
             double[] values => Create<double>(values),
-            string[] str => Create(str.AsSpan()),
+            string[] str => Create(str.AsSpan()), // TODO: Split nulls for strings.
             // TODO: Handle nullable arrays.
-            // sbyte?[] values => Create<sbyte>(values),
-            // short?[] values => Create<short>(values),
-            // int?[] values => Create<int>(values),
-            // long?[] values => Create<long>(values),
-            // byte?[] values => Create<byte>(values),
-            // ushort?[] values => Create<ushort>(values),
-            // uint?[] values => Create<uint>(values),
-            // ulong?[] values => Create<ulong>(values),
-            // Half?[] values => Create<Half>(values),
-            // float?[] values => Create<float>(values),
-            // double?[] values => Create<double>(values),
+            sbyte?[] values => SplitNulls<sbyte>(values, out nulls),
+            short?[] values => SplitNulls<short>(values, out nulls),
+            int?[] values => SplitNulls<int>(values, out nulls),
+            long?[] values => SplitNulls<long>(values, out nulls),
+            byte?[] values => SplitNulls<byte>(values, out nulls),
+            ushort?[] values => SplitNulls<ushort>(values, out nulls),
+            uint?[] values => SplitNulls<uint>(values, out nulls),
+            ulong?[] values => SplitNulls<ulong>(values, out nulls),
+            Half?[] values => SplitNulls<Half>(values, out nulls),
+            float?[] values => SplitNulls<float>(values, out nulls),
+            double?[] values => SplitNulls<double>(values, out nulls),
             _ => throw new ArgumentOutOfRangeException(nameof(array))
         };
+    }
+
+    private static DataColumn SplitNulls<T>(T?[] array, out DataColumn? nulls)
+        where T : unmanaged
+    {
+        int valueSize = 0;
+        for (int i = 0; i < array.Length; i++)
+        {
+            T? value = array[i];
+            if (value is null)
+            {
+                continue;
+            }
+
+            valueSize += Unsafe.SizeOf<T>();
+        }
+        
+        DataColumnBuilder valueBuilder = new DataColumnBuilder(typeof(T).ToLogicalType(), valueSize);
+        DataColumnBuilder nullBuilder = new DataColumnBuilder((int)float.Ceiling(array.Length / 8f) + 1); // TODO: +1 is probably wrong.
+        byte nullByte = 0;
+        for (int i = 0; i < array.Length; i++)
+        {
+            T? value = array[i];
+            if (value is { } val)
+            {
+                nullByte = (byte)((nullByte << 1) | 0);
+                valueBuilder.Write(val);
+            }
+            else
+            {
+                nullByte = (byte)((nullByte << 1) | 1);
+            }
+
+            if (i % 8 == 0)
+            {
+                nullBuilder.Write(nullByte);
+                nullByte = 0;
+            }
+        }
+        nullBuilder.Write(nullByte);
+        
+        nulls = nullBuilder.Build();
+        return valueBuilder.Build();
     }
 
     public DataColumnReader OpenReader()

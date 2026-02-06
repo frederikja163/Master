@@ -10,13 +10,16 @@ internal sealed class EncodingBenchmark : IRawBenchmark
         Stream stream = File.OpenWrite(path);
         BinaryWriter writer = new BinaryWriter(stream);
 
-        foreach (Array array in data.Columns)
+        for (int i = 0; i < data.Repeats; i++)
         {
-            DataColumn dataColumn = DataColumn.Create(array);
-            MetadataColumn column = serializer.Encode(dataColumn);
-            foreach (DataColumn col in column.GetDataColumns())
+            foreach (Array array in data.Columns)
             {
-                writer.Write(col.Data.Span);
+                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                MetadataColumn column = serializer.Encode(dataColumn);
+                foreach (DataColumn col in column.GetDataColumns())
+                {
+                    writer.Write(col.Data.Span);
+                }
             }
         }
     }
