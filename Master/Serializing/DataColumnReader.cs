@@ -143,9 +143,9 @@ public ref struct DataColumnReader
         int length = 0;
         for (int i = 0; i < count; i++)
         {
-            length += Peek<int>() + Unsafe.SizeOf<int>();
+            length += Peek<int>(length) + Unsafe.SizeOf<int>();
         }
 
-        return Read<byte>(count * size);
+        return Read<byte>(length);
     }
 }

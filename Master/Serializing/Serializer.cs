@@ -22,7 +22,7 @@ public sealed class Serializer
             .ToLookup(t => t.t, t => t.e);
     }
     
-    public int CascadingEncodings { get; init; } = 3;
+    public int CascadingEncodings { get; init; } = 2;
     public double SamplePercentage { get; init; } = 0.1;
     public int SampleCount { get; init; } = 10;
     
@@ -71,6 +71,11 @@ public sealed class Serializer
         }
         int minSize = sample.PhysicalSize;
         MetadataColumn bestEncoding = new MetadataColumn(sample);
+        if (!_encodingsByType.Contains(sample.LogicalType))
+        {
+            return bestEncoding;
+        }
+        
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
             DataColumn metadata = DataColumn.Empty;

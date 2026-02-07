@@ -1,0 +1,60 @@
+﻿using Master.Serializing;
+
+namespace Master.Benchmarks.Raw;
+
+internal sealed class CascadingBenchmark : IRawBenchmark
+{
+    public void Write(string path, Data data)
+    {
+        Serializer serializer = new Serializer();
+        Stream stream = File.OpenWrite(path);
+
+        for (int i = 0; i < data.Repeats; i++)
+        {
+            foreach (Array array in data.Columns)
+            {
+                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                MetadataColumn column = serializer.Encode(dataColumn);
+                foreach (DataColumn col in column.GetDataColumns())
+                {
+                    stream.Write(col.Data.Span);
+                    if (nulls.HasValue)
+                    {
+                        stream.Write(nulls.Value.Data.Span);
+                    }
+                }
+            }
+        }
+    }
+
+    public override string ToString()
+    {
+        return "Cascading";
+    }
+}
+
+internal sealed class EncodingBenchmark : IRawBenchmark
+{
+    public void Write(string path, Data data)
+    {
+        Stream stream = File.OpenWrite(path);
+
+        for (int i = 0; i < data.Repeats; i++)
+        {
+            foreach (Array array in data.Columns)
+            {
+                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                stream.Write(dataColumn.Data.Span);
+                if (nulls.HasValue)
+                {
+                    stream.Write(nulls.Value.Data.Span);
+                }
+            }
+        }
+    }
+
+    public override string ToString()
+    {
+        return "Encoding";
+    }
+}

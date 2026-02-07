@@ -36,12 +36,13 @@ public abstract class AllBenchmarks
             int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 100;
             float sparsity = isSparsity ? MathF.Max((float)i / totalCount, 0.1f) : 1f;
             yield return new Data(1_000, rows, sparsity)
+                .PopulateRandomNatoAlphabetStrings(columns / 5)
                 .PopulateRandomInts(columns / 10)
                 .PopulateRandomDoubles(columns / 5)
-                .PopulateRandomNatoAlphabetStrings(columns / 5)
                 .PopulateOrderedInts(columns / 10)
                 .PopulateRandomGuidStrings(columns / 5)
-                .PopulateRandomFloats(columns / 5);
+                .PopulateRandomFloats(columns / 5)
+                ;
         }
     }
     

@@ -20,7 +20,7 @@ internal sealed class EncodingTests
             SamplePercentage = samplePercentage,
         };
         int[] data = Enumerable.Range(0, dataSize).ToArray();
-        DataColumn sample = serializer.CreateSample(DataColumn.Create(data));
+        DataColumn sample = serializer.CreateSample(DataColumn.Create<int>(data));
 
         int sampleLength = (int)(dataSize * samplePercentage) / sampleCount;
         int totalSampleLength = sampleLength * sampleCount;
@@ -40,5 +40,24 @@ internal sealed class EncodingTests
                 prevValue = value;
             }
         }
+    }
+    
+    [Test]
+    public void StringRoundtripTest()
+    {
+        string[] data = ["test", "testing", "hello", "world"];
+        
+        Serializer serializer = new Serializer()
+        {
+            SampleCount = 1,
+            SamplePercentage = 0.5,
+            CascadingEncodings = 2,
+        };
+
+        DataColumn expected = DataColumn.Create(data);
+        MetadataColumn column = serializer.Encode(expected);
+        DataColumn dataColumn = serializer.Decode(column);
+        
+        Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
     }
 }

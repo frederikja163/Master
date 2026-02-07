@@ -21,7 +21,7 @@ public readonly struct DataColumn
     }
 
     public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
-    {
+    {   
         if (!BitConverter.IsLittleEndian)
         {
             throw new NotImplementedException();
