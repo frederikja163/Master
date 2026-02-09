@@ -8,11 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Master.OpenTAP", "Master.Op
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Master.Tests", "Master.Tests\Master.Tests.csproj", "{28F75F9C-41AD-479D-BC4F-3A9511374FC0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Parquet", "Parquet", "{0EAEE189-D6BB-4D81-B8FD-330BB112723E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parquet", "Parquet\Parquet\Parquet.csproj", "{AB7A4082-DB1C-4F3E-BB5B-239A92E9ACCE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parquet.Core", "Parquet\Parquet.Core\Parquet.Core.csproj", "{7F882824-DFF8-4D65-A4F5-E00B96B1E46C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{B15E38A7-FFBA-491E-801A-3E3C0A6F72D4}"
+	ProjectSection(SolutionItems) = preProject
+		OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj = OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,17 +35,7 @@ Global
 		{28F75F9C-41AD-479D-BC4F-3A9511374FC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28F75F9C-41AD-479D-BC4F-3A9511374FC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28F75F9C-41AD-479D-BC4F-3A9511374FC0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AB7A4082-DB1C-4F3E-BB5B-239A92E9ACCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AB7A4082-DB1C-4F3E-BB5B-239A92E9ACCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AB7A4082-DB1C-4F3E-BB5B-239A92E9ACCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AB7A4082-DB1C-4F3E-BB5B-239A92E9ACCE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7F882824-DFF8-4D65-A4F5-E00B96B1E46C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7F882824-DFF8-4D65-A4F5-E00B96B1E46C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7F882824-DFF8-4D65-A4F5-E00B96B1E46C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7F882824-DFF8-4D65-A4F5-E00B96B1E46C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{AB7A4082-DB1C-4F3E-BB5B-239A92E9ACCE} = {0EAEE189-D6BB-4D81-B8FD-330BB112723E}
-		{7F882824-DFF8-4D65-A4F5-E00B96B1E46C} = {0EAEE189-D6BB-4D81-B8FD-330BB112723E}
 	EndGlobalSection
 EndGlobal

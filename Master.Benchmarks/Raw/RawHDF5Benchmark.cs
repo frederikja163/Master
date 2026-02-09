@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using HDF.PInvoke;
 using Master.Benchmarks.Data;
+using Master.Benchmarks.Extensions;
 
 namespace Master.Benchmarks.Raw;
 
@@ -27,7 +28,7 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
         ulong chunkSize = 10_000;
         H5P.set_chunk(datasetCreate, 1, &chunkSize);
         using DisposableList<long> datasets = data.ColumnNames.Zip(data.Columns)
-            .Select(t => H5D.create(groupId, t.First, GetType(t.Second.GetType().GetElementType()!), spaceId, H5P.DEFAULT, datasetCreate))
+            .Select(t => H5D.create(groupId, t.First, GetType(t.Second.GetType().GetElementType()!.GetUnderlyingNullableType()), spaceId, H5P.DEFAULT, datasetCreate))
             .ToDisposableList(i => H5D.close(i));
         Debug.Assert(datasets.All(d => d > 0));
         
@@ -46,7 +47,7 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
                 
                 using Disposable<GCHandle> handle = GetValues(values);
                 IntPtr ptr = handle.Value.AddrOfPinnedObject();
-                H5D.write(datasetId, GetType(values.GetType().GetElementType()!), memspace, filespace, H5P.DEFAULT, ptr);
+                H5D.write(datasetId, GetType(values.GetType().GetElementType()!.GetUnderlyingNullableType()), memspace, filespace, H5P.DEFAULT, ptr);
             }
         }
     }
@@ -61,6 +62,11 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
         if (type == typeof(float))
         {
             return H5T.NATIVE_FLOAT;
+        }
+
+        if (type == typeof(double))
+        {
+            return H5T.NATIVE_DOUBLE;
         }
 
         if (type == typeof(string))

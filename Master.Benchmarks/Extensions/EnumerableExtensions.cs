@@ -15,4 +15,30 @@ internal static class EnumerableExtensions
 
         return dictionary;
     }
+
+    public static IEnumerable<T> ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+    {
+        foreach (T value in enumerable)
+        {
+            action(value);
+            yield return value;
+        }
+    }
+
+    public static IEnumerable<T?> WithNullsClass<T>(this IEnumerable<T> enumerable, float sparsity)
+        where T : class
+    {
+        foreach (T value in enumerable)
+        {
+            yield return Random.Shared.NextSingle() < sparsity ? value : null;
+        }
+    }
+    public static IEnumerable<T?> WithNullsStruct<T>(this IEnumerable<T> enumerable, float sparsity)
+        where T : struct
+    {
+        foreach (T value in enumerable)
+        {
+            yield return Random.Shared.NextSingle() < sparsity ? value : null;
+        }
+    }
 }

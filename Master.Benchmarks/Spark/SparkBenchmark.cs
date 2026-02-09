@@ -1,4 +1,6 @@
 using Master.Benchmarks.Data;
+using Master.Benchmarks.Extensions;
+using Master.Benchmarks.Raw;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 
@@ -21,13 +23,13 @@ public class SparkBenchmark
         {
             StructType schema = new(
                 data.ColumnNames.Zip(data.Columns)
-                    .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!)))
+                    .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!.GetUnderlyingNullableType())))
             );
-            var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), path);
         
             for (int i = 0; i < data.Repeats; i++)
             {
+                var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
                 dataFrame.Write()
                     .Mode(i == 0 ? SaveMode.Overwrite : SaveMode.Append)
                     .Format(_format)
@@ -41,6 +43,7 @@ public class SparkBenchmark
     {
         return dataType == typeof(int) ? new IntegerType() :
             dataType == typeof(string) ? new StringType() :
+            dataType == typeof(double) ? new DoubleType() :
             dataType == typeof(float) ? new DoubleType() : throw new NotImplementedException("Couldn't read data type");
     }
     private static object ConvertValue(object v)

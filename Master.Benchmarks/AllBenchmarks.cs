@@ -1,13 +1,14 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Master.Benchmarks.BenchmarkDotnetConfig;
 using Master.Benchmarks.Data;
+using Master.Benchmarks.Master.Benchmarks;
 
 namespace Master.Benchmarks;
 
 [Config(typeof(BenchmarkConfig))]
 public abstract class AllBenchmarks
 {
-    protected TimeSpan Timeout = TimeSpan.FromMinutes(2);
+    protected TimeSpan Timeout = TimeSpan.FromMinutes(60);
     
     [IterationSetup]
     public void Setup()
@@ -25,32 +26,25 @@ public abstract class AllBenchmarks
     
     [ParamsSource(nameof(GetData))] public required ICustomData Data { get; set; }
 
-    public IEnumerable<ICustomData> GetData()
+    public static IEnumerable<ICustomData> GetData()
     {
-        yield return new RawData(10_000, 1_000).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 100).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 10).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 1).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 1_000).PopulateOrderedInts();
-        yield return new RawData(10_000, 100).PopulateOrderedInts();
-        yield return new RawData(10_000, 10).PopulateOrderedInts();
-        yield return new RawData(10_000, 1).PopulateOrderedInts();
-        yield return new RawData(10_000, 1_000).PopulateRandomInts();
-        yield return new RawData(10_000, 100).PopulateRandomInts();
-        yield return new RawData(10_000, 10).PopulateRandomInts();
-        yield return new RawData(10_000, 1).PopulateRandomInts();
-        yield return new RawData(10_000, 1_000).PopulateRandomFloats();
-        yield return new RawData(10_000, 100).PopulateRandomFloats();
-        yield return new RawData(10_000, 10).PopulateRandomFloats();
-        yield return new RawData(10_000, 1).PopulateRandomFloats();
-        yield return new RawData(10_000, 1_000).PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 100).PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 10).PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 1).PopulateRandomGuidStrings();
-        yield return new RawData(10_000, 1_000).PopulateRandomNatoAlphabetStrings();
-        yield return new RawData(10_000, 100).PopulateRandomNatoAlphabetStrings();
-        yield return new RawData(10_000, 10).PopulateRandomNatoAlphabetStrings();
-        yield return new RawData(10_000, 1).PopulateRandomNatoAlphabetStrings();
+        bool isRows = false;
+        bool isColumns = true;
+        bool isSparsity = false;
+        int totalCount = 5;
+        for (int i = 0; i < totalCount; i++)
+        {
+            int rows = isRows ? (int)Math.Pow(10, i) : 10;
+            int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 100;
+            float sparsity = isSparsity ? MathF.Max((float)i / totalCount, 0.1f) : 1f;
+            yield return new RawData(1_000, rows, sparsity)
+                .PopulateRandomInts(columns / 10)
+                .PopulateRandomDoubles(columns / 5)
+                .PopulateRandomNatoAlphabetStrings(columns / 5)
+                .PopulateOrderedInts(columns / 10)
+                .PopulateRandomGuidStrings(columns / 5)
+                .PopulateRandomFloats(columns / 5);
+        }
     }
     
     protected static void RunWithTimeout(Action action, TimeSpan timeout)
