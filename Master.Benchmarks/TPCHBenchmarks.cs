@@ -32,7 +32,17 @@ public class TPCHBenchmarks
     public IEnumerable<TpchData> GetData()
     {
         string path = Path.Combine(AppContext.BaseDirectory, "TPC-H V3.0.1", "dbgen");
-        string ddlFile = new StreamReader(path + "/dss.ddl").ReadToEnd();
+        string ddlFile;
+        try
+        {
+            ddlFile = new StreamReader(path + "/dss.ddl").ReadToEnd();
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("Couldn't find TPCH data. Please go to https://www.tpc.org/ and ensure that ddl and .tbl exist in Master.Benchmarks/TPC-H V3.0.1/dbgen");
+            Console.WriteLine(e);
+            yield break;
+        }
         foreach (string table in ddlFile.Substring(ddlFile.IndexOf('\n')).Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
             /*
