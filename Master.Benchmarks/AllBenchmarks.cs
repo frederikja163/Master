@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Master.Benchmarks.BenchmarkDotnetConfig;
+using Master.Benchmarks.Data;
 
 namespace Master.Benchmarks;
 
@@ -22,34 +23,34 @@ public abstract class AllBenchmarks
         }
     }
     
-    [ParamsSource(nameof(GetData))] public required Data Data { get; set; }
+    [ParamsSource(nameof(GetData))] public required ICustomData Data { get; set; }
 
-    public IEnumerable<Data> GetData()
+    public IEnumerable<ICustomData> GetData()
     {
-        yield return new Data(10_000, 1_000).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new Data(10_000, 100).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new Data(10_000, 10).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new Data(10_000, 1).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
-        yield return new Data(10_000, 1_000).PopulateOrderedInts();
-        yield return new Data(10_000, 100).PopulateOrderedInts();
-        yield return new Data(10_000, 10).PopulateOrderedInts();
-        yield return new Data(10_000, 1).PopulateOrderedInts();
-        yield return new Data(10_000, 1_000).PopulateRandomInts();
-        yield return new Data(10_000, 100).PopulateRandomInts();
-        yield return new Data(10_000, 10).PopulateRandomInts();
-        yield return new Data(10_000, 1).PopulateRandomInts();
-        yield return new Data(10_000, 1_000).PopulateRandomFloats();
-        yield return new Data(10_000, 100).PopulateRandomFloats();
-        yield return new Data(10_000, 10).PopulateRandomFloats();
-        yield return new Data(10_000, 1).PopulateRandomFloats();
-        yield return new Data(10_000, 1_000).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 100).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 10).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 1).PopulateRandomGuidStrings();
-        yield return new Data(10_000, 1_000).PopulateRandomNatoAlphabetStrings();
-        yield return new Data(10_000, 100).PopulateRandomNatoAlphabetStrings();
-        yield return new Data(10_000, 10).PopulateRandomNatoAlphabetStrings();
-        yield return new Data(10_000, 1).PopulateRandomNatoAlphabetStrings();
+        yield return new RawData(10_000, 1_000).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 100).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 10).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 1).PopulateOrderedInts().PopulateRandomInts().PopulateRandomFloats().PopulateRandomNatoAlphabetStrings().PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 1_000).PopulateOrderedInts();
+        yield return new RawData(10_000, 100).PopulateOrderedInts();
+        yield return new RawData(10_000, 10).PopulateOrderedInts();
+        yield return new RawData(10_000, 1).PopulateOrderedInts();
+        yield return new RawData(10_000, 1_000).PopulateRandomInts();
+        yield return new RawData(10_000, 100).PopulateRandomInts();
+        yield return new RawData(10_000, 10).PopulateRandomInts();
+        yield return new RawData(10_000, 1).PopulateRandomInts();
+        yield return new RawData(10_000, 1_000).PopulateRandomFloats();
+        yield return new RawData(10_000, 100).PopulateRandomFloats();
+        yield return new RawData(10_000, 10).PopulateRandomFloats();
+        yield return new RawData(10_000, 1).PopulateRandomFloats();
+        yield return new RawData(10_000, 1_000).PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 100).PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 10).PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 1).PopulateRandomGuidStrings();
+        yield return new RawData(10_000, 1_000).PopulateRandomNatoAlphabetStrings();
+        yield return new RawData(10_000, 100).PopulateRandomNatoAlphabetStrings();
+        yield return new RawData(10_000, 10).PopulateRandomNatoAlphabetStrings();
+        yield return new RawData(10_000, 1).PopulateRandomNatoAlphabetStrings();
     }
     
     protected static void RunWithTimeout(Action action, TimeSpan timeout)

@@ -1,4 +1,4 @@
-﻿using System.IO.Compression;
+﻿using Master.Benchmarks.Data;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
@@ -7,7 +7,7 @@ namespace Master.Benchmarks.Raw;
 
 internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
 {
-    public void Write(string filePath, Data data)
+    public void Write(string filePath, ICustomData data)
     {
         Task.Run(async () =>
         {

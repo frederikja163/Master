@@ -1,14 +1,14 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 using HDF.PInvoke;
+using Master.Benchmarks.Data;
 
 namespace Master.Benchmarks.Raw;
 
 
 internal sealed class RawHdf5Benchmark : IRawBenchmark
 {
-    public unsafe void Write(string path, Data data)
+    public unsafe void Write(string path, ICustomData data)
     {
         using Disposable<long> fileId = new Disposable<long>(H5F.create(path, H5F.ACC_TRUNC), i => H5F.close(i)); 
         Debug.Assert(fileId > 0);
@@ -71,7 +71,7 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
             return typeId;
         }
 
-        throw new ArgumentOutOfRangeException(nameof(type));
+        throw new ArgumentOutOfRangeException(type.ToString());
     }
 
     public static Disposable<GCHandle> GetValues(Array values)

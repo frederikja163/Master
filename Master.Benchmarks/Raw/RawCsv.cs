@@ -1,8 +1,10 @@
-﻿namespace Master.Benchmarks.Raw;
+﻿using Master.Benchmarks.Data;
+
+namespace Master.Benchmarks.Raw;
 
 internal sealed class RawCsv : IRawBenchmark
 {
-    public void Write(string filePath, Data data)
+    public void Write(string filePath, ICustomData data)
     {
         using Stream stream = File.OpenWrite(filePath);
         using StreamWriter writer = new StreamWriter(stream);
@@ -10,7 +12,7 @@ internal sealed class RawCsv : IRawBenchmark
         
         for (int i = 0; i < data.Repeats; i++)
         {
-            foreach (IEnumerable<object> row in data.RowMajor())
+            foreach (Array row in data.Rows)
             {
                 writer.WriteLine(string.Join(",", row));
             }

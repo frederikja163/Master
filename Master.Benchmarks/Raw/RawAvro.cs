@@ -1,13 +1,13 @@
-﻿using System.Text;
-using Avro;
+﻿using Avro;
 using Avro.File;
 using Avro.Generic;
+using Master.Benchmarks.Data;
 
 namespace Master.Benchmarks.Raw;
 
 internal sealed class RawAvro : IRawBenchmark
 {
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         Schema schema = Schema.Parse(CreateSchema(data));
         using IFileWriter<GenericRecord> writer =
@@ -15,19 +15,19 @@ internal sealed class RawAvro : IRawBenchmark
 
         for (int i = 0; i < data.Repeats; i++)
         {
-            foreach (IEnumerable<object> row in data.RowMajor())
+            foreach (Array row in data.Rows)
             {
                 GenericRecord record = new GenericRecord((RecordSchema)schema);
-                foreach ((object cell, int colIndex) in row.Select((c, i) => (c, i)))
+                for (int j = 0; j < row.Length; j++)
                 {
-                    record.Add(colIndex, cell);
+                    record.Add(j, row.GetValue(j));
                 }
                 writer.Append(record);
             }
         }
     }
 
-    private string CreateSchema(Data data)
+    private string CreateSchema(ICustomData data)
     {
         return $"{{{string.Join(
             ",",
@@ -44,7 +44,7 @@ internal sealed class RawAvro : IRawBenchmark
             return type == typeof(int) ? "int" :
                 type == typeof(string) ? "string" :
                 type == typeof(float) ? "float" :
-                throw new NotImplementedException();
+                throw new NotImplementedException(type.ToString());
         }
 
         static string CreateField((string name, string type) tuple)

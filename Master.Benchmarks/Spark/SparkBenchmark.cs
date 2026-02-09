@@ -1,4 +1,4 @@
-using Master.Benchmarks.Raw;
+using Master.Benchmarks.Data;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 
@@ -15,7 +15,7 @@ public class SparkBenchmark
         _spark = spark;
     }
     
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         Task.Run(() =>
         {
@@ -23,7 +23,7 @@ public class SparkBenchmark
                 data.ColumnNames.Zip(data.Columns)
                     .Select(tuple => new StructField(tuple.First, ReadDataType(tuple.Second.GetType().GetElementType()!)))
             );
-            var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
+            var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), path);
         
             for (int i = 0; i < data.Repeats; i++)

@@ -9,5 +9,6 @@ internal static class Program
         BenchmarkRunner.Run<OpenTAPBenchmarks>();
         BenchmarkRunner.Run<RawBenchmarks>();
         BenchmarkRunner.Run<SparkBenchmarks>();
+        BenchmarkRunner.Run<TPCHBenchmarks>();
     }
 }

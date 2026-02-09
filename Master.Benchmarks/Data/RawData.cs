@@ -1,6 +1,9 @@
-﻿namespace Master.Benchmarks;
+﻿using Master.Benchmarks.Data;
+using OpenTap;
 
-public sealed class Data
+namespace Master.Benchmarks;
+
+public sealed class RawData : ICustomData
 {
     private static readonly string[] NatoAlphabet = [
         "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima",
@@ -9,64 +12,65 @@ public sealed class Data
     ];
     private List<Array> _columns = [];
     private List<string> _columnNames = [];
-
-    public int Count { get; }
-    public int Repeats { get; }
     
-    public Data(int count, int repeats = 1)
+    public RawData(int count, int repeats = 1)
     {
         Count = count;
         Repeats = repeats;
     }
+    
+    public int Count { get; }
+    public int Repeats { get; }
 
     public IEnumerable<Array> Columns => _columns;
     public IEnumerable<string> ColumnNames => _columnNames;
 
-    public IEnumerable<IEnumerable<object>> RowMajor()
-    {
-        for (int i = 0; i < Count; i++)
-        {
-            yield return GetRow(i);
-        }
-
-        IEnumerable<object> GetRow(int i)
-        {
-            for (int j = 0; j < _columns.Count; j++)
+    public IEnumerable<Array> Rows { 
+        get {
+            for (int i = 0; i < Count; i++)
             {
-                yield return _columns[j].GetValue(i) ?? throw new IndexOutOfRangeException();
+                yield return GetRow(i).ToArray();
             }
-        }
+
+            IEnumerable<object> GetRow(int i)
+            {
+                for (int j = 0; j < _columns.Count; j++)
+                {
+                    yield return _columns[j].GetValue(i) ?? throw new IndexOutOfRangeException();
+                }
+            }
+        } 
     }
     
-    public Data PopulateRandomInts()
+    public RawData PopulateRandomInts()
     {
         UniqueColumnName("RandomInt");
         _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.Next()).ToArray());
         return this;
     }
     
-    public Data PopulateOrderedInts()
+    public RawData PopulateOrderedInts()
     {
         UniqueColumnName("OrderedInt");
         _columns.Add(Enumerable.Range(0, Count).ToArray());
         return this;
     }
     
-    public Data PopulateRandomFloats()
+    public RawData PopulateRandomFloats()
     {
         UniqueColumnName("RandomFloat");
         _columns.Add(Enumerable.Range(0, Count).Select(_ => Random.Shared.NextSingle()).ToArray());
         return this;
     }
 
-    public Data PopulateRandomGuidStrings()
+    public RawData PopulateRandomGuidStrings()
     {
         UniqueColumnName("GuidStrings");
         _columns.Add(Enumerable.Range(0, Count).Select(_ => Guid.NewGuid().ToString()).ToArray());
         return this;
     }
 
-    public Data PopulateRandomNatoAlphabetStrings()
+    public RawData PopulateRandomNatoAlphabetStrings()
     {
         UniqueColumnName("NatoAlphabet");
         _columns.Add(Random.Shared.GetItems(NatoAlphabet, Count));
