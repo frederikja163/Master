@@ -104,7 +104,7 @@ public sealed class RawData : ICustomData
         return this;
     }
 
-    public Data PopulateRandomNatoAlphabetStrings(int columns = 1)
+    public RawData PopulateRandomNatoAlphabetStrings(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {

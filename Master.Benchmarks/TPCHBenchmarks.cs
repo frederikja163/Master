@@ -104,7 +104,6 @@ public class TPCHBenchmarks
         yield return new RawParquet(CompressionMethod.Lz4Raw);
         yield return new RawParquet(CompressionMethod.Brotli);
         yield return new RawCsv();
-        yield return new RawAvro();
         yield return new RawSqlite();
         yield return new RawHdf5Benchmark();
     }

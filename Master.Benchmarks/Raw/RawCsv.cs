@@ -14,7 +14,7 @@ internal sealed class RawCsv : IRawBenchmark
         {
             foreach (Array row in data.Rows)
             {
-                writer.WriteLine(string.Join(",", row.Select(o => o ?? "")));
+                writer.WriteLine(string.Join(",", row.OfType<object>().Select(o => o.ToString() ?? "")));
             }
         }
     }

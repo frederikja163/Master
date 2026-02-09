@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Master.Benchmarks.BenchmarkDotnetConfig;
 using Master.Benchmarks.Data;
-using Master.Benchmarks.Master.Benchmarks;
 
 namespace Master.Benchmarks;
 
