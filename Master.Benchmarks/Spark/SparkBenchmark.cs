@@ -1,3 +1,4 @@
+using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
 using Master.Benchmarks.Raw;
 using Microsoft.Spark.Sql;
@@ -16,7 +17,7 @@ public class SparkBenchmark
         _spark = spark;
     }
     
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         Task.Run(() =>
         {
@@ -28,7 +29,7 @@ public class SparkBenchmark
         
             for (int i = 0; i < data.Repeats; i++)
             {
-                var dataFrame = _spark.CreateDataFrame(data.RowMajor().Select(row => new GenericRow(row.Select(ConvertValue).ToArray())), schema);
+                var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
                 dataFrame.Write()
                     .Mode(i == 0 ? SaveMode.Overwrite : SaveMode.Append)
                     .Format(_format)

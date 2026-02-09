@@ -1,8 +1,11 @@
-﻿using Master.Benchmarks.Extensions;
+using Master.Benchmarks.Data;
+using OpenTap;
+
+using Master.Benchmarks.Extensions;
 
 namespace Master.Benchmarks;
 
-public sealed class Data
+public sealed class RawData : ICustomData
 {
     private static readonly string[] NatoAlphabet = [
         "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima",
@@ -11,38 +14,39 @@ public sealed class Data
     ];
     private List<Array> _columns = [];
     private List<string> _columnNames = [];
-
-    public int Count { get; }
-    public int Repeats { get; }
-    public float Sparsity { get; }
     
-    public Data(int count, int repeats = 1, float sparsity = 1.0f)
+    public RawData(int count, int repeats = 1, float sparsity = 1.0f)
     {
         Count = (int)(count / sparsity);
         Repeats = repeats;
         Sparsity = sparsity;
     }
+    
+    public int Count { get; }
+    public int Repeats { get; }
+    public float Sparsity { get; }
 
     public IEnumerable<Array> Columns => _columns;
     public IEnumerable<string> ColumnNames => _columnNames;
 
-    public IEnumerable<IEnumerable<object?>> RowMajor()
-    {
-        for (int i = 0; i < Count; i++)
-        {
-            yield return GetRow(i);
-        }
-
-        IEnumerable<object?> GetRow(int i)
-        {
-            for (int j = 0; j < _columns.Count; j++)
+    public IEnumerable<Array> Rows { 
+        get {
+            for (int i = 0; i < Count; i++)
             {
-                yield return _columns[j].GetValue(i);
+                yield return GetRow(i).ToArray();
             }
-        }
+
+            IEnumerable<object?> GetRow(int i)
+            {
+                for (int j = 0; j < _columns.Count; j++)
+                {
+                    yield return _columns[j].GetValue(i);
+                }
+            }
+        } 
     }
     
-    public Data PopulateRandomInts(int columns = 1)
+    public RawData PopulateRandomInts(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {
@@ -53,7 +57,7 @@ public sealed class Data
         return this;
     }
     
-    public Data PopulateOrderedInts(int columns = 1)
+    public RawData PopulateOrderedInts(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {
@@ -64,7 +68,7 @@ public sealed class Data
         return this;
     }
     
-    public Data PopulateRandomFloats(int columns = 1)
+    public RawData PopulateRandomFloats(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {
@@ -76,7 +80,7 @@ public sealed class Data
         return this;
     }
     
-    public Data PopulateRandomDoubles(int columns = 1)
+    public RawData PopulateRandomDoubles(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {
@@ -88,7 +92,7 @@ public sealed class Data
         return this;
     }
 
-    public Data PopulateRandomGuidStrings(int columns = 1)
+    public RawData PopulateRandomGuidStrings(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {
@@ -100,7 +104,7 @@ public sealed class Data
         return this;
     }
 
-    public Data PopulateRandomNatoAlphabetStrings(int columns = 1)
+    public RawData PopulateRandomNatoAlphabetStrings(int columns = 1)
     {
         for (int i = 0; i < columns; i++)
         {
