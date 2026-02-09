@@ -1,5 +1,6 @@
 ﻿[Bb]in/
 [Oo]bj/
 .idea/
-.DotSettings.user
+*.DotSettings.user
 BenchmarkDotNet.Artifacts/
+Master.Benchmarks/TPC-H*/

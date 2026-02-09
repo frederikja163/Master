@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Master.Benchmarks.BenchmarkDotnetConfig;
+using Master.Benchmarks.Data;
 
 namespace Master.Benchmarks;
 
@@ -22,9 +23,9 @@ public abstract class AllBenchmarks
         }
     }
     
-    [ParamsSource(nameof(GetData))] public required Data Data { get; set; }
+    [ParamsSource(nameof(GetData))] public required ICustomData Data { get; set; }
 
-    public static IEnumerable<Data> GetData()
+    public static IEnumerable<ICustomData> GetData()
     {
         bool isRows = true;
         bool isColumns = false;
@@ -35,8 +36,12 @@ public abstract class AllBenchmarks
             int rows = isRows ? (int)Math.Pow(10, i) : 10;
             int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 100;
             float sparsity = isSparsity ? MathF.Max((float)i / totalCount, 0.1f) : 1f;
+<<<<<<< HEAD
             yield return new Data(1_000, rows, sparsity)
                 .PopulateRandomNatoAlphabetStrings(columns / 5)
+=======
+            yield return new RawData(1_000, rows, sparsity)
+>>>>>>> origin/main
                 .PopulateRandomInts(columns / 10)
                 .PopulateRandomDoubles(columns / 5)
                 .PopulateOrderedInts(columns / 10)

@@ -1,3 +1,4 @@
+using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
 using Vortex.Net;
 
@@ -5,7 +6,7 @@ namespace Master.Benchmarks.Raw;
 
 public sealed class RawVortexWriter : IRawBenchmark
 {
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         VxError error = VxError.Zero;
         using VxSession session = new VxSession();

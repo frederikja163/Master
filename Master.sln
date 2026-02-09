@@ -8,10 +8,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Master.OpenTAP", "Master.Op
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Master.Tests", "Master.Tests\Master.Tests.csproj", "{28F75F9C-41AD-479D-BC4F-3A9511374FC0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{B15E38A7-FFBA-491E-801A-3E3C0A6F72D4}"
-	ProjectSection(SolutionItems) = preProject
-		OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj = OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTap.Hdf5", "OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj", "{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTap.Hdf5", "OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj", "{C6868351-052E-4A8C-A754-1F89089C57B3}"
 EndProject
@@ -37,10 +34,17 @@ Global
 		{28F75F9C-41AD-479D-BC4F-3A9511374FC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28F75F9C-41AD-479D-BC4F-3A9511374FC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28F75F9C-41AD-479D-BC4F-3A9511374FC0}.Release|Any CPU.Build.0 = Release|Any CPU
+<<<<<<< HEAD
 		{C6868351-052E-4A8C-A754-1F89089C57B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C6868351-052E-4A8C-A754-1F89089C57B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6868351-052E-4A8C-A754-1F89089C57B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6868351-052E-4A8C-A754-1F89089C57B3}.Release|Any CPU.Build.0 = Release|Any CPU
+=======
+		{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}.Release|Any CPU.Build.0 = Release|Any CPU
+>>>>>>> origin/main
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C6868351-052E-4A8C-A754-1F89089C57B3} = {B15E38A7-FFBA-491E-801A-3E3C0A6F72D4}

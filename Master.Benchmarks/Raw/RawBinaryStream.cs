@@ -1,8 +1,10 @@
-﻿namespace Master.Benchmarks.Raw;
+﻿using Master.Benchmarks.Data;
+
+namespace Master.Benchmarks.Raw;
 
 internal sealed class RawBinaryStream : IRawBenchmark
 {
-    public void Write(string filePath, Data data)
+    public void Write(string filePath, ICustomData data)
     {
         using ExtendedBinaryWriter writer = new ExtendedBinaryWriter(filePath);
         for (int i = 0; i < data.Repeats; i++)

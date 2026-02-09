@@ -1,12 +1,13 @@
 ﻿using System.Data;
 using System.Data.SQLite;
+using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
 
 namespace Master.Benchmarks.Raw;
 
 internal sealed class RawSqlite : IRawBenchmark
 {
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         string connectionString = new SQLiteConnectionStringBuilder()
         {
@@ -34,11 +35,11 @@ internal sealed class RawSqlite : IRawBenchmark
             SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
                 .Select(t => command.Parameters.Add($"${t.First}", t.Second)).ToArray();
             
-            foreach (IEnumerable<object> row in data.RowMajor())
+            foreach (Array row in data.Rows)
             {
-                foreach ((object value, SQLiteParameter parameter)  in row.Zip(parameters))
+                for (int j = 0; j < row.Length; j++)
                 {
-                    parameter.Value = value;
+                    parameters[j].Value = row.GetValue(j);
                 }
                 command.ExecuteNonQuery();
             }
