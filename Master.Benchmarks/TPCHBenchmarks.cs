@@ -29,7 +29,7 @@ public class TPCHBenchmarks
     // Types: System.Int32, System.String, System.Decimal, System.Char, System.DateTime
     [ParamsSource(nameof(GetData))] public required TpchData Data { get; set; }
 
-    public IEnumerable<TpchData> GetData()
+    public static IEnumerable<TpchData> GetData()
     {
         string path = Path.Combine(AppContext.BaseDirectory, "TPC-H V3.0.1", "dbgen");
         string ddlFile;
@@ -70,7 +70,7 @@ public class TPCHBenchmarks
         }
     }
 
-    private Type StringToType(string stringName)
+    private static Type StringToType(string stringName)
     {
         // TODO: Consider fixing types - Check dss.ddl 
         return stringName switch
@@ -106,13 +106,15 @@ public class TPCHBenchmarks
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
         yield return new RawBinaryStream();
-        yield return new RawParquet(CompressionMethod.Snappy);
-        yield return new RawParquet(CompressionMethod.Zstd);
-        yield return new RawParquet(CompressionMethod.Gzip);
-        yield return new RawParquet(CompressionMethod.None);
-        yield return new RawParquet(CompressionMethod.LZ4);
-        yield return new RawParquet(CompressionMethod.Lz4Raw);
-        yield return new RawParquet(CompressionMethod.Brotli);
+        yield return new EncodingBenchmark();
+        yield return new CascadingBenchmark();
+        // yield return new RawParquet(CompressionMethod.Snappy);
+        // yield return new RawParquet(CompressionMethod.Zstd);
+        // yield return new RawParquet(CompressionMethod.Gzip);
+        // yield return new RawParquet(CompressionMethod.None);
+        // yield return new RawParquet(CompressionMethod.LZ4);
+        // yield return new RawParquet(CompressionMethod.Lz4Raw);
+        // yield return new RawParquet(CompressionMethod.Brotli);
         yield return new RawCsv();
         yield return new RawSqlite();
         yield return new RawHdf5Benchmark();

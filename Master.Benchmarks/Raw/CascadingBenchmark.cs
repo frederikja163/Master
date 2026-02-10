@@ -1,10 +1,12 @@
-﻿using Master.Serializing;
+﻿using BenchmarkDotNet.Columns;
+using Master.Benchmarks.Data;
+using Master.Serializing;
 
 namespace Master.Benchmarks.Raw;
 
 internal sealed class CascadingBenchmark : IRawBenchmark
 {
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         Serializer serializer = new Serializer();
         Stream stream = File.OpenWrite(path);
@@ -35,7 +37,7 @@ internal sealed class CascadingBenchmark : IRawBenchmark
 
 internal sealed class EncodingBenchmark : IRawBenchmark
 {
-    public void Write(string path, Data data)
+    public void Write(string path, ICustomData data)
     {
         Stream stream = File.OpenWrite(path);
 
