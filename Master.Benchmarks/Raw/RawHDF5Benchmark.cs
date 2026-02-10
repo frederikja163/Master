@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using HDF.PInvoke;
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using SqlParser;
+using SqlParser.Ast;
 
 namespace Master.Benchmarks.Raw;
 
@@ -50,6 +52,11 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
                 H5D.write(datasetId, GetType(values.GetType().GetElementType()!.GetUnderlyingNullableType()), memspace, filespace, H5P.DEFAULT, ptr);
             }
         }
+    }
+
+    public void Read(string path, Sequence<Statement> sql)
+    {
+        throw new NotImplementedException();
     }
 
     public static long GetType(Type type)

@@ -1,4 +1,6 @@
 ﻿using Master.Benchmarks.Data;
+using SqlParser;
+using SqlParser.Ast;
 
 namespace Master.Benchmarks.Raw;
 
@@ -17,6 +19,11 @@ internal sealed class RawCsv : IRawBenchmark
                 writer.WriteLine(string.Join(",", row.OfType<object>().Select(o => o.ToString() ?? "")));
             }
         }
+    }
+
+    public void Read(string path, Sequence<Statement> sql)
+    {
+        throw new NotImplementedException();
     }
 
     public override string ToString()

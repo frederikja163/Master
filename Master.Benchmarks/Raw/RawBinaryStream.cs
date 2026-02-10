@@ -1,4 +1,6 @@
 ﻿using Master.Benchmarks.Data;
+using SqlParser;
+using SqlParser.Ast;
 
 namespace Master.Benchmarks.Raw;
 
@@ -14,6 +16,11 @@ internal sealed class RawBinaryStream : IRawBenchmark
                 writer.Write(array);
             }
         }
+    }
+
+    public void Read(string path, Sequence<Statement> sql)
+    {
+        throw new NotImplementedException();
     }
 
     public override string ToString()

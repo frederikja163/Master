@@ -1,8 +1,11 @@
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using Master.Benchmarks.Raw.Visitors;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
+using SqlParser;
+using SqlParser.Ast;
 
 namespace Master.Benchmarks.Raw;
 
@@ -30,6 +33,20 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
                     await groupWriter.WriteColumnAsync(new DataColumn(field, values));
                 }
             }
+        }).Wait();
+    }
+
+    public void Read(string path, Sequence<Statement> sql)
+    {
+        Task.Run(async () =>
+        {
+            using ParquetReader reader = await ParquetReader.CreateAsync(path);
+            foreach (IParquetRowGroupReader parquetRowGroupReader in reader.RowGroups)
+            {
+                sql.Visit(new ParquetWhereVisitor());
+                //parquetRowGroupReader.GetStatistics()
+            }
+            
         }).Wait();
     }
 

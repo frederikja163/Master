@@ -1,5 +1,7 @@
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using SqlParser;
+using SqlParser.Ast;
 using Vortex.Net;
 
 namespace Master.Benchmarks.Raw;
@@ -32,6 +34,11 @@ public sealed class RawVortexWriter : IRawBenchmark
             sink.Push(array, ref error);
             error.Dispose();
         }
+    }
+
+    public void Read(string path, Sequence<Statement> sql)
+    {
+        throw new NotImplementedException();
     }
 
     private VxDType ArrayToDType(Array array)

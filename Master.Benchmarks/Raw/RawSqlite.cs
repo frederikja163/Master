@@ -2,6 +2,8 @@
 using System.Data.SQLite;
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using SqlParser;
+using SqlParser.Ast;
 
 namespace Master.Benchmarks.Raw;
 
@@ -70,6 +72,11 @@ internal sealed class RawSqlite : IRawBenchmark
             (string name, string type) = tuple;
             return $"{name} {type}";
         }
+    }
+
+    public void Read(string path, Sequence<Statement> sql)
+    {
+        throw new NotImplementedException();
     }
 
     public override string ToString()
