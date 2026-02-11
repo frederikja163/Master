@@ -10,7 +10,7 @@ namespace Master;
 internal ref struct DataColumnBuilder
 {
     private readonly LogicalType _type;
-    private byte[] _data = [];
+    private Memory<byte> _data = Memory<byte>.Empty;
     private int _index = 0;
     private int _logicalLength = 0;
     private bool _resizeAble = false;
@@ -38,12 +38,12 @@ internal ref struct DataColumnBuilder
                 throw new IndexOutOfRangeException();
             }
 
-            byte[] oldData = _data;
+            Memory<byte> oldData = _data;
             _data = new byte[oldData.Length * 2];
-            Array.Copy(oldData, _data, oldData.Length);
+            oldData.CopyTo(_data);
         }
 
-        Span<byte> slice = _data.AsSpan(_index, size);
+        Span<byte> slice = _data.Span.Slice(_index, size);
         _index += size;
         return slice;
     }
@@ -125,6 +125,6 @@ internal ref struct DataColumnBuilder
 
     public DataColumn Build()
     {
-        return new DataColumn(_type,  new ReadOnlyMemory<byte>(_data, 0, _index), _logicalLength);
+        return new DataColumn(_type,  _data.Slice(0, _index), _logicalLength);
     }
 }
