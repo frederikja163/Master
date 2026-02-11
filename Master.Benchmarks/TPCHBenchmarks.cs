@@ -108,6 +108,7 @@ public class TPCHBenchmarks
         yield return new RawBinaryStream();
         yield return new EncodingBenchmark();
         yield return new CascadingBenchmark();
+        yield return new CascadingAsyncBenchmark();
         // yield return new RawParquet(CompressionMethod.Snappy);
         // yield return new RawParquet(CompressionMethod.Zstd);
         // yield return new RawParquet(CompressionMethod.Gzip);

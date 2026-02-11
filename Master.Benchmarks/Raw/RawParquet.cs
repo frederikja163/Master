@@ -23,14 +23,21 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
             await using ParquetWriter writer = await ParquetWriter.CreateAsync(schema, stream);
             writer.CompressionMethod = method;
 
+            List<Task> tasks = new List<Task>();
             for (int i = 0; i < data.Repeats; i++)
             {
-                using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
-                foreach ((DataField field, Array values) in schema.Fields.Cast<DataField>().Zip(data.Columns))
+                tasks.Add(Task.Run(async () =>
                 {
-                    await groupWriter.WriteColumnAsync(new DataColumn(field, values));
-                }
+
+                    using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
+                    foreach ((DataField field, Array values) in schema.Fields.Cast<DataField>().Zip(data.Columns))
+                    {
+                        await groupWriter.WriteColumnAsync(new DataColumn(field, values));
+                    }
+                }));
             }
+
+            Task.WaitAll(tasks);
         }).Wait();
     }
 

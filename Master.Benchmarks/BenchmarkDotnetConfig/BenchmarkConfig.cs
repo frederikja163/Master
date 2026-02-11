@@ -1,8 +1,6 @@
 ﻿using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
-using Perfolizer.Horology;
 
 namespace Master.Benchmarks.BenchmarkDotnetConfig;
 

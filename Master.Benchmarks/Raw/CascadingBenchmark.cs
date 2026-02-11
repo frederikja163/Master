@@ -10,7 +10,6 @@ internal sealed class CascadingBenchmark : IRawBenchmark
     {
         Serializer serializer = new Serializer();
         using Stream stream = File.OpenWrite(path);
-
         for (int i = 0; i < data.Repeats; i++)
         {
             foreach (Array array in data.Columns)
@@ -25,6 +24,7 @@ internal sealed class CascadingBenchmark : IRawBenchmark
                         stream.Write(nulls.Value.Data.Span);
                     }
                 }
+
             }
         }
     }
@@ -32,6 +32,46 @@ internal sealed class CascadingBenchmark : IRawBenchmark
     public override string ToString()
     {
         return "Cascading";
+    }
+}
+
+
+internal sealed class CascadingAsyncBenchmark : IRawBenchmark
+{
+    public void Write(string path, ICustomData data)
+    {
+        Serializer serializer = new Serializer();
+        using Stream stream = File.OpenWrite(path);
+        List<Task> tasks = new ();
+        for (int i = 0; i < data.Repeats; i++)
+        {
+            foreach (Array array in data.Columns)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                    MetadataColumn column = serializer.Encode(dataColumn);
+                    lock (stream)
+                    {
+                        foreach (DataColumn col in column.GetDataColumns())
+                        {
+                            stream.Write(col.Data.Span);
+                            if (nulls.HasValue)
+                            {
+                                stream.Write(nulls.Value.Data.Span);
+                            }
+                        }
+                    }
+                }));
+            }
+        }
+
+        Task.WaitAll(tasks);
+    }
+
+    public override string ToString()
+    {
+        return "Async Cascading";
     }
 }
 
