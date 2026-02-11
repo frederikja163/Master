@@ -14,7 +14,7 @@ internal ref struct DataColumnBuilder
     private int _index = 0;
     private int _logicalLength = 0;
     private bool _resizeAble = false;
-
+    
     public DataColumnBuilder(int size, bool resizeAble = false) : this(LogicalType.UInt8, size, resizeAble)
     {
     }

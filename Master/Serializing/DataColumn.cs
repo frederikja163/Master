@@ -39,16 +39,10 @@ public readonly struct DataColumn
             length += Encoding.UTF8.GetByteCount(str);
         }
 
-        byte[] bytes = new byte[length + sizeof(int) * data.Length];
-        int index = 0;
-        foreach (string str in data)
-        {
-            BitConverter.TryWriteBytes(bytes.AsSpan().Slice(index, sizeof(int)), str.Length); // TODO: Using str.length here is wrong
-            index += 4;
-            index += Encoding.UTF8.GetBytes(str, bytes.AsSpan().Slice(index));
-        }
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, length + sizeof(int) * data.Length);
+        builder.WriteStrings(data);
 
-        return new DataColumn(LogicalType.String, bytes, data.Length);
+        return builder.Build();
     }
 
     public static DataColumn Create(ReadOnlySpan<ReadOnlyMemory<byte>> data)
