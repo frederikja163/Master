@@ -91,8 +91,7 @@ internal ref struct DataColumnBuilder
     public void WriteBlob(ReadOnlySpan<byte> blob)
     {
         Write(blob.Length);
-        Write(blob);
-        _logicalLength += 1;
+        WriteRaw(blob, 0);
     }
 
     public void WriteBlobs(ReadOnlySpan<ReadOnlyMemory<byte>> blobs)

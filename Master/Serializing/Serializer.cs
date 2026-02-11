@@ -25,6 +25,7 @@ public sealed class Serializer
     public int CascadingEncodings { get; init; } = 2;
     public double SamplePercentage { get; init; } = 0.1;
     public int SampleCount { get; init; } = 10;
+    public int MaxSampleLength = 1024;
     
     public MetadataColumn Encode(DataColumn column)
     {
@@ -69,7 +70,7 @@ public sealed class Serializer
         {
             return new MetadataColumn(sample);
         }
-        int minSize = sample.PhysicalSize;
+        int minSize = sample.PhysicalSize / 4 * 3;
         MetadataColumn bestEncoding = new MetadataColumn(sample);
         if (!_encodingsByType.Contains(sample.LogicalType))
         {
@@ -103,6 +104,7 @@ public sealed class Serializer
         
         // Need to calculate sample length first, to round correctly.
         var sampleLength = (int)(length * SamplePercentage) / SampleCount;
+        sampleLength = Math.Min(sampleLength, MaxSampleLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
         DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, true);

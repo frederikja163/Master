@@ -9,7 +9,7 @@ internal sealed class CascadingBenchmark : IRawBenchmark
     public void Write(string path, ICustomData data)
     {
         Serializer serializer = new Serializer();
-        Stream stream = File.OpenWrite(path);
+        using Stream stream = File.OpenWrite(path);
 
         for (int i = 0; i < data.Repeats; i++)
         {

@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
 using Parquet;
@@ -14,7 +15,7 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
         {
             ParquetSchema schema = new(
                 data.ColumnNames.Zip(data.Columns)
-                    .Select(tuple => new DataField(tuple.First, GetType(tuple), true))
+                    .Select(tuple => new DataField(tuple.First, GetType(tuple.Second), IsNullable(tuple.Second)))
             );
 
             await using Stream stream = File.OpenWrite(filePath);
@@ -33,9 +34,14 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
         }).Wait();
     }
 
-    private static Type GetType((string First, Array Second) tuple)
+    private static Type GetType(Array arr)
     {
-        return tuple.Second.GetType().GetElementType()!.GetUnderlyingNullableType();
+        return arr.GetType().GetElementType()!.GetUnderlyingNullableType();
+    }
+
+    public static bool IsNullable(Array arr)
+    {
+        return arr.GetType().GetElementType()!.IsNullable();
     }
 
     public override string ToString()

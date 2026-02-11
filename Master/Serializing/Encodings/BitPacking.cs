@@ -74,9 +74,8 @@ internal sealed class BitPacking : IEncoding
         DataColumnReader reader = dataColumn.OpenReader();
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
-        int length = (int)float.Ceiling(reader.PhysicalSize * packedSize / (float)size) + 1;
+        int length = (int)double.Ceiling(reader.PhysicalSize * (packedSize / (double)size)) + 1;
         DataColumnBuilder builder = new DataColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
-
         T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
         T currentValue = default;
         int shift = 0;
