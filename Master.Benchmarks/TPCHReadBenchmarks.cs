@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Master.Benchmarks.BenchmarkDotnetConfig;
+using Master.Benchmarks.Data;
 using Master.Benchmarks.Raw;
 using Parquet;
 using SqlParser;
@@ -13,39 +14,50 @@ public class TPCHReadBenchmarks
 {
     protected TimeSpan Timeout = TimeSpan.FromMinutes(2);
     
-    public TPCHReadBenchmarks()
+    [ParamsSource(nameof(GetQueries))] public required Statement Query { get; set; }
+    
+    public IEnumerable<Statement> GetQueries()
     {
         string path = Path.Combine(AppContext.BaseDirectory, "TPC-H V3.0.1", "dbgen");
-        
-        
-    }
-    
-    
-    [ParamsSource(nameof(GetQueries))] public required Sequence<Statement> Query { get; set; }
-    
-    public IEnumerable<Sequence<Statement>> GetQueries()
-    {
-        string path = Path.Combine(AppContext.BaseDirectory, "TPC-H V3.0.1", "dbgen");
-        string ddlFile;
+        string queriesFile;
         try
         {
-            ddlFile = new StreamReader(path + "/dss.ddl").ReadToEnd();
+            queriesFile = new StreamReader(path + "/queries.sql").ReadToEnd();
         }
         catch (FileNotFoundException e)
         {
             Console.WriteLine("Couldn't find TPCH data. Please go to https://www.tpc.org/ and ensure that ddl and .tbl exist in Master.Benchmarks/TPC-H V3.0.1/dbgen");
             Console.WriteLine(e);
-            yield break;
+            return [];
         }
 
-        var sqlParser = new SqlQueryParser();
-        foreach (var queryPath in Directory.EnumerateFiles(Path.Combine(path, "queries")))
-        {
-            yield return sqlParser.Parse(new StreamReader(queryPath).ReadToEnd());
-        }
+        return new SqlQueryParser().Parse(queriesFile).Where(statement => statement.GetType() != typeof(Statement.Comment))
+            .Take(1); //TODO: remove
         
     }
 
+    [GlobalSetup]
+    public void Setup()
+    {
+        if (File.Exists(Config.FilePath))
+        {
+            File.Delete(Config.FilePath);
+        }
+
+        if (Directory.Exists(Config.FilePath))
+        {
+            Directory.Delete(Config.FilePath, true);
+        }
+
+        foreach (IRawBenchmark implementation in GetImplementations())
+        {
+            foreach (TpchData tpchData in TPCHBenchmarks.GetData())
+            {
+                Directory.CreateDirectory(Config.FilePath);
+                implementation.Write(Path.Combine(Config.FilePath, tpchData.ToString()), tpchData);
+            }
+        }
+    }
     
     [Benchmark]
     [ArgumentsSource(nameof(GetImplementations))]
@@ -53,7 +65,6 @@ public class TPCHReadBenchmarks
     {
         RunWithTimeout(() =>
         {
-            Console.WriteLine(Query);
             implementation?.Read(Config.FilePath, Query);
         }, Timeout);
     }
@@ -70,5 +81,6 @@ public class TPCHReadBenchmarks
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
         yield return new RawParquet(CompressionMethod.Snappy);
+        //TODO: add others
     }
 }

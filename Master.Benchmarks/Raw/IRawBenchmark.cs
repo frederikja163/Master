@@ -8,5 +8,5 @@ public interface IRawBenchmark
 {
     public void Write(string path, ICustomData data);
 
-    public void Read(string path, Sequence<Statement> sql);
+    public void Read(string path, Statement sql);
 }

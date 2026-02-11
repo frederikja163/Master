@@ -1,7 +1,9 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using BenchmarkDotNet.Attributes;
 using Master.Benchmarks.BenchmarkDotnetConfig;
 using Master.Benchmarks.Data;
+using Master.Benchmarks.Extensions;
 using Master.Benchmarks.Raw;
 using Parquet;
 
@@ -27,9 +29,15 @@ public class TPCHBenchmarks
     }
     
     // Types: System.Int32, System.String, System.Decimal, System.Char, System.DateTime
-    [ParamsSource(nameof(GetData))] public required TpchData Data { get; set; }
+    [ParamsSource(nameof(_GetData))] public required TpchData Data { get; set; }
 
-    public IEnumerable<TpchData> GetData()
+
+    [SuppressMessage("Performance", "CA1822:Mark members as static")]
+    public IEnumerable<TpchData> _GetData()
+    {
+        return GetData();
+    }
+    public static IEnumerable<TpchData> GetData(string? specificTables = null)
     {
         string path = Path.Combine(AppContext.BaseDirectory, "TPC-H V3.0.1", "dbgen");
         string ddlFile;
@@ -43,7 +51,8 @@ public class TPCHBenchmarks
             Console.WriteLine(e);
             yield break;
         }
-        foreach (string table in ddlFile.Substring(ddlFile.IndexOf('\n')).Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+
+        foreach (string table in ddlFile.Substring(ddlFile.IndexOf('\n')) .Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
             /*
              * CREATE TABLE XXX  ( ColumnName  Type,
@@ -54,23 +63,25 @@ public class TPCHBenchmarks
             int startIndex = table.IndexOf("TABLE", StringComparison.Ordinal) + 6;
             int length = table.IndexOf('(') - table.IndexOf("TABLE", StringComparison.Ordinal) - 6;
             string tableName = table.Substring(startIndex, length).Trim();
+            if (specificTables != null && !tableName.Contains(specificTables)) 
+                continue;
             //Console.WriteLine(tableName);
             startIndex = table.IndexOf("(", StringComparison.Ordinal) + 1;
             length = table.LastIndexOf(')') - table.IndexOf("(", StringComparison.Ordinal) - 1;
             string tableColumns = table.Substring(startIndex, length);
             //Console.WriteLine(tableColumns);
             List<(string columnName, Type type)> columns = [];
-            foreach (string tableColumn in tableColumns.Split(",\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            foreach (string tableColumn in tableColumns.Split("\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
             {
                 string[] values = tableColumn.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
                 var column = (columnName: values[0], type: StringToType(values[1]));
                 columns.Add(column);
             }
-            yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
+            yield return new TpchData(columns, tableName, $"{path}/{tableName.ToLower()}.tbl");
         }
     }
 
-    private Type StringToType(string stringName)
+    private static Type StringToType(string stringName)
     {
         // TODO: Consider fixing types - Check dss.ddl 
         return stringName switch

@@ -17,7 +17,7 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
         {
             ParquetSchema schema = new(
                 data.ColumnNames.Zip(data.Columns)
-                    .Select(tuple => new DataField(tuple.First, GetType(tuple), true))
+                    .Select(tuple => new DataField(tuple.First, GetType(tuple), false))
             );
 
             await using Stream stream = File.OpenWrite(filePath);
@@ -36,14 +36,17 @@ internal sealed class RawParquet(CompressionMethod method) : IRawBenchmark
         }).Wait();
     }
 
-    public void Read(string path, Sequence<Statement> sql)
+    public void Read(string path, Statement sql)
     {
         Task.Run(async () =>
         {
-            using ParquetReader reader = await ParquetReader.CreateAsync(path);
+            
+            using ParquetReader reader = await ParquetReader.CreateAsync(Path.Combine(path, sql.AsQuery().Body.AsSelect().From[0].Joins[0].Relation.ToString() + ".parquet"));
             foreach (IParquetRowGroupReader parquetRowGroupReader in reader.RowGroups)
             {
-                sql.Visit(new ParquetWhereVisitor());
+                ParquetWhereVisitor visitor = new(parquetRowGroupReader);
+                visitor.PreVisitExpression(sql.AsSelect().Query.Body.AsSelect().PreWhere!);
+                //sql.Visit(new ParquetWhereVisitor());
                 //parquetRowGroupReader.GetStatistics()
             }
             

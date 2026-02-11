@@ -47,8 +47,8 @@
                  Condition="Exists('TPC-H V3.0.1\dbgen')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Content Include="TPC-H V3.0.1\dbgen\queries\*"
-                 Condition="Exists('TPC-H V3.0.1\dbgen\queries')">
+        <Content Include="TPC-H V3.0.1\dbgen\queries.sql"
+                 Condition="Exists('TPC-H V3.0.1\dbgen\queries.sql')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>

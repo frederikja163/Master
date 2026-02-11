@@ -74,7 +74,7 @@ internal sealed class RawSqlite : IRawBenchmark
         }
     }
 
-    public void Read(string path, Sequence<Statement> sql)
+    public void Read(string path, Statement sql)
     {
         throw new NotImplementedException();
     }

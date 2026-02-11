@@ -36,7 +36,7 @@ public sealed class RawVortexWriter : IRawBenchmark
         }
     }
 
-    public void Read(string path, Sequence<Statement> sql)
+    public void Read(string path, Statement sql)
     {
         throw new NotImplementedException();
     }
