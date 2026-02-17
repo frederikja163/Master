@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using HDF.PInvoke;
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using Master.Extensions;
 
 namespace Master.Benchmarks.Raw;
 

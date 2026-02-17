@@ -8,11 +8,11 @@ internal sealed class BinaryResultListener : ResultListener
     [Display("File path")]
     public string FilePath { get; set; } = "Results";
      
-    private ExtendedBinaryWriter _writer;
+    private ExtendedBinaryWriter? _writer;
 
     public override void Close()
     {
-        _writer.Dispose();
+        _writer?.Dispose();
         base.Close();
     }
 

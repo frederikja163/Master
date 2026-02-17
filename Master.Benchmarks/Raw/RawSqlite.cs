@@ -2,6 +2,7 @@
 using System.Data.SQLite;
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using Master.Extensions;
 
 namespace Master.Benchmarks.Raw;
 
@@ -57,7 +58,7 @@ internal sealed class RawSqlite : IRawBenchmark
 
         static DbType GetParamType(Array array)
         {
-            Type type = array.GetType().GetElementType().GetUnderlyingNullableType() ?? throw new ArgumentNullException(null, nameof(array));
+            Type type = array.GetType().GetElementType()?.GetUnderlyingNullableType() ?? throw new ArgumentNullException(null, nameof(array));
             return type == typeof(int) ? DbType.Int32 :
                 type == typeof(string) ? DbType.String :
                 type == typeof(float) ? DbType.Single :
