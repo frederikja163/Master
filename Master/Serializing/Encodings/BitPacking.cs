@@ -64,7 +64,8 @@ internal sealed class BitPacking : IEncoding
     private static DataColumn Encode<T>(DataColumn dataColumn, ref DataColumn metadataCol)
         where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        Metadata metadata = GetMetadata<T>(dataColumn, ref metadataCol);
+        Metadata metadata = GetMetadata<T>(dataColumn, metadataCol);
+        metadataCol = metadata.ToDataColumn();
         return EncodeData<T>(dataColumn, metadata);
     }
 
@@ -105,11 +106,14 @@ internal sealed class BitPacking : IEncoding
         return builder.Build();
     }
 
-    internal static Metadata GetMetadata<T>(DataColumn data, ref DataColumn metadataCol) where T : unmanaged, IBinaryInteger<T>
+    internal static Metadata GetMetadata<T>(DataColumn data, DataColumn metadataCol) where T : unmanaged, IBinaryInteger<T>
     {
         if (metadataCol.LogicalLength != 0)
         {
-            return new Metadata(metadataCol);
+            return new Metadata(metadataCol)
+            {
+                LogicalLength = data.LogicalLength
+            };
         }
 
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
@@ -137,8 +141,6 @@ internal sealed class BitPacking : IEncoding
                 break;
             }
         }
-
-        metadataCol = metadata.ToDataColumn();
         return metadata;
     }
 
