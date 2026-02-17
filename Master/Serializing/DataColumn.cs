@@ -83,7 +83,6 @@ public readonly struct DataColumn
             float[] values => Create<float>(values),
             double[] values => Create<double>(values),
             string[] str => Create(str.AsSpan()), // TODO: Split nulls for strings.
-            // TODO: Handle nullable arrays.
             sbyte?[] values => SplitNulls<sbyte>(values, out nulls),
             short?[] values => SplitNulls<short>(values, out nulls),
             int?[] values => SplitNulls<int>(values, out nulls),
@@ -115,8 +114,9 @@ public readonly struct DataColumn
         }
         
         DataColumnBuilder valueBuilder = new DataColumnBuilder(typeof(T).ToLogicalType(), valueSize);
-        DataColumnBuilder nullBuilder = new DataColumnBuilder((int)float.Ceiling(array.Length / 8f) + 1); // TODO: +1 is probably wrong.
+        DataColumnBuilder nullBuilder = new DataColumnBuilder(array.Length / 8 + 1);
         byte nullByte = 0;
+        // TODO: Benchmark using a bitarray and loop unrolling here versus the current implementation.
         for (int i = 0; i < array.Length; i++)
         {
             T? value = array[i];
