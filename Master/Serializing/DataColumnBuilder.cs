@@ -67,7 +67,8 @@ internal ref struct DataColumnBuilder
             case double float64: BinaryPrimitives.WriteDoubleLittleEndian(slice, float64); break;
             default: throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
         }
-        _logicalLength += 1;
+        Debug.Assert(_type.TryGetSize(out int size));
+        _logicalLength += Unsafe.SizeOf<T>() / size;
     }
 
     public void Write<T>(ReadOnlySpan<T> values)
