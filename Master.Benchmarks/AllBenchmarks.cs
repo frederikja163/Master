@@ -27,22 +27,23 @@ public abstract class AllBenchmarks
 
     public static IEnumerable<ICustomData> GetData()
     {
-        bool isRows = false;
-        bool isColumns = true;
+        bool isRows = true;
+        bool isColumns = false;
         bool isSparsity = false;
-        int totalCount = 5;
+        int totalCount = 3;
         for (int i = 0; i < totalCount; i++)
         {
             int rows = isRows ? (int)Math.Pow(10, i) : 10;
             int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 100;
             float sparsity = isSparsity ? MathF.Max((float)i / totalCount, 0.1f) : 1f;
             yield return new RawData(1_000, rows, sparsity)
+                .PopulateRandomNatoAlphabetStrings(columns / 5)
                 .PopulateRandomInts(columns / 10)
                 .PopulateRandomDoubles(columns / 5)
-                .PopulateRandomNatoAlphabetStrings(columns / 5)
                 .PopulateOrderedInts(columns / 10)
                 .PopulateRandomGuidStrings(columns / 5)
-                .PopulateRandomFloats(columns / 5);
+                .PopulateRandomFloats(columns / 5)
+                ;
         }
     }
     

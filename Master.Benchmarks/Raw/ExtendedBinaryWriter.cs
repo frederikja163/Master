@@ -48,7 +48,7 @@ internal sealed class ExtendedBinaryWriter : IDisposable
     private bool WriteNullableType<T>(Array array)
         where T : unmanaged
     {
-        if (array.GetType().GetElementType()!.GetUnderlyingNullableType() != typeof(T?))
+        if (array.GetType().GetElementType()! != typeof(T?))
         {
             return false;
         }
@@ -85,6 +85,7 @@ internal sealed class ExtendedBinaryWriter : IDisposable
         {
             return false;
         }
+        
         foreach (string str in array.Cast<string>())
         {
             _writer.Write(str ?? "");

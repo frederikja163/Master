@@ -6,4 +6,9 @@ public static class TypeExtensions
     { 
         return Nullable.GetUnderlyingType(type) ?? type;
     }
+
+    public static bool IsNullable(this Type type)
+    {
+        return Nullable.GetUnderlyingType(type) is not null;
+    }
 }

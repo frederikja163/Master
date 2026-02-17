@@ -37,6 +37,4 @@ Global
 		{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4B7500F-B95E-4A4B-BEA8-728B6D99DFDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-	EndGlobalSection
 EndGlobal
