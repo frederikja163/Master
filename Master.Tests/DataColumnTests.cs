@@ -26,6 +26,10 @@ internal sealed class DataColumnTests
             case Half float16: size = Unsafe.SizeOf<Half>(); BinaryPrimitives.WriteHalfLittleEndian(bytes, float16); break;
             case float float32: size = Unsafe.SizeOf<float>(); BinaryPrimitives.WriteSingleLittleEndian(bytes, float32); break;
             case double float64: size = Unsafe.SizeOf<double>(); BinaryPrimitives.WriteDoubleLittleEndian(bytes, float64); break;
+            case string str:
+                return GetBytes(str.Length).Concat(Encoding.UTF8.GetBytes(str));
+            case byte[] blob:
+                return GetBytes(blob.Length).Concat(blob);
         }
 
         return bytes.Take(size);
@@ -41,7 +45,7 @@ internal sealed class DataColumnTests
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
         Assert.That(column.LogicalLength, Is.EqualTo(strings.Length));
         
-        byte[] data = strings.SelectMany(str => GetBytes(str.Length).Concat(Encoding.UTF8.GetBytes(str))).ToArray();
+        byte[] data = strings.SelectMany(GetBytes).ToArray();
         Assert.That(column.Data.ToArray(), Is.EquivalentTo(data));
     }
     
@@ -55,7 +59,7 @@ internal sealed class DataColumnTests
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
         Assert.That(column.LogicalLength, Is.EqualTo(blobs.Length));
 
-        byte[] data = blobs.SelectMany(blob => GetBytes(blob.Length).Concat(blob)).ToArray();
+        byte[] data = blobs.SelectMany(GetBytes).ToArray();
         Assert.That(column.Data.ToArray(), Is.EquivalentTo(data));
     }
 
