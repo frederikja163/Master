@@ -41,6 +41,7 @@ public class OpenTAPBenchmarks : AllBenchmarks
         {
             FilePath = Config.FilePath,
         };
+        // TODO: For some reason the parquet dependency is a bit messed up right now, we should try to resolve this.
         // yield return new ParquetResultListener()
         // {
         //     FilePath = new MacroString() { Text = Config.FilePath }
