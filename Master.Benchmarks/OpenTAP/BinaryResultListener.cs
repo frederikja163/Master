@@ -26,7 +26,7 @@ internal sealed class BinaryResultListener : ResultListener
     {
         foreach (ResultColumn column in resultTable.Columns)
         {
-            _writer.Write(column.Data);
+            _writer?.Write(column.Data);
         }
     }
 
