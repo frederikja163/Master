@@ -1,6 +1,6 @@
-namespace Master.Benchmarks.Extensions;
+namespace Master.Extensions;
 
-public static class TypeExtensions
+internal static class TypeExtensions
 {
     public static Type GetUnderlyingNullableType(this Type type)
     { 
