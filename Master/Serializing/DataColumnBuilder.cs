@@ -26,7 +26,8 @@ internal ref struct DataColumnBuilder
         _resizeAble = resizeAble;
     }
 
-    public int PhysicalSize => _data.Length;
+    public int PhysicalSize => _index;
+    public bool IsAtEnd => _index >= _data.Length;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
@@ -97,11 +98,19 @@ internal ref struct DataColumnBuilder
         WriteRaw(blob, 0);
     }
 
-    public void WriteBlobs(ReadOnlySpan<ReadOnlyMemory<byte>> blobs)
+    public void WriteBlobs(IEnumerable<ReadOnlyMemory<byte>> blobs)
     {
-        for (int i = 0; i < blobs.Length; i++)
+        foreach (ReadOnlyMemory<byte> blob in blobs)
         {
-            WriteBlob(blobs[i].Span);
+            WriteBlob(blob.Span);
+        }
+    }
+
+    public void WriteBlobs(IEnumerable<byte[]> blobs)
+    {
+        foreach (ReadOnlyMemory<byte> blob in blobs)
+        {
+            WriteBlob(blob.Span);
         }
     }
     
@@ -110,7 +119,7 @@ internal ref struct DataColumnBuilder
         WriteBlob(Encoding.UTF8.GetBytes(str));
     }
     
-    public void WriteStrings(ReadOnlySpan<string> strs)
+    public void WriteStrings(IEnumerable<string> strs)
     {
         foreach (string str in strs)
         {
