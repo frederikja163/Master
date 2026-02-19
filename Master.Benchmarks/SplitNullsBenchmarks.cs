@@ -1,6 +1,4 @@
 ﻿#define original
-// #define abstract
-// #define field
 using System.Collections;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
@@ -9,34 +7,9 @@ using Master.Serializing;
 
 namespace Master.Benchmarks;
 
-#if original
-using DDataColumnBuilder = Master.DataColumnBuilder;
-#elif abstract
-using DDataColumnBuilder = IDataColumnBuilder;
-#elif field
-using DDataColumnBuilder = DataColumnBuilderField;
-#endif
-
 [MemoryDiagnoser]
 public class SplitNullsBenchmarks
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    internal DDataColumnBuilder CreateBuilder(int size, bool resizeable = false) =>
-        CreateBuilder(LogicalType.UInt8, size, false);
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    internal DDataColumnBuilder CreateBuilder(LogicalType type, int size, bool resizeable = false)
-    {
-        #if original
-        return new DataColumnBuilder(type, size, resizeable);
-        #elif abstract
-        return (resizeable
-            ? new ResizeableDataColumnBuilder(type, size)
-            : new FixedDataColumnBuilder(type, size));
-        #elif field
-        return new DataColumnBuilderField(type, size, resizeable);
-        #endif
-    }
-    
     private int?[] array = [];
     private DataColumn? nulls = DataColumn.Empty;
 
@@ -61,7 +34,7 @@ public class SplitNullsBenchmarks
             valueSize += Unsafe.SizeOf<int>();
         }
         
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), valueSize);
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), valueSize, false);
         BitArray nullArray = new BitArray(array.Length);
         for (int i = 0; i < array.Length; i++)
         {
@@ -98,8 +71,9 @@ public class SplitNullsBenchmarks
             valueSize += Unsafe.SizeOf<int>();
         }
         
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), valueSize);
-        var nullBuilder = CreateBuilder(array.Length / 8 + 1);
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), valueSize, false);
+        int size = array.Length / 8 + 1;
+        var nullBuilder = new DataColumnBuilder(LogicalType.UInt8, size, false);
         int i = 0;
         for (; i + 8 < array.Length; i += 8)
         {
@@ -127,7 +101,7 @@ public class SplitNullsBenchmarks
         return valueBuilder.Build();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Iteration(int? value, DDataColumnBuilder dataColumnBuilder, ref byte nullByte)
+        void Iteration(int? value, DataColumnBuilder dataColumnBuilder, ref byte nullByte)
         {
             if (value is { } val)
             {
@@ -156,7 +130,7 @@ public class SplitNullsBenchmarks
             valueSize += Unsafe.SizeOf<int>();
         }
         
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), valueSize);
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), valueSize, false);
         byte[] nullBuilder = new byte[array.Length / 8 + 1];
         byte nullByte = 0;
         for (int i = 0; i < array.Length; i++)
@@ -200,8 +174,9 @@ public class SplitNullsBenchmarks
             valueSize += Unsafe.SizeOf<int>();
         }
         
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), valueSize);
-        var nullBuilder = CreateBuilder(array.Length / 8 + 1);
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), valueSize, false);
+        int size = array.Length / 8 + 1;
+        var nullBuilder = new DataColumnBuilder(LogicalType.UInt8, size, false);
         byte nullByte = 0;
         for (int i = 0; i < array.Length; i++)
         {
@@ -232,8 +207,10 @@ public class SplitNullsBenchmarks
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public DataColumn SingleLoopResizeable()
     {
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), array.Length / 10, true);
-        var nullBuilder = CreateBuilder(array.Length / 8 + 1);
+        int size = array.Length / 10;
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), size, true);
+        int size1 = array.Length / 8 + 1;
+        var nullBuilder = new DataColumnBuilder(LogicalType.UInt8, size1, false);
         byte nullByte = 0;
         for (int i = 0; i < array.Length; i++)
         {
@@ -264,8 +241,10 @@ public class SplitNullsBenchmarks
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public DataColumn SingleLoopOversized()
     {
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), array.Length * Unsafe.SizeOf<int>());
-        var nullBuilder = CreateBuilder(array.Length / 8 + 1);
+        int size = array.Length * Unsafe.SizeOf<int>();
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), size, false);
+        int size1 = array.Length / 8 + 1;
+        var nullBuilder = new DataColumnBuilder(LogicalType.UInt8, size1, false);
         byte nullByte = 0;
         for (int i = 0; i < array.Length; i++)
         {
@@ -296,8 +275,10 @@ public class SplitNullsBenchmarks
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public DataColumn SingleLoopOversizedBranchless()
     {
-        var valueBuilder = CreateBuilder(typeof(int).ToLogicalType(), array.Length * Unsafe.SizeOf<int>());
-        var nullBuilder = CreateBuilder(array.Length / 8 + 1);
+        int size = array.Length * Unsafe.SizeOf<int>();
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), size, false);
+        int size1 = array.Length / 8 + 1;
+        var nullBuilder = new DataColumnBuilder(LogicalType.UInt8, size1, false);
         byte nullByte = 0;
         for (int i = 0; i < array.Length; i++)
         {
@@ -315,6 +296,49 @@ public class SplitNullsBenchmarks
         nullBuilder.Write(nullByte);
         
         nulls = nullBuilder.Build();
+        return valueBuilder.Build();
+    }
+    
+    [Benchmark]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public DataColumn SingleLoopOversizedBitArray()
+    {
+        int size = array.Length * Unsafe.SizeOf<int>();
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), size, false);
+        var nullBuilder = new BitArray(array.Length);
+        for (int i = 0; i < array.Length; i++)
+        {
+            int? value = array[i];
+            nullBuilder[i] = value.HasValue;
+            if (value.HasValue)
+            {
+                valueBuilder.Write(value.GetValueOrDefault());
+            }
+        }
+
+        int[] ints = new int[(nullBuilder.Length + 31) / 32];
+        nullBuilder.CopyTo(ints, 0);
+        nulls = DataColumn.Create<int>(ints);
+        return valueBuilder.Build();
+    }
+    
+    [Benchmark]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public DataColumn SingleLoopOversizedBranchlessBitArray()
+    {
+        int size = array.Length * Unsafe.SizeOf<int>();
+        var valueBuilder = new DataColumnBuilder(typeof(int).ToLogicalType(), size, false);
+        var nullBuilder = new BitArray(array.Length);
+        for (int i = 0; i < array.Length; i++)
+        {
+            int? value = array[i];
+            nullBuilder[i] = value.HasValue;
+            valueBuilder.Write(value.GetValueOrDefault());
+        }
+
+        int[] ints = new int[(nullBuilder.Length + 31) / 32];
+        nullBuilder.CopyTo(ints, 0);
+        nulls = DataColumn.Create<int>(ints);
         return valueBuilder.Build();
     }
 }
