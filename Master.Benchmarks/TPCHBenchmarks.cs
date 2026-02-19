@@ -60,7 +60,7 @@ public class TPCHBenchmarks
             string tableColumns = table.Substring(startIndex, length);
             //Console.WriteLine(tableColumns);
             List<(string columnName, Type type)> columns = [];
-            foreach (string tableColumn in tableColumns.Split(",\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            foreach (string tableColumn in tableColumns.Split("\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
             {
                 string[] values = tableColumn.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
                 var column = (columnName: values[0], type: StringToType(values[1]));

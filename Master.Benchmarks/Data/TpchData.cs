@@ -14,8 +14,8 @@ public class TpchData : ICustomData
         var tempColumns = Enumerable.Range(0,_columnTypes.Length).Select(_ => new List<object>()).ToArray();
         foreach (string line in File.ReadLines(path))
         { 
-            var values = line.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            for (int i = 0; i < tempColumns.Length; i++)
+            var values = line.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries); 
+            for (int i = 0; i < values.Length; i++) 
             {
                 tempColumns[i].Add(Parse(values[i], _columnTypes[i]));
             }

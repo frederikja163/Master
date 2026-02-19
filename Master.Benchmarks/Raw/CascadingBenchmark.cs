@@ -1,6 +1,8 @@
 ﻿using BenchmarkDotNet.Columns;
 using Master.Benchmarks.Data;
 using Master.Serializing;
+using Master.Serializing.Columns;
+using IColumn = Master.Serializing.Columns.IColumn;
 
 namespace Master.Benchmarks.Raw;
 
@@ -15,7 +17,7 @@ internal sealed class CascadingBenchmark : IRawBenchmark
             foreach (Array array in data.Columns)
             {
                 DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                MetadataColumn column = serializer.Encode(dataColumn);
+                IColumn column = serializer.Encode(dataColumn);
                 foreach (DataColumn col in column.GetDataColumns())
                 {
                     stream.Write(col.Data.Span);
@@ -50,7 +52,7 @@ internal sealed class CascadingAsyncBenchmark : IRawBenchmark
                 tasks.Add(Task.Run(() =>
                 {
                     DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                    MetadataColumn column = serializer.Encode(dataColumn);
+                    IColumn column = serializer.Encode(dataColumn);
                     lock (stream)
                     {
                         foreach (DataColumn col in column.GetDataColumns())
