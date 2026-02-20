@@ -36,7 +36,7 @@ public readonly struct DataColumn
         return Create(data, typeof(T).ToLogicalType());
     }
 
-    public static DataColumn Create(ReadOnlySpan<string> data)
+    public static DataColumn Create(ICollection<string> data)
     {
         int length = 0;
         foreach (string str in data)
@@ -44,7 +44,7 @@ public readonly struct DataColumn
             length += Encoding.UTF8.GetByteCount(str);
         }
 
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, length + sizeof(int) * data.Length);
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, length + sizeof(int) * data.Count);
         builder.WriteStrings(data);
 
         return builder.Build();
@@ -88,7 +88,7 @@ public readonly struct DataColumn
             Half[] values => Create<Half>(values),
             float[] values => Create<float>(values),
             double[] values => Create<double>(values),
-            string[] str => Create(str.AsSpan()), // TODO: Split nulls for strings.
+            string[] str => Create(str), // TODO: Split nulls for strings.
             sbyte?[] values => SplitNulls<sbyte>(values, out nulls),
             short?[] values => SplitNulls<short>(values, out nulls),
             int?[] values => SplitNulls<int>(values, out nulls),
