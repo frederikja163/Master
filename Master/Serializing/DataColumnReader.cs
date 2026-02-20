@@ -28,6 +28,17 @@ public ref struct DataColumnReader
         _index = newIndex;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private ReadOnlySpan<byte> Slice(int offset, int size)
+    {
+        int start = _index + offset;
+        if ((uint)start + size > (uint)_data.Length)
+            throw new IndexOutOfRangeException();
+
+        ReadOnlySpan<byte> slice = _data.Slice(start, size);
+        return slice;
+    }
+
     public T Peek<T>(int offset = 0)
         where T : unmanaged
     {
@@ -45,17 +56,6 @@ public ref struct DataColumnReader
             typeof(T) == typeof(float) ? Unsafe.BitCast<float, T>(BinaryPrimitives.ReadSingleLittleEndian(slice)) :
             typeof(T) == typeof(double) ? Unsafe.BitCast<double, T>(BinaryPrimitives.ReadDoubleLittleEndian(slice)) :
             throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private ReadOnlySpan<byte> Slice(int offset, int size)
-    {
-        int start = _index + offset;
-        if ((uint)start + size > (uint)_data.Length)
-            throw new IndexOutOfRangeException();
-
-        ReadOnlySpan<byte> slice = _data.Slice(start, size);
-        return slice;
     }
 
     public T Read<T>() where T : unmanaged
