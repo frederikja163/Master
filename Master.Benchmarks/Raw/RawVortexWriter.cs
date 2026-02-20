@@ -1,5 +1,6 @@
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using Master.Extensions;
 using Vortex.Net;
 
 namespace Master.Benchmarks.Raw;

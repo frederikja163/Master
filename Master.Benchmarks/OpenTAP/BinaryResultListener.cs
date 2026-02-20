@@ -8,11 +8,11 @@ internal sealed class BinaryResultListener : ResultListener
     [Display("File path")]
     public string FilePath { get; set; } = "Results";
      
-    private ExtendedBinaryWriter _writer;
+    private ExtendedBinaryWriter? _writer;
 
     public override void Close()
     {
-        _writer.Dispose();
+        _writer?.Dispose();
         base.Close();
     }
 
@@ -26,7 +26,7 @@ internal sealed class BinaryResultListener : ResultListener
     {
         foreach (ResultColumn column in resultTable.Columns)
         {
-            _writer.Write(column.Data);
+            _writer?.Write(column.Data);
         }
     }
 

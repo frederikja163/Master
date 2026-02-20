@@ -1,6 +1,7 @@
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
 using Master.Benchmarks.Raw;
+using Master.Extensions;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 

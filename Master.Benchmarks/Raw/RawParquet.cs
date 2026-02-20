@@ -1,6 +1,7 @@
 using System.Runtime.ExceptionServices;
 using Master.Benchmarks.Data;
 using Master.Benchmarks.Extensions;
+using Master.Extensions;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;

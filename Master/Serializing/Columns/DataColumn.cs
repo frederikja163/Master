@@ -24,8 +24,8 @@ public readonly struct DataColumn : IColumn
         LogicalType = logicalType;
         LogicalLength = logicalLength;
     }
-
-    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
+    
+    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : struct
     {   
         if (!BitConverter.IsLittleEndian)
         {
@@ -33,7 +33,12 @@ public readonly struct DataColumn : IColumn
         }
         
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
-        return new DataColumn(typeof(T).ToLogicalType(), new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
+        return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
+    }
+
+    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
+    {
+        return Create(data, typeof(T).ToLogicalType());
     }
 
     public static DataColumn Create(ReadOnlySpan<string> data)
@@ -50,7 +55,12 @@ public readonly struct DataColumn : IColumn
         return builder.Build();
     }
 
-    public static DataColumn Create(ReadOnlySpan<ReadOnlyMemory<byte>> data)
+    public static DataColumn Create(IEnumerable<byte[]> data)
+    {
+        return Create(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
+    }
+    
+    public static DataColumn Create(ICollection<ReadOnlyMemory<byte>> data)
     {
         int length = 0;
         foreach (ReadOnlyMemory<byte> blob in data)
@@ -58,7 +68,7 @@ public readonly struct DataColumn : IColumn
             length += blob.Length;
         }
 
-        byte[] bytes = new byte[length + sizeof(int) * data.Length];
+        byte[] bytes = new byte[length + sizeof(int) * data.Count];
         int index = 0;
         foreach (ReadOnlyMemory<byte> blob in data)
         {
@@ -68,7 +78,7 @@ public readonly struct DataColumn : IColumn
             index += blob.Length;
         }
 
-        return new DataColumn(LogicalType.Blob, bytes, data.Length);
+        return new DataColumn(LogicalType.Blob, bytes, data.Count);
     }
 
     public static DataColumn Create(Array array, out DataColumn? nulls)
@@ -76,14 +86,10 @@ public readonly struct DataColumn : IColumn
         nulls = null;
         return array switch
         {
-            sbyte[] values => Create<sbyte>(values),
-            short[] values => Create<short>(values),
-            int[] values => Create<int>(values),
-            long[] values => Create<long>(values),
-            byte[] values => Create<byte>(values),
-            ushort[] values => Create<ushort>(values),
-            uint[] values => Create<uint>(values),
-            ulong[] values => Create<ulong>(values),
+            sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
+            short[] values => Create<short>(values, array.GetType().GetElementType()! == typeof(short) ? LogicalType.SInt16 : LogicalType.UInt16),
+            int[] values => Create<int>(values, array.GetType().GetElementType()! == typeof(int) ? LogicalType.SInt32 : LogicalType.UInt32),
+            long[] values => Create<long>(values, array.GetType().GetElementType()! == typeof(long) ? LogicalType.SInt64 : LogicalType.UInt64),
             Half[] values => Create<Half>(values),
             float[] values => Create<float>(values),
             double[] values => Create<double>(values),
@@ -103,13 +109,12 @@ public readonly struct DataColumn : IColumn
         };
     }
 
-    private static DataColumn SplitNulls<T>(T?[] array, out DataColumn? nulls)
+    internal static DataColumn SplitNulls<T>(T?[] array, out DataColumn? nulls)
         where T : unmanaged
     {
         int valueSize = 0;
-        for (int i = 0; i < array.Length; i++)
+        foreach (var value in array)
         {
-            T? value = array[i];
             if (value is null)
             {
                 continue;
