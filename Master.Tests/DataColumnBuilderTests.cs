@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using Master.Serializing;
+using Master.Serializing.Columns;
 
 namespace Master.Tests;
 

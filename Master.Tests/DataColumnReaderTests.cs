@@ -1,4 +1,5 @@
 ﻿using Master.Serializing;
+using Master.Serializing.Columns;
 
 namespace Master.Tests;
 
