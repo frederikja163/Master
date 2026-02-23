@@ -54,8 +54,10 @@ public sealed class Serializer
         var columns = encoding.Encode(inData);
         if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
         {
-            parent.Columns = columns.GetDataColumns().Zip(parentMeta.Columns).Select(d => Encode(d.First,d.Second)).ToArray();
-
+            foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
+            {
+                parent.Swap(child.First, Encode(child.First, child.Second));
+            }
         }
         return columns;
     }
@@ -78,7 +80,10 @@ public sealed class Serializer
             IColumn encodedColumn = encoding.Encode(sample);
             if (encodedColumn is IColumnParent parent)
             {
-                parent.Columns = encodedColumn.GetDataColumns().Select(d => PickEncoding(d, cascades - 1)).ToArray();
+                foreach (var child in encodedColumn.GetDataColumns())
+                {
+                    parent.Swap(child, PickEncoding(child, cascades - 1));
+                }
             }
             int length = encodedColumn.CalculateTotalLength();
             if (length < minSize)

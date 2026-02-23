@@ -18,7 +18,6 @@ public interface IEncoding
     IColumn Encode(DataColumn dataColumn);
 
     DataColumn Decode(IColumn data);
-    //DataColumn Decode(ReadOnlySpan<byte> metadata, EncodingId id, int logicalLength, int physicalLength);
 
     IEnumerable<LogicalType> GetSupportedTypes();
 }

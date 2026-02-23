@@ -27,14 +27,16 @@ internal sealed class SplitEncoding : IEncoding
     {
         if (data is not SplitColumn splitColumn)
             throw new Exception($"Data({nameof(data)}) is not a SplitColumn");
-        if (splitColumn._lengthColumn.PhysicalSize % sizeof(int) != 0)
+        DataColumn lengthColumn = (DataColumn) splitColumn.LengthColumn;
+        DataColumn byteColumn = (DataColumn)splitColumn.ByteColumn;
+        if (lengthColumn.PhysicalSize % sizeof(int) != 0)
             throw new Exception($"Length column length must be divisible by {sizeof(int)}.");
 
         
-        DataColumnReader lengthReader = splitColumn._lengthColumn.OpenReader();
-        DataColumnReader byteReader = splitColumn._byteColumn.OpenReader();
+        DataColumnReader lengthReader = lengthColumn.OpenReader();
+        DataColumnReader byteReader = byteColumn.OpenReader();
         int logicalLength = lengthReader.PhysicalSize / sizeof(int);
-        DataColumnBuilder builder = new DataColumnBuilder(splitColumn._logicalType, lengthReader.PhysicalSize + byteReader.PhysicalSize);
+        DataColumnBuilder builder = new DataColumnBuilder(splitColumn.LogicalType, lengthReader.PhysicalSize + byteReader.PhysicalSize);
 
         for (int i = 0; i < logicalLength; i++)
         {

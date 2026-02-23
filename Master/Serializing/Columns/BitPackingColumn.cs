@@ -4,7 +4,7 @@ using Master.Serializing.Encodings;
 
 namespace Master.Serializing.Columns;
 
-public sealed class BitPackingColumn : IColumn, IColumnParent
+internal sealed class BitPackingColumn : IColumnParent
 {
     public EncodingId Id => EncodingId.Split;
 
@@ -19,29 +19,34 @@ public sealed class BitPackingColumn : IColumn, IColumnParent
         Type = (LogicalType)reader.Read<byte>();
     }
 
+    public IColumn Column;
 
-    public IColumn[] Columns { get; set; } = [];
+
+    IEnumerable<IColumn> IColumnParent.GetChildColumns()
+    {
+        yield return Column;
+    }
+
+    public void Swap(IColumn existingColumn, IColumn newColumn)
+    {
+        Debug.Assert(existingColumn == Column);
+        Column = newColumn;
+    }
 
     public int CalculateTotalLength()
     {
-        return Columns.Sum(column => column.CalculateTotalLength());
+        return GetDataColumns().Sum(column => column.CalculateTotalLength());
     }
 
     public IEnumerable<DataColumn> GetDataColumns()
     {
-        foreach (IColumn column in Columns)
-        {
-            foreach (DataColumn data in column.GetDataColumns())
-            {
-                yield return data;
-            }
-        }
+        return Column.GetDataColumns();
     }
-    
-    public static readonly int Size = Unsafe.SizeOf<byte>() +
-                                      Unsafe.SizeOf<ulong>() +
-                                      Unsafe.SizeOf<int>() +
-                                      Unsafe.SizeOf<byte>();
+
+    private static readonly int Size = Unsafe.SizeOf<byte>() +
+                                       Unsafe.SizeOf<ulong>() +
+                                       Unsafe.SizeOf<int>() +
+                                       Unsafe.SizeOf<byte>();
     public byte PrefixLength { get; set; }
     public ulong Prefix { get; set; }
     public int LogicalLength { get; set; }
@@ -55,5 +60,10 @@ public sealed class BitPackingColumn : IColumn, IColumnParent
         builder.Write(LogicalLength);
         builder.Write((byte)Type);
         return builder.Build();
+    }
+    
+    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -16,9 +16,9 @@ internal sealed class SplitEncodingTests
         SplitEncoding encoder = new SplitEncoding();
         var columns = (SplitColumn) encoder.Encode(DataColumn.Create(strs));
         Assert.That(columns.GetDataColumns().Count(), Is.EqualTo(2));
-        DataColumn lengthColumn = columns._lengthColumn;
+        DataColumn lengthColumn = (DataColumn) columns.LengthColumn;
         DataColumnReader lengthReader = lengthColumn.OpenReader();
-        DataColumn strColumn = columns._byteColumn;
+        DataColumn strColumn = (DataColumn) columns.ByteColumn;
         DataColumnReader strReader = strColumn.OpenReader();
         Assert.That(lengthColumn.LogicalType, Is.EqualTo(LogicalType.SInt32));
         Assert.That(lengthColumn.LogicalLength, Is.EqualTo(2));

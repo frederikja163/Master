@@ -14,4 +14,5 @@ public interface IColumn
     /// </summary>
     public EncodingId Id { get; }
     public IEnumerable<DataColumn> GetDataColumns();
+    internal void WriteMetadata(DataColumnBuilder builder);
 }

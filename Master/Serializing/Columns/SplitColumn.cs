@@ -2,17 +2,17 @@
 
 namespace Master.Serializing.Columns;
 
-public class SplitColumn : IColumn
+internal sealed class SplitColumn : IColumnParent
 {
-    public readonly DataColumn _lengthColumn;
-    public readonly DataColumn _byteColumn;
-    public readonly LogicalType _logicalType;
+    public IColumn LengthColumn;
+    public IColumn ByteColumn;
+    public readonly LogicalType LogicalType;
 
-    public SplitColumn(DataColumn lengthColumn, DataColumn byteColumn, LogicalType logicalType)
+    public SplitColumn(IColumn lengthColumn, IColumn byteColumn, LogicalType logicalType)
     {
-        _lengthColumn = lengthColumn;
-        _byteColumn = byteColumn;
-        _logicalType = logicalType;
+        LengthColumn = lengthColumn;
+        ByteColumn = byteColumn;
+        LogicalType = logicalType;
     }
     
     public int CalculateTotalLength()
@@ -21,12 +21,28 @@ public class SplitColumn : IColumn
     }
 
     public EncodingId Id { get; } = EncodingId.Split;
-    public IEnumerable<DataColumn> GetDataColumns()
+    public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
+
+    void IColumn.WriteMetadata(DataColumnBuilder builder)
     {
-        yield return _lengthColumn;
-        yield return _byteColumn;
+        throw new NotImplementedException();
     }
-    
-    // DataColumn.Create<byte>(BitConverter.GetBytes((int)dataColumn.LogicalType))
-    //        LogicalType type = (LogicalType)metadataReader.Read<int>();
+
+    IEnumerable<IColumn> IColumnParent.GetChildColumns()
+    {
+        yield return LengthColumn;
+        yield return ByteColumn;
+    }
+
+    void IColumnParent.Swap(IColumn existingColumn, IColumn newColumn)
+    {
+        if (existingColumn == LengthColumn)
+        {
+            LengthColumn = newColumn;
+        }
+        if (existingColumn == ByteColumn)
+        {
+            ByteColumn = newColumn;
+        }
+    }
 }

@@ -72,7 +72,7 @@ internal sealed class BitPacking : IEncoding
         currentValue <<= size - shift;
         builder.Write(currentValue);
 
-        metadata.Columns = [builder.Build()];
+        metadata.Column = builder.Build();
     }
 
     internal static BitPackingColumn GetMetadata<T>(DataColumn data) where T : unmanaged, IBinaryInteger<T>
@@ -127,7 +127,7 @@ internal sealed class BitPacking : IEncoding
     {
         if (data is not BitPackingColumn bitPackingColumn)
             throw new Exception($"Data({nameof(data)}) is not a BitPackingColumn");
-        DataColumn dataColumn = (DataColumn) bitPackingColumn.Columns[0];
+        DataColumn dataColumn = (DataColumn) bitPackingColumn.Column; // TODO: needs to not be casted here
         if (!bitPackingColumn.Type.TryGetSize(out int size))
         {
             throw new Exception("Type must be a primitive");

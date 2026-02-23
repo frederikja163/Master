@@ -16,7 +16,7 @@ public readonly struct DataColumn : IColumn
     public int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
 
-    public static DataColumn Empty { get; } = new DataColumn(LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
+    public static DataColumn Empty { get; } = new (LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
 
     public DataColumn(LogicalType logicalType, ReadOnlyMemory<byte> data, int logicalLength)
     {
@@ -165,5 +165,10 @@ public readonly struct DataColumn : IColumn
     public IEnumerable<DataColumn> GetDataColumns()
     {
         yield return this;
+    }
+
+    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    {
+        throw new NotImplementedException();
     }
 }

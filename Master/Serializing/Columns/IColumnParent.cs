@@ -2,5 +2,6 @@
 
 public interface IColumnParent : IColumn
 {
-    public IColumn[] Columns { get; set; }
+    internal IEnumerable<IColumn> GetChildColumns();
+    internal void Swap(IColumn existingColumn, IColumn newColumn);
 }
