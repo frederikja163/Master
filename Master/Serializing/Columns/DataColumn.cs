@@ -1,17 +1,22 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Master.Serializing.Encodings;
 
-namespace Master.Serializing;
+namespace Master.Serializing.Columns;
 
-public readonly struct DataColumn
+/// <summary>
+/// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
+/// </summary>
+public readonly struct DataColumn : IColumn
 {
+    public EncodingId Id => EncodingId.Binary;
     public ReadOnlyMemory<byte> Data { get; }
     public readonly LogicalType LogicalType;
     public int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
 
-    public static DataColumn Empty { get; } = new DataColumn(LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
+    public static DataColumn Empty { get; } = new (LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
 
     public DataColumn(LogicalType logicalType, ReadOnlyMemory<byte> data, int logicalLength)
     {
@@ -150,5 +155,20 @@ public readonly struct DataColumn
     public DataColumnReader OpenReader()
     {
         return new DataColumnReader(this);
+    }
+
+    public int CalculateTotalLength()
+    {
+        return LogicalLength;
+    }
+
+    public IEnumerable<DataColumn> GetDataColumns()
+    {
+        yield return this;
+    }
+
+    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    {
+        throw new NotImplementedException();
     }
 }

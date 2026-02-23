@@ -3,73 +3,42 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using Master.Serializing.Columns;
 
 namespace Master.Serializing.Encodings;
 
 internal sealed class BitPacking : IEncoding
 {
-    internal struct Metadata
-    {
-        public static readonly int Size = Unsafe.SizeOf<byte>() +
-                                          Unsafe.SizeOf<ulong>() +
-                                          Unsafe.SizeOf<int>() +
-                                          Unsafe.SizeOf<byte>();
-        public byte PrefixLength { get; set; }
-        public ulong Prefix { get; set; }
-        public int LogicalLength { get; set; }
-        public LogicalType Type { get; set; }
-
-        public Metadata(DataColumn column)
-        {
-            Debug.Assert(column.PhysicalSize == Size);
-            DataColumnReader reader = column.OpenReader();
-            PrefixLength = reader.Read<byte>();
-            Prefix = reader.Read<ulong>();
-            LogicalLength = reader.Read<int>();
-            Type = (LogicalType)reader.Read<byte>();
-        }
-        
-        public DataColumn ToDataColumn()
-        {
-            DataColumnBuilder builder = new DataColumnBuilder(Size);
-            builder.Write(PrefixLength);
-            builder.Write(Prefix);
-            builder.Write(LogicalLength);
-            builder.Write((byte)Type);
-            return builder.Build();
-        }
-    }
-    
     public EncodingId Id { get; } = EncodingId.BitPacking;
     
-    public void Encode(DataColumn dataColumn, ref DataColumn metadataCol, out DataColumn[] outColumns)
+    public IColumn Encode(DataColumn dataColumn)
     {
         if (!dataColumn.LogicalType.TryGetSize(out int size))
         {
             throw new Exception("Type must be a primitive.");
         }
         
-        DataColumn column = size switch
+        IColumn column = size switch
         {
-            1 => Encode<byte>(dataColumn, ref metadataCol),
-            2 => Encode<ushort>(dataColumn, ref metadataCol),
-            4 => Encode<uint>(dataColumn, ref metadataCol),
-            8 => Encode<ulong>(dataColumn, ref metadataCol),
+            1 => Encode<byte>(dataColumn),
+            2 => Encode<ushort>(dataColumn),
+            4 => Encode<uint>(dataColumn),
+            8 => Encode<ulong>(dataColumn),
             _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
         };
 
-        outColumns = [column];
+        return column;
     }
 
-    private static DataColumn Encode<T>(DataColumn dataColumn, ref DataColumn metadataCol)
+    private static IColumn Encode<T>(DataColumn dataColumn)
         where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        Metadata metadata = GetMetadata<T>(dataColumn, metadataCol);
-        metadataCol = metadata.ToDataColumn();
-        return EncodeData<T>(dataColumn, metadata);
+        BitPackingColumn metadata = GetMetadata<T>(dataColumn);
+        EncodeData<T>(dataColumn, metadata);
+        return metadata;
     }
 
-    private static DataColumn EncodeData<T>(DataColumn dataColumn, Metadata metadata)
+    private static void EncodeData<T>(DataColumn dataColumn, BitPackingColumn metadata)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
         DataColumnReader reader = dataColumn.OpenReader();
@@ -103,25 +72,19 @@ internal sealed class BitPacking : IEncoding
         currentValue <<= size - shift;
         builder.Write(currentValue);
 
-        return builder.Build();
+        metadata.Column = builder.Build();
     }
 
-    internal static Metadata GetMetadata<T>(DataColumn data, DataColumn metadataCol) where T : unmanaged, IBinaryInteger<T>
+    internal static BitPackingColumn GetMetadata<T>(DataColumn data) where T : unmanaged, IBinaryInteger<T>
     {
-        if (metadataCol.LogicalLength != 0)
-        {
-            return new Metadata(metadataCol)
-            {
-                LogicalLength = data.LogicalLength
-            };
-        }
-
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
         GetBitCounts<T>(data, bitCounts);
         int count = data.LogicalLength;
-        Metadata metadata = new Metadata();
-        metadata.Type = data.LogicalType;
-        metadata.LogicalLength = data.LogicalLength;
+        BitPackingColumn metadata = new (data)
+        {
+            Type = data.LogicalType,
+            LogicalLength = data.LogicalLength
+        };
 
         for (int i = 0; i < Unsafe.SizeOf<T>() * 8 - 1; i++)
         {
@@ -162,29 +125,28 @@ internal sealed class BitPacking : IEncoding
         }
     }
 
-    public DataColumn Decode(DataColumn[] data, DataColumn metadataCol)
+    public DataColumn Decode(IColumn data)
     {
-        if (data.Length != 1)
-            throw new Exception($"Length of {nameof(data)} must be equal to 1");
-        DataColumn dataColumn = data[0];
-        Metadata metadata = new Metadata(metadataCol);
-        if (!metadata.Type.TryGetSize(out int size))
+        if (data is not BitPackingColumn bitPackingColumn)
+            throw new Exception($"Data({nameof(data)}) is not a BitPackingColumn");
+        DataColumn dataColumn = (DataColumn) bitPackingColumn.Column; // TODO: needs to not be casted here
+        if (!bitPackingColumn.Type.TryGetSize(out int size))
         {
             throw new Exception("Type must be a primitive");
         }
         
         DataColumn column = size switch
         {
-            1 => Decode<byte>(dataColumn, metadata),
-            2 => Decode<ushort>(dataColumn, metadata),
-            4 => Decode<uint>(dataColumn, metadata),
-            8 => Decode<ulong>(dataColumn, metadata),
+            1 => Decode<byte>(dataColumn, bitPackingColumn),
+            2 => Decode<ushort>(dataColumn, bitPackingColumn),
+            4 => Decode<uint>(dataColumn, bitPackingColumn),
+            8 => Decode<ulong>(dataColumn, bitPackingColumn),
             _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
         };
         return column;
     }
 
-    private DataColumn Decode<T>(DataColumn dataColumn, Metadata metadata)
+    private DataColumn Decode<T>(DataColumn dataColumn, BitPackingColumn metadata)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
         int size = Unsafe.SizeOf<T>() * 8;

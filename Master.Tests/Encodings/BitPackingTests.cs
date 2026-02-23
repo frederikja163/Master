@@ -1,4 +1,5 @@
 ﻿using Master.Serializing;
+using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 
 namespace Master.Tests.Encodings;
@@ -13,10 +14,9 @@ internal sealed class BitPackingTests
     {
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn dataColumn = DataColumn.Create<int>(data.AsSpan());
-        DataColumn metadata = DataColumn.Empty;
         IEncoding encoding = new BitPacking();
-        encoding.Encode(dataColumn, ref metadata, out DataColumn[] columns);
-        DataColumnReader decoded = encoding.Decode(columns, metadata).OpenReader();
+        IColumn columns = encoding.Encode(dataColumn);
+        DataColumnReader decoded = encoding.Decode(columns).OpenReader();
         Assert.That(decoded.Read<int>(length).ToArray(), Is.EquivalentTo(data));
     }
 
@@ -33,8 +33,7 @@ internal sealed class BitPackingTests
     [Test]
     public void GetMetadataTest()
     {
-        DataColumn metadataCol = DataColumn.Empty;
-        BitPacking.Metadata metadata = BitPacking.GetMetadata<byte>(DataColumn.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()), metadataCol);
+        BitPackingColumn metadata = BitPacking.GetMetadata<byte>(DataColumn.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
         Assert.That(metadata.LogicalLength, Is.EqualTo(21));
         Assert.That(metadata.Type, Is.EqualTo(LogicalType.UInt8));
         Assert.That(metadata.Prefix, Is.EqualTo(0b100));

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 
 namespace Master.Serializing;
@@ -27,66 +28,67 @@ public sealed class Serializer
     public int SampleCount { get; init; } = 10;
     public int MaxSampleLength = 1024;
     
-    public MetadataColumn Encode(DataColumn column)
+    public IColumn Encode(DataColumn column)
     {
         DataColumn sample = CreateSample(column);
-        MetadataColumn metadataSample = PickEncoding(sample, CascadingEncodings);
+        IColumn metadataSample = PickEncoding(sample, CascadingEncodings);
         return Encode(column, metadataSample);
     }
 
-    public DataColumn Decode(MetadataColumn column)
+    public DataColumn Decode(IColumn column)
     {
-        if (column.Id == EncodingId.Binary)
-        {
-            return column.Metadata;
-        }
-        
-        DataColumn[] physicalColumns = column.Columns.Select(c => Decode(c)).ToArray();
-        return _encodingsById[column.Id].Decode(physicalColumns, column.Metadata);
+        if (column is DataColumn dataColumn)
+            return dataColumn;
+        return _encodingsById[column.Id].Decode(column);
     }
 
-    private MetadataColumn Encode(DataColumn inData, MetadataColumn metadataSample)
+    private IColumn Encode(DataColumn inData, IColumn metadataSample)
     {
-        EncodingId id = metadataSample.Id;
-
-        if (id == EncodingId.Binary)
+        if (metadataSample is DataColumn col)
         {
-            return new MetadataColumn(inData);
+            return inData;
         }
+        EncodingId id = metadataSample.Id;
         
         IEncoding encoding = _encodingsById[id];
-        DataColumn metadata = metadataSample.Metadata;
-        encoding.Encode(inData, ref metadata, out var columns);
-        MetadataColumn[] column = columns
-            .Zip(metadataSample.Columns)
-            .Select(t => Encode(t.First, t.Second))
-            .ToArray();
-        return new MetadataColumn(id, metadata, column);
+        var columns = encoding.Encode(inData);
+        if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
+        {
+            foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
+            {
+                parent.Swap(child.First, Encode(child.First, child.Second));
+            }
+        }
+        return columns;
     }
 
-    internal MetadataColumn PickEncoding(DataColumn sample, int cascades)
+    internal IColumn PickEncoding(DataColumn sample, int cascades)
     {
         if (cascades == 0)
         {
-            return new MetadataColumn(sample);
+            return sample;
         }
         int minSize = sample.PhysicalSize / 4 * 3;
-        MetadataColumn bestEncoding = new MetadataColumn(sample);
+        IColumn bestEncoding = sample;
         if (!_encodingsByType.Contains(sample.LogicalType))
         {
-            return bestEncoding;
+            return sample;
         }
         
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            DataColumn metadata = DataColumn.Empty;
-            encoding.Encode(sample, ref metadata, out DataColumn[] columns);
-            MetadataColumn[] childColumns = columns.Select(d => PickEncoding(d, cascades - 1)).ToArray();
-            MetadataColumn metadataColumn = new MetadataColumn(encoding.Id, metadata, childColumns);
-            int length = metadataColumn.CalculateTotalLength();
+            IColumn encodedColumn = encoding.Encode(sample);
+            if (encodedColumn is IColumnParent parent)
+            {
+                foreach (var child in encodedColumn.GetDataColumns())
+                {
+                    parent.Swap(child, PickEncoding(child, cascades - 1));
+                }
+            }
+            int length = encodedColumn.CalculateTotalLength();
             if (length < minSize)
             {
-                bestEncoding = metadataColumn;
+                bestEncoding = encodedColumn;
                 minSize = length;
             }
         }

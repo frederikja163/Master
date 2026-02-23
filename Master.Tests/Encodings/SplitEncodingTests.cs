@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Master.Serializing;
+using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 
 namespace Master.Tests.Encodings;
@@ -13,13 +14,11 @@ internal sealed class SplitEncodingTests
         string str2 = "testing1234";
         string[] strs = [str1, str2];
         SplitEncoding encoder = new SplitEncoding();
-        DataColumn metadata = DataColumn.Empty;
-        encoder.Encode(DataColumn.Create(strs), ref metadata, out var columns);
-        Assert.That(columns.Length, Is.EqualTo(2));
-        Assert.That(metadata.LogicalLength, Is.EqualTo(4));
-        DataColumn lengthColumn = columns[0];
+        var columns = (SplitColumn) encoder.Encode(DataColumn.Create(strs));
+        Assert.That(columns.GetDataColumns().Count(), Is.EqualTo(2));
+        DataColumn lengthColumn = (DataColumn) columns.LengthColumn;
         DataColumnReader lengthReader = lengthColumn.OpenReader();
-        DataColumn strColumn = columns[1];
+        DataColumn strColumn = (DataColumn) columns.ByteColumn;
         DataColumnReader strReader = strColumn.OpenReader();
         Assert.That(lengthColumn.LogicalType, Is.EqualTo(LogicalType.SInt32));
         Assert.That(lengthColumn.LogicalLength, Is.EqualTo(2));
@@ -35,10 +34,9 @@ internal sealed class SplitEncodingTests
         string str1 = "Hello world";
         string str2 = "testing1234";
         string[] strs = [str1, str2];
-        DataColumn metadata = DataColumn.Empty;
         SplitEncoding encoding = new SplitEncoding();
-        encoding.Encode(DataColumn.Create(strs), ref metadata, out DataColumn[] columns);
-        DataColumnReader decoded = encoding.Decode(columns, metadata).OpenReader();
+        IColumn columns = encoding.Encode(DataColumn.Create(strs));
+        DataColumnReader decoded = encoding.Decode(columns).OpenReader();
         Assert.That(decoded.ReadString(2), Is.EquivalentTo(strs));
     }
 }

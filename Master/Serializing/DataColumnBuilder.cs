@@ -1,11 +1,10 @@
 ﻿using System.Buffers.Binary;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Master.Serializing;
+using Master.Serializing.Columns;
 
-namespace Master;
+namespace Master.Serializing;
 
 internal ref struct DataColumnBuilder
 {

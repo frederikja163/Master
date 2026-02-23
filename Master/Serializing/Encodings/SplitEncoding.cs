@@ -1,12 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Master.Serializing.Columns;
 
 namespace Master.Serializing.Encodings;
 
 internal sealed class SplitEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.Split;
-    public void Encode(DataColumn dataColumn, ref DataColumn metadataCol, out DataColumn[] outColumns)
+    public IColumn Encode(DataColumn dataColumn)
     {
         DataColumnReader columnReader = dataColumn.OpenReader();
         int length = dataColumn.LogicalLength;
@@ -19,28 +20,23 @@ internal sealed class SplitEncoding : IEncoding
             byteBuilder.Write<byte>(blob);
         }
 
-        metadataCol = DataColumn.Create<byte>(BitConverter.GetBytes((int)dataColumn.LogicalType));
-        outColumns =
-        [
-            lengthBuilder.Build(),
-            byteBuilder.Build(),
-        ];
+        return new SplitColumn(lengthBuilder.Build(), byteBuilder.Build(), dataColumn.LogicalType);
     }
 
-    public DataColumn Decode(DataColumn[] data, DataColumn metadataCol)
+    public DataColumn Decode(IColumn data)
     {
-        if (data.Length != 2)
-            throw new Exception("Split encoding must have two columns.");
-        if (data[0].PhysicalSize % sizeof(int) != 0)
+        if (data is not SplitColumn splitColumn)
+            throw new Exception($"Data({nameof(data)}) is not a SplitColumn");
+        DataColumn lengthColumn = (DataColumn) splitColumn.LengthColumn;
+        DataColumn byteColumn = (DataColumn)splitColumn.ByteColumn;
+        if (lengthColumn.PhysicalSize % sizeof(int) != 0)
             throw new Exception($"Length column length must be divisible by {sizeof(int)}.");
 
-        DataColumnReader metadataReader = metadataCol.OpenReader();
-        LogicalType type = (LogicalType)metadataReader.Read<int>();
         
-        DataColumnReader lengthReader = data[0].OpenReader();
-        DataColumnReader byteReader = data[1].OpenReader();
+        DataColumnReader lengthReader = lengthColumn.OpenReader();
+        DataColumnReader byteReader = byteColumn.OpenReader();
         int logicalLength = lengthReader.PhysicalSize / sizeof(int);
-        DataColumnBuilder builder = new DataColumnBuilder(type, lengthReader.PhysicalSize + byteReader.PhysicalSize);
+        DataColumnBuilder builder = new DataColumnBuilder(splitColumn.LogicalType, lengthReader.PhysicalSize + byteReader.PhysicalSize);
 
         for (int i = 0; i < logicalLength; i++)
         {

@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text;
 using Master.Serializing;
+using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 
 namespace Master.Tests.Encodings;
@@ -55,7 +56,7 @@ internal sealed class EncodingTests
         };
 
         DataColumn expected = DataColumn.Create(data);
-        MetadataColumn column = serializer.Encode(expected);
+        IColumn column = serializer.Encode(expected);
         DataColumn dataColumn = serializer.Decode(column);
         
         Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
