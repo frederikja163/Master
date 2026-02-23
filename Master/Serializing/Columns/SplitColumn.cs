@@ -20,7 +20,7 @@ internal sealed class SplitColumn : IColumnParent
         return GetDataColumns().Sum(d => d.CalculateTotalLength());
     }
 
-    public EncodingId Id { get; } = EncodingId.Split;
+    public EncodingId Id => EncodingId.Split;
     public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
 
     void IColumn.WriteMetadata(DataColumnBuilder builder)

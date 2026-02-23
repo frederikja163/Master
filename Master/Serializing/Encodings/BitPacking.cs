@@ -80,9 +80,11 @@ internal sealed class BitPacking : IEncoding
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
         GetBitCounts<T>(data, bitCounts);
         int count = data.LogicalLength;
-        BitPackingColumn metadata = new ();
-        metadata.Type = data.LogicalType;
-        metadata.LogicalLength = data.LogicalLength;
+        BitPackingColumn metadata = new (data)
+        {
+            Type = data.LogicalType,
+            LogicalLength = data.LogicalLength
+        };
 
         for (int i = 0; i < Unsafe.SizeOf<T>() * 8 - 1; i++)
         {

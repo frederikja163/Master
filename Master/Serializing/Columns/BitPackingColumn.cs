@@ -8,15 +8,9 @@ internal sealed class BitPackingColumn : IColumnParent
 {
     public EncodingId Id => EncodingId.Split;
 
-    public BitPackingColumn() {}
-    public BitPackingColumn(DataColumn blob)
+    public BitPackingColumn(IColumn placeholder)
     {
-        Debug.Assert(blob.PhysicalSize == Size);
-        DataColumnReader reader = blob.OpenReader();
-        PrefixLength = reader.Read<byte>();
-        Prefix = reader.Read<ulong>();
-        LogicalLength = reader.Read<int>();
-        Type = (LogicalType)reader.Read<byte>();
+        Column = placeholder;
     }
 
     public IColumn Column;
