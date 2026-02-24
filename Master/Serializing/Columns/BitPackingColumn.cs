@@ -7,15 +7,21 @@ namespace Master.Serializing.Columns;
 internal sealed class BitPackingColumn : IColumnParent
 {
     public EncodingId Id => EncodingId.Split;
+    public byte PrefixLength { get; set; }
+    public ulong Prefix { get; set; }
+    public int LogicalLength { get; set; }
+    public IColumn Column { get; set; }
+    public LogicalType Type { get; set; }
+    private static readonly int Size = Unsafe.SizeOf<byte>() +
+                                       Unsafe.SizeOf<ulong>() +
+                                       Unsafe.SizeOf<int>() +
+                                       Unsafe.SizeOf<byte>();
 
     public BitPackingColumn(IColumn placeholder)
     {
         Column = placeholder;
     }
-
-    public IColumn Column;
-
-
+    
     IEnumerable<IColumn> IColumnParent.GetChildColumns()
     {
         yield return Column;
@@ -36,15 +42,6 @@ internal sealed class BitPackingColumn : IColumnParent
     {
         return Column.GetDataColumns();
     }
-
-    private static readonly int Size = Unsafe.SizeOf<byte>() +
-                                       Unsafe.SizeOf<ulong>() +
-                                       Unsafe.SizeOf<int>() +
-                                       Unsafe.SizeOf<byte>();
-    public byte PrefixLength { get; set; }
-    public ulong Prefix { get; set; }
-    public int LogicalLength { get; set; }
-    public LogicalType Type { get; set; }
         
     public DataColumn ToDataColumn()
     {

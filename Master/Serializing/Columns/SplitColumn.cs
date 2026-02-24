@@ -4,9 +4,10 @@ namespace Master.Serializing.Columns;
 
 internal sealed class SplitColumn : IColumnParent
 {
-    public IColumn LengthColumn;
-    public IColumn ByteColumn;
-    public readonly LogicalType LogicalType;
+    public IColumn LengthColumn { get; set; }
+    public IColumn ByteColumn { get; set; }
+    public LogicalType LogicalType { get; }
+    public EncodingId Id => EncodingId.Split;
 
     public SplitColumn(IColumn lengthColumn, IColumn byteColumn, LogicalType logicalType)
     {
@@ -20,7 +21,6 @@ internal sealed class SplitColumn : IColumnParent
         return GetDataColumns().Sum(d => d.CalculateTotalLength());
     }
 
-    public EncodingId Id => EncodingId.Split;
     public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
 
     void IColumn.WriteMetadata(DataColumnBuilder builder)
