@@ -3,40 +3,44 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Master.Serializing.Columns;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing;
 
-public ref struct DataColumnReader
+public sealed class DataColumnReader : IColumnReader
 {
-    private readonly ReadOnlySpan<byte> _data;
+    private readonly ReadOnlyMemory<byte> _data;
     private readonly LogicalType _logicalType;
-    private int _index = 0;
 
     public DataColumnReader(DataColumn dataColumn)
     {
-        _data = dataColumn.Data.Span;
+        _data = dataColumn.Data;
         _logicalType = dataColumn.LogicalType;
+        Length = dataColumn.LogicalLength;
     }
     
     public int PhysicalSize => _data.Length;
-    public bool AtEnd => _index == _data.Length;
-    
+    public bool AtEnd => Index == _data.Length;
+
+    public int Length { get; }
+    public int Index { get; private set; } = 0;
+
     public void Advance(int byteCount)
     {
-        int newIndex = _index + byteCount;
+        int newIndex = Index + byteCount;
         if ((uint)newIndex > _data.Length)
             throw new IndexOutOfRangeException();
-        _index = newIndex;
+        Index = newIndex;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private ReadOnlySpan<byte> Slice(int offset, int size)
     {
-        int start = _index + offset;
+        int start = Index + offset;
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
-        ReadOnlySpan<byte> slice = _data.Slice(start, size);
+        ReadOnlySpan<byte> slice = _data.Slice(start, size).Span;
         return slice;
     }
 

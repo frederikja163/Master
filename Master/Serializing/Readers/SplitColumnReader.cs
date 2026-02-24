@@ -10,6 +10,12 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
     public int Length => _lengthColumn.Length;
     public int Index => _lengthColumn.Index;
 
+    public SplitColumnReader(IColumnReader<int> lengthColumn, IColumnReader<byte> byteColumn)
+    {
+        _lengthColumn = lengthColumn;
+        _byteColumn = byteColumn;
+    }
+
     public void Advance(int units)
     {
         for (int i = 0; i < units; i++)

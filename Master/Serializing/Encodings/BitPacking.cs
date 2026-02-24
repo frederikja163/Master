@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using Master.Serializing.Columns;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Encodings;
 
@@ -28,6 +29,35 @@ internal sealed class BitPacking : IEncoding
         };
 
         return column;
+    }
+
+    public IColumnReader CreateDecoder(IEnumerable<IColumnReader> childReader, LogicalType type, DataColumnReader metadataReader)
+    {
+        IColumnReader? reader = childReader.FirstOrDefault();
+        if (reader is null)
+            throw new Exception("Expected a child column to a bitpack encoded column, but found none.");
+        byte prefixLength = metadataReader.Read<byte>();
+        ulong prefix = metadataReader.Read<ulong>();
+        int logicalLength = metadataReader.Read<int>();
+        return type switch
+        {
+            LogicalType.SInt8 => new BitPackingColumnReader<sbyte>(reader, logicalLength, type, prefixLength, (sbyte)prefix),
+            LogicalType.SInt16 => new BitPackingColumnReader<short>(reader, logicalLength, type, prefixLength, (short)prefix),
+            LogicalType.SInt32 => new BitPackingColumnReader<int>(reader, logicalLength, type, prefixLength, (int)prefix),
+            LogicalType.SInt64 => new BitPackingColumnReader<long>(reader, logicalLength, type, prefixLength, (long)prefix),
+            LogicalType.UInt8 => new BitPackingColumnReader<byte>(reader, logicalLength, type, prefixLength, (byte)prefix),
+            LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
+            LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
+            LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
+            
+            // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
+            LogicalType.Float16 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Float32 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Float64 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
     }
 
     private static IColumn Encode<T>(DataColumn dataColumn)
@@ -80,31 +110,28 @@ internal sealed class BitPacking : IEncoding
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
         GetBitCounts<T>(data, bitCounts);
         int count = data.LogicalLength;
-        BitPackingColumn metadata = new (data)
-        {
-            Type = data.LogicalType,
-            LogicalLength = data.LogicalLength
-        };
+        byte prefixLength = 0;
+        ulong prefix = 0;
 
         for (int i = 0; i < Unsafe.SizeOf<T>() * 8 - 1; i++)
         {
             int bitCount = bitCounts[i];
             if (bitCount == count)
             {
-                metadata.PrefixLength += 1;
-                metadata.Prefix = (metadata.Prefix << 1) | 1;
+                prefixLength += 1;
+                prefix = (prefix << 1) | 1;
             }
             else if (bitCount == 0)
             {
-                metadata.PrefixLength += 1;
-                metadata.Prefix <<= 1;
+                prefixLength += 1;
+                prefix <<= 1;
             }
             else
             {
                 break;
             }
         }
-        return metadata;
+        return new BitPackingColumn(data, prefixLength, prefix);
     }
 
     internal static void GetBitCounts<T>(DataColumn column, Span<int> bitCounts)
@@ -130,7 +157,7 @@ internal sealed class BitPacking : IEncoding
         if (data is not BitPackingColumn bitPackingColumn)
             throw new Exception($"Data({nameof(data)}) is not a BitPackingColumn");
         DataColumn dataColumn = (DataColumn) bitPackingColumn.Column; // TODO: needs to not be casted here
-        if (!bitPackingColumn.Type.TryGetSize(out int size))
+        if (!bitPackingColumn.LogicalType.TryGetSize(out int size))
         {
             throw new Exception("Type must be a primitive");
         }
@@ -154,7 +181,7 @@ internal sealed class BitPacking : IEncoding
         int length = metadata.LogicalLength;
         DataColumnReader reader = dataColumn.OpenReader();
         DataColumnBuilder builder =
-            new DataColumnBuilder(metadata.Type, length * size / 8);
+            new DataColumnBuilder(metadata.LogicalType, length * size / 8);
 
         T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
         ulong p = metadata.Prefix << (size - metadata.PrefixLength);

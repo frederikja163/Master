@@ -6,23 +6,23 @@ using Master.Serializing.Columns;
 
 namespace Master.Serializing;
 
-internal ref struct DataColumnBuilder
+internal sealed class DataColumnBuilder
 {
     private readonly LogicalType _type;
     private Memory<byte> _data = Memory<byte>.Empty;
     private int _index = 0;
     private int _logicalLength = 0;
-    private bool _resizeAble = false;
+    private readonly bool _isConstSize = false;
     
-    public DataColumnBuilder(int size, bool resizeAble = false) : this(LogicalType.UInt8, size, resizeAble)
+    public DataColumnBuilder(int size, bool isConstSize = true) : this(LogicalType.UInt8, size, isConstSize)
     {
     }
 
-    public DataColumnBuilder(LogicalType type, int size, bool resizeAble = false)
+    public DataColumnBuilder(LogicalType type, int size, bool isConstSize = true)
     {
         _type = type;
         _data = new byte[size];
-        _resizeAble = resizeAble;
+        _isConstSize = isConstSize;
     }
 
     public int PhysicalSize => _index;
@@ -33,7 +33,7 @@ internal ref struct DataColumnBuilder
     {
         while ((uint)_index + size > (uint)_data.Length)
         {
-            if (!_resizeAble)
+            if (_isConstSize)
             {
                 throw new IndexOutOfRangeException();
             }

@@ -1,6 +1,7 @@
 ﻿using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Tests.Encodings;
 
@@ -16,8 +17,15 @@ internal sealed class BitPackingTests
         DataColumn dataColumn = DataColumn.Create<int>(data.AsSpan());
         IEncoding encoding = new BitPacking();
         IColumn columns = encoding.Encode(dataColumn);
-        DataColumnReader decoded = encoding.Decode(columns).OpenReader();
-        Assert.That(decoded.Read<int>(length).ToArray(), Is.EquivalentTo(data));
+        DataColumnBuilder metadataBuilder = new DataColumnBuilder(BitPackingColumn.Size);
+        columns.WriteMetadata(metadataBuilder);
+        DataColumn metadataColumn = metadataBuilder.Build();
+        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
+            columns.GetDataColumns().Select(d => d.OpenReader()).Cast<IColumnReader>(),
+            LogicalType.SInt32,
+            metadataColumn.OpenReader());
+        
+        Assert.That(reader.Read(length).ToArray(), Is.EquivalentTo(data));
     }
 
     [Test]
@@ -35,7 +43,7 @@ internal sealed class BitPackingTests
     {
         BitPackingColumn metadata = BitPacking.GetMetadata<byte>(DataColumn.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
         Assert.That(metadata.LogicalLength, Is.EqualTo(21));
-        Assert.That(metadata.Type, Is.EqualTo(LogicalType.UInt8));
+        Assert.That(metadata.LogicalType, Is.EqualTo(LogicalType.UInt8));
         Assert.That(metadata.Prefix, Is.EqualTo(0b100));
         Assert.That(metadata.PrefixLength, Is.EqualTo(3));
     }

@@ -4,9 +4,8 @@ namespace Master.Serializing.Columns;
 
 internal sealed class SplitColumn : IColumnParent
 {
-    public IColumn LengthColumn;
-    public IColumn ByteColumn;
-    public readonly LogicalType LogicalType;
+    public IColumn LengthColumn { get; private set; }
+    public IColumn ByteColumn { get; private set; }
 
     public SplitColumn(IColumn lengthColumn, IColumn byteColumn, LogicalType logicalType)
     {
@@ -21,11 +20,11 @@ internal sealed class SplitColumn : IColumnParent
     }
 
     public EncodingId Id => EncodingId.Split;
+    public LogicalType LogicalType { get; }
     public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
 
     void IColumn.WriteMetadata(DataColumnBuilder builder)
     {
-        throw new NotImplementedException();
     }
 
     IEnumerable<IColumn> IColumnParent.GetChildColumns()

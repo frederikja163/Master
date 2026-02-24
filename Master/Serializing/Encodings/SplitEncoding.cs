@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Master.Serializing.Columns;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Encodings;
 
@@ -23,28 +24,20 @@ internal sealed class SplitEncoding : IEncoding
         return new SplitColumn(lengthBuilder.Build(), byteBuilder.Build(), dataColumn.LogicalType);
     }
 
-    public DataColumn Decode(IColumn data)
+    public IColumnReader CreateDecoder(IEnumerable<IColumnReader> childColumns, LogicalType type,
+        DataColumnReader metadataReader)
     {
-        if (data is not SplitColumn splitColumn)
-            throw new Exception($"Data({nameof(data)}) is not a SplitColumn");
-        DataColumn lengthColumn = (DataColumn) splitColumn.LengthColumn;
-        DataColumn byteColumn = (DataColumn)splitColumn.ByteColumn;
-        if (lengthColumn.PhysicalSize % sizeof(int) != 0)
-            throw new Exception($"Length column length must be divisible by {sizeof(int)}.");
-
+        using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
+        IColumnReader lengthReader = childColumnEnumerator.Current;
+        if (!childColumnEnumerator.MoveNext() || lengthReader is not IColumnReader<int> lengths)
+            goto error;
+        IColumnReader byteReader = childColumnEnumerator.Current;
+        if (childColumnEnumerator.MoveNext() || byteReader is not IColumnReader<byte> bytes)
+            goto error;
+        return new SplitColumnReader(lengths, bytes);
         
-        DataColumnReader lengthReader = lengthColumn.OpenReader();
-        DataColumnReader byteReader = byteColumn.OpenReader();
-        int logicalLength = lengthReader.PhysicalSize / sizeof(int);
-        DataColumnBuilder builder = new DataColumnBuilder(splitColumn.LogicalType, lengthReader.PhysicalSize + byteReader.PhysicalSize);
-
-        for (int i = 0; i < logicalLength; i++)
-        {
-            int length = lengthReader.Read<int>();
-            ReadOnlySpan<byte> bytes = byteReader.Read<byte>(length);
-            builder.WriteBlob(bytes);
-        }
-        return builder.Build();
+        error:
+        throw new Exception();
     }
 
     public IEnumerable<LogicalType> GetSupportedTypes()

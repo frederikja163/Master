@@ -7,96 +7,62 @@ namespace Master.Serializing.Readers;
 internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
     where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
 {
+    private static readonly int BitSize = Unsafe.SizeOf<T>();
     public byte PrefixLength { get; }
-    public ulong Prefix { get; }
+    public T Prefix { get; }
     public LogicalType Type { get; }
     public IColumnReader<T> ColumnReader { get; }
     public int Length { get; }
     public int Index { get; } = 0;
-    private readonly int _valueBitSize;
+    private readonly int _valueSize;
+    private readonly T _valueMask;
 
-    public BitPackingColumnReader(byte prefixLength, ulong prefix, int logicalLength, LogicalType type, IColumnReader<T> reader)
+    public BitPackingColumnReader(IColumnReader reader, int logicalLength, LogicalType type, byte prefixLength, T prefix)
     {
+        if (reader is not IColumnReader<T> columnReader)
+            throw new Exception(
+                $"Expected child column of {nameof(BitPackingColumnReader<T>)} to be of type {nameof(IColumnReader<T>)} but found {reader.GetType().FullName}");
+        ColumnReader = columnReader;
         PrefixLength = prefixLength;
         Prefix = prefix;
         Length = logicalLength;
         Type = type;
-        ColumnReader = reader;
+        _valueSize = BitSize - prefixLength;
+        _valueMask = (T.MaxValue << PrefixLength) >> PrefixLength;
     }
     
     public T Peek(int offset = 0)
     {
+        int index = (Index + offset) * _valueSize;
+        int valueIndex = index / BitSize - ColumnReader.Index;
+        int bitIndex = index % BitSize;
+        T value = ColumnReader.Peek(valueIndex);
+        value >>= bitIndex;
+        if (bitIndex + _valueSize >= BitSize)
+        {
+            T nextValue = ColumnReader.Peek(valueIndex + 1);
+            nextValue >>= bitIndex - _valueSize;
+            value |= nextValue;
+        }
+        value = value & _valueMask | Prefix;
+        return value;
     }
 
     public IEnumerable<T> Peek(int count, int offset)
     {
-        throw new NotImplementedException();
+        // TODO: Implement faster SIMD version of peekn here.
+        for (int i = 0; i < count; i++)
+        {
+            yield return Peek(i + offset);
+        }
     }
 
     public void Advance(int units)
     {
-        throw new NotImplementedException();
-    }
-    
-    
-    public DataColumn Decode(IColumn data)
-    {
-        if (data is not BitPackingColumn bitPackingColumn)
-            throw new Exception($"Data({nameof(data)}) is not a BitPackingColumn");
-        DataColumn dataColumn = (DataColumn) bitPackingColumn.Column; // TODO: needs to not be casted here
-        if (!bitPackingColumn.Type.TryGetSize(out int size))
+        int index = Index * _valueSize / BitSize - ColumnReader.Index;
+        if (index > 0)
         {
-            throw new Exception("Type must be a primitive");
+            ColumnReader.Advance(index);
         }
-        
-        DataColumn column = size switch
-        {
-            1 => Decode<byte>(dataColumn, bitPackingColumn),
-            2 => Decode<ushort>(dataColumn, bitPackingColumn),
-            4 => Decode<uint>(dataColumn, bitPackingColumn),
-            8 => Decode<ulong>(dataColumn, bitPackingColumn),
-            _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
-        };
-        return column;
-    }
-
-    private DataColumn Decode<T>(DataColumn dataColumn, BitPackingColumn metadata)
-        where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
-    {
-        int size = Unsafe.SizeOf<T>() * 8;
-        int packedSize = size - metadata.PrefixLength;
-        int length = metadata.LogicalLength;
-        DataColumnReader reader = dataColumn.OpenReader();
-        DataColumnBuilder builder =
-            new DataColumnBuilder(metadata.Type, length * size / 8);
-
-        T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
-        ulong p = metadata.Prefix << (size - metadata.PrefixLength);
-        T prefix = Unsafe.As<ulong, T>(ref p);
-        T currentValue = reader.Read<T>();
-        int shift = size - packedSize;
-        for (int i = 0; i < length; i++)
-        {
-            T value;
-            if (shift >= 0)
-            {
-                value = (currentValue >> shift);
-            }
-            else
-            {
-                int shift1 = int.Abs(shift);
-                value = currentValue << shift1;
-                currentValue = reader.Read<T>();
-                shift = size - shift1;
-                value |= (currentValue >> shift);
-            }
-
-            value &= flag;
-            value |= prefix;
-            builder.Write(value);
-            shift -= packedSize;
-        }
-        
-        return builder.Build();
     }
 }

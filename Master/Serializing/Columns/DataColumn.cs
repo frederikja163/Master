@@ -11,8 +11,8 @@ namespace Master.Serializing.Columns;
 public readonly struct DataColumn : IColumn
 {
     public EncodingId Id => EncodingId.Binary;
+    public LogicalType LogicalType { get; }
     public ReadOnlyMemory<byte> Data { get; }
-    public readonly LogicalType LogicalType;
     public int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
 

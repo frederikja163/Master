@@ -1,4 +1,5 @@
 ﻿using Master.Serializing.Columns;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Encodings;
 
@@ -17,7 +18,7 @@ public interface IEncoding
     public EncodingId Id { get; }
     IColumn Encode(DataColumn dataColumn);
 
-    DataColumn Decode(IColumn data);
+    IColumnReader CreateDecoder(IEnumerable<IColumnReader> childColumns, LogicalType type, DataColumnReader metadataReader);
 
     IEnumerable<LogicalType> GetSupportedTypes();
 }

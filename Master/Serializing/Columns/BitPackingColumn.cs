@@ -8,9 +8,13 @@ internal sealed class BitPackingColumn : IColumnParent
 {
     public EncodingId Id => EncodingId.Split;
 
-    public BitPackingColumn(IColumn placeholder)
+    public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix)
     {
-        Column = placeholder;
+        Column = column;
+        PrefixLength = prefixLength;
+        Prefix = prefix;
+        LogicalLength = column.LogicalLength;
+        LogicalType = column.LogicalType;
     }
 
     public IColumn Column;
@@ -37,27 +41,19 @@ internal sealed class BitPackingColumn : IColumnParent
         return Column.GetDataColumns();
     }
 
-    private static readonly int Size = Unsafe.SizeOf<byte>() +
+    public static readonly int Size = Unsafe.SizeOf<byte>() +
                                        Unsafe.SizeOf<ulong>() +
                                        Unsafe.SizeOf<int>() +
                                        Unsafe.SizeOf<byte>();
-    public byte PrefixLength { get; set; }
-    public ulong Prefix { get; set; }
-    public int LogicalLength { get; set; }
-    public LogicalType Type { get; set; }
+    public byte PrefixLength { get; }
+    public ulong Prefix { get; }
+    public int LogicalLength { get; }
+    public LogicalType LogicalType { get; }
         
-    public DataColumn ToDataColumn()
+    public void WriteMetadata(DataColumnBuilder builder)
     {
-        DataColumnBuilder builder = new DataColumnBuilder(Size);
         builder.Write(PrefixLength);
         builder.Write(Prefix);
         builder.Write(LogicalLength);
-        builder.Write((byte)Type);
-        return builder.Build();
-    }
-    
-    void IColumn.WriteMetadata(DataColumnBuilder builder)
-    {
-        throw new NotImplementedException();
     }
 }

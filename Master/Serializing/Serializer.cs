@@ -35,13 +35,6 @@ public sealed class Serializer
         return Encode(column, metadataSample);
     }
 
-    public DataColumn Decode(IColumn column)
-    {
-        if (column is DataColumn dataColumn)
-            return dataColumn;
-        return _encodingsById[column.Id].Decode(column);
-    }
-
     private IColumn Encode(DataColumn inData, IColumn metadataSample)
     {
         if (metadataSample is DataColumn col)
@@ -109,7 +102,7 @@ public sealed class Serializer
         sampleLength = Math.Min(sampleLength, MaxSampleLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, true);
+        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size);
         DataColumnReader reader = data.OpenReader();
         
         int sectionLength = length / SampleCount;
