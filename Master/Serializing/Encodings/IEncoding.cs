@@ -5,7 +5,7 @@ namespace Master.Serializing.Encodings;
 /// <summary>
 /// Describes what <b>IEncoding</b> to use. The encoding does not determine the type of IColumn as IColumns can be reused in different encodings.
 /// </summary>
-public enum EncodingId : Int16
+public enum EncodingId : byte
 {
     Table = 0,
     Binary = 1,

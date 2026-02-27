@@ -133,6 +133,13 @@ internal ref struct DataColumnBuilder
         _logicalLength -= values.Length;
         _logicalLength += logicalLength;
     }
+    
+    public void WriteRaw<T>(T value)
+        where T : unmanaged
+    {
+        Write(value);
+        _logicalLength -= 1;
+    }
 
     public DataColumn Build()
     {

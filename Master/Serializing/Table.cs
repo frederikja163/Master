@@ -5,41 +5,75 @@ using Master.Serializing.Encodings;
 
 namespace Master.Serializing;
 
-public struct Table : IColumn
+public struct Table : IColumnParent
 {
-    public IEnumerable<(IColumn column, string name)> Columns => _columns;
-    private (IColumn column, string name)[] _columns;
+    private readonly IColumn[] _columns;
+    public int ColumnCount => _columns.Length;
+    internal IEnumerable<IColumn> Columns => _columns;
+    private readonly string[] _names;
+    public IEnumerable<string> Names => _names;
 
+
+    public EncodingId EncodingId => EncodingId.Table;
+    public LogicalType LogicalType => LogicalType.UInt8;
+    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+    {
+        foreach (IColumn column in _columns)
+        {
+            if (recursive && column is IColumnParent columnParent)
+            {
+                foreach (IColumn childColumn in columnParent.GetChildColumns(recursive))
+                {
+                    yield return childColumn;
+                }
+            }
+            yield return column;
+        }
+    }
+
+    public void Swap(IColumn existingColumn, IColumn newColumn)
+    {
+        for (var i = 0; i < _columns.Length; i++)
+        {
+            IColumn column = _columns[i];
+            if (!ReferenceEquals(column, existingColumn)) 
+                continue;
+            _columns[i] = column;
+            break;
+        }
+    }
     public int CalculateTotalLength()
     {
         return GetDataColumns().Sum(column => column.CalculateTotalLength());
     }
 
-    public EncodingId Id => EncodingId.Table;
     public IEnumerable<DataColumn> GetDataColumns()
     {
-        foreach ((IColumn column, string _) in Columns)
+        foreach (IColumn column in _columns)
         {
             foreach (DataColumn dataColumn in column.GetDataColumns()) 
                 yield return dataColumn;
         }
     }
 
-    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
-        throw new NotImplementedException();
+        StringBuilder sb = new();
+        int idCounter = 0;
+        
+        foreach (string name in _names)
+        {
+            sb.Append(idCounter + "," + name.Replace("\\", "\\\\").Replace(",", "\\,") + ","); // TODO: consider making name optional
+            idCounter++;
+        }
+        Console.WriteLine(sb.ToString());
+        blobBuilder.WriteString(sb.ToString());
     }
 
-    public Table(IEnumerable<(DataColumn column, string name)> columns)
+    internal Table(IEnumerable<DataColumn> columns, IEnumerable<string> names)
     {
-        Serializer serializer = new();
-        _columns = columns.Select(item => (serializer.Encode(item.column), item.name)).ToArray();
-    }
-
-    internal Table(DataColumn[] columns, string[] names)
-    {
-        Debug.Assert(columns.Length == names.Length);
-        Serializer serializer = new();
-        _columns = columns.Zip(names).Select(item => (serializer.Encode(item.First), item.Second)).ToArray();
+        Debug.Assert(columns.Count() == names.Count());
+        _columns = columns.OfType<IColumn>().ToArray();
+        _names = names.ToArray();
     }
 }

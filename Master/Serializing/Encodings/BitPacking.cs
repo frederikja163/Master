@@ -82,7 +82,7 @@ internal sealed class BitPacking : IEncoding
         int count = data.LogicalLength;
         BitPackingColumn metadata = new (data)
         {
-            Type = data.LogicalType,
+            LogicalType = data.LogicalType,
             LogicalLength = data.LogicalLength
         };
 
@@ -130,7 +130,7 @@ internal sealed class BitPacking : IEncoding
         if (data is not BitPackingColumn bitPackingColumn)
             throw new Exception($"Data({nameof(data)}) is not a BitPackingColumn");
         DataColumn dataColumn = (DataColumn) bitPackingColumn.Column; // TODO: needs to not be casted here
-        if (!bitPackingColumn.Type.TryGetSize(out int size))
+        if (!bitPackingColumn.LogicalType.TryGetSize(out int size))
         {
             throw new Exception("Type must be a primitive");
         }
@@ -154,7 +154,7 @@ internal sealed class BitPacking : IEncoding
         int length = metadata.LogicalLength;
         DataColumnReader reader = dataColumn.OpenReader();
         DataColumnBuilder builder =
-            new DataColumnBuilder(metadata.Type, length * size / 8);
+            new DataColumnBuilder(metadata.LogicalType, length * size / 8);
 
         T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
         ulong p = metadata.Prefix << (size - metadata.PrefixLength);
