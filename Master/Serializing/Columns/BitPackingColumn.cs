@@ -6,7 +6,7 @@ namespace Master.Serializing.Columns;
 
 internal sealed class BitPackingColumn : IColumnParent
 {
-    public EncodingId Id => EncodingId.Split;
+    public EncodingId Id => EncodingId.BitPacking;
 
     public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix)
     {

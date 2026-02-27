@@ -91,7 +91,7 @@ internal sealed class DataColumnBuilderTests
     [Test]
     public void CanResizeTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(1);
+        DataColumnBuilder builder = new DataColumnBuilder(1, false);
         builder.Write<byte>(123);
         Assert.That(builder.IsAtEnd, Is.True);
         Assert.That(builder.PhysicalSize, Is.EqualTo(1));
@@ -112,7 +112,7 @@ internal sealed class DataColumnBuilderTests
     public void IndexOutOfBoundsExceptionTest()
     {
         Assert.Throws<IndexOutOfRangeException>(() => { 
-            DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 1, false);
+            DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 1);
             builder.Write(new byte[] { 123, 23 });
         });
     }

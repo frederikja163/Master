@@ -10,6 +10,7 @@ internal sealed class BitPackingTests
     [TestCase(1, 5)]
     [TestCase(1, 10)]
     [TestCase(1, 1000)]
+    [TestCase(1, 256)]
     [TestCase(1000, 10)]
     public void BitPackEncodingRoundTripTest(int start, int length)
     {
@@ -21,9 +22,8 @@ internal sealed class BitPackingTests
         columns.WriteMetadata(metadataBuilder);
         DataColumn metadataColumn = metadataBuilder.Build();
         IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
-            columns.GetDataColumns().Select(d => d.OpenReader()).Cast<IColumnReader>(),
             LogicalType.SInt32,
-            metadataColumn.OpenReader());
+            metadataColumn.OpenDataColumnReader<byte>(), columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
         
         Assert.That(reader.Read(length).ToArray(), Is.EquivalentTo(data));
     }

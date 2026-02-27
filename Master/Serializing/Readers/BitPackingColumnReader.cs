@@ -7,13 +7,13 @@ namespace Master.Serializing.Readers;
 internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
     where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    private static readonly int BitSize = Unsafe.SizeOf<T>();
+    private static readonly int BitSize = Unsafe.SizeOf<T>() * 8;
     public byte PrefixLength { get; }
     public T Prefix { get; }
     public LogicalType Type { get; }
     public IColumnReader<T> ColumnReader { get; }
     public int Length { get; }
-    public int Index { get; } = 0;
+    public int Index { get; private set;  } = 0;
     private readonly int _valueSize;
     private readonly T _valueMask;
 
@@ -24,27 +24,32 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
                 $"Expected child column of {nameof(BitPackingColumnReader<T>)} to be of type {nameof(IColumnReader<T>)} but found {reader.GetType().FullName}");
         ColumnReader = columnReader;
         PrefixLength = prefixLength;
-        Prefix = prefix;
+        Prefix = prefix << (BitSize - prefixLength);
         Length = logicalLength;
         Type = type;
         _valueSize = BitSize - prefixLength;
-        _valueMask = (T.MaxValue << PrefixLength) >> PrefixLength;
+        _valueMask = ((~T.Zero) << prefixLength) >>> prefixLength;
     }
     
     public T Peek(int offset = 0)
     {
         int index = (Index + offset) * _valueSize;
         int valueIndex = index / BitSize - ColumnReader.Index;
-        int bitIndex = index % BitSize;
+        int shiftAmount = BitSize - _valueSize - index % BitSize;
         T value = ColumnReader.Peek(valueIndex);
-        value >>= bitIndex;
-        if (bitIndex + _valueSize >= BitSize)
+        if (shiftAmount >= 0)
+        {
+            value >>>= shiftAmount; // 1000 >> BitSize - valueSize
+        }
+        else
         {
             T nextValue = ColumnReader.Peek(valueIndex + 1);
-            nextValue >>= bitIndex - _valueSize;
+            shiftAmount = int.Abs(shiftAmount);
+            nextValue >>>= BitSize - shiftAmount; // 1000 = 0010
+            value <<= shiftAmount;
             value |= nextValue;
         }
-        value = value & _valueMask | Prefix;
+        value = (value & _valueMask) | Prefix;
         return value;
     }
 
@@ -59,6 +64,7 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
 
     public void Advance(int units)
     {
+        Index += units;
         int index = Index * _valueSize / BitSize - ColumnReader.Index;
         if (index > 0)
         {

@@ -102,16 +102,16 @@ public sealed class Serializer
         sampleLength = Math.Min(sampleLength, MaxSampleLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size);
-        DataColumnReader reader = data.OpenReader();
+        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, false);
+        DataColumnReader<byte> reader = data.OpenDataColumnReader<byte>();
         
         int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)
         {
             int index = Random.Shared.Next(0, sectionLength - sampleLength);
-            reader.AdvanceUnits(index);
+            reader.Advance(index);
             builder.WriteRaw(reader.ReadUnits(sampleLength), sampleLength);
-            reader.AdvanceUnits(sectionLength - index - sampleLength);
+            reader.Advance(sectionLength - index - sampleLength);
         }
 
         return builder.Build();

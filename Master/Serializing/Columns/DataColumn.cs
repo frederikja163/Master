@@ -2,13 +2,14 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Columns;
 
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
 /// </summary>
-public readonly struct DataColumn : IColumn
+public sealed class DataColumn : IColumn
 {
     public EncodingId Id => EncodingId.Binary;
     public LogicalType LogicalType { get; }
@@ -152,9 +153,14 @@ public readonly struct DataColumn : IColumn
         return valueBuilder.Build();
     }
 
-    public DataColumnReader OpenReader()
+    public IColumnReader<T> OpenReader<T>()
     {
-        return new DataColumnReader(this);
+        return new DataColumnReader<T>(this);
+    }
+
+    internal DataColumnReader<T> OpenDataColumnReader<T>()
+    {
+        return new DataColumnReader<T>(this);
     }
 
     public int CalculateTotalLength()

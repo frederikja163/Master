@@ -7,7 +7,7 @@ using Master.Serializing.Readers;
 
 namespace Master.Serializing;
 
-public sealed class DataColumnReader : IColumnReader
+public sealed class DataColumnReader<T> : IColumnReader<T>
 {
     private readonly ReadOnlyMemory<byte> _data;
     private readonly LogicalType _logicalType;
@@ -20,23 +20,24 @@ public sealed class DataColumnReader : IColumnReader
     }
     
     public int PhysicalSize => _data.Length;
-    public bool AtEnd => Index == _data.Length;
+    public bool AtEnd => _byteIndex >= _data.Length;
 
     public int Length { get; }
+    private int _byteIndex = 0;
     public int Index { get; private set; } = 0;
 
-    public void Advance(int byteCount)
+    public void AdvanceRaw(int byteCount, int units)
     {
-        int newIndex = Index + byteCount;
-        if ((uint)newIndex > _data.Length)
+        if ((uint)_byteIndex + byteCount > _data.Length || (uint)units > Length)
             throw new IndexOutOfRangeException();
-        Index = newIndex;
+        _byteIndex += byteCount;
+        Index += units;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private ReadOnlySpan<byte> Slice(int offset, int size)
     {
-        int start = Index + offset;
+        int start = _byteIndex + offset;
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
@@ -44,97 +45,72 @@ public sealed class DataColumnReader : IColumnReader
         return slice;
     }
 
-    public T Peek<T>(int offset = 0)
-        where T : unmanaged
+    public T1 Peek<T1>(int offset = 0)
     {
-        ReadOnlySpan<byte> slice = Slice(offset, Unsafe.SizeOf<T>());
+        // TODO: This function only works properly where T : unmanaged, since the offset is in byte counts. This means we need a separate function for T Peek that can properly have an offset for var length types.
         return 
-            typeof(T) == typeof(sbyte) ? Unsafe.BitCast<sbyte, T>((sbyte)slice[0]) :
-            typeof(T) == typeof(short) ? Unsafe.BitCast<short, T>(BinaryPrimitives.ReadInt16LittleEndian(slice)) :
-            typeof(T) == typeof(int) ? Unsafe.BitCast<int, T>(BinaryPrimitives.ReadInt32LittleEndian(slice)) :
-            typeof(T) == typeof(long) ? Unsafe.BitCast<long, T>(BinaryPrimitives.ReadInt64LittleEndian(slice)) :
-            typeof(T) == typeof(byte) ? Unsafe.BitCast<byte, T>(slice[0]) :
-            typeof(T) == typeof(ushort) ? Unsafe.BitCast<ushort, T>(BinaryPrimitives.ReadUInt16LittleEndian(slice)) :
-            typeof(T) == typeof(uint) ? Unsafe.BitCast<uint, T>(BinaryPrimitives.ReadUInt32LittleEndian(slice)) :
-            typeof(T) == typeof(ulong) ? Unsafe.BitCast<ulong, T>(BinaryPrimitives.ReadUInt64LittleEndian(slice)) :
-            typeof(T) == typeof(Half) ? Unsafe.BitCast<Half, T>(BinaryPrimitives.ReadHalfLittleEndian(slice)) :
-            typeof(T) == typeof(float) ? Unsafe.BitCast<float, T>(BinaryPrimitives.ReadSingleLittleEndian(slice)) :
-            typeof(T) == typeof(double) ? Unsafe.BitCast<double, T>(BinaryPrimitives.ReadDoubleLittleEndian(slice)) :
+            typeof(T1) == typeof(sbyte) ? Unsafe.BitCast<sbyte, T1>((sbyte)Slice(offset, Unsafe.SizeOf<sbyte>())[0]) :
+            typeof(T1) == typeof(short) ? Unsafe.BitCast<short, T1>(BinaryPrimitives.ReadInt16LittleEndian(Slice(offset, Unsafe.SizeOf<short>()))) :
+            typeof(T1) == typeof(int) ? Unsafe.BitCast<int, T1>(BinaryPrimitives.ReadInt32LittleEndian(Slice(offset, Unsafe.SizeOf<int>()))) :
+            typeof(T1) == typeof(long) ? Unsafe.BitCast<long, T1>(BinaryPrimitives.ReadInt64LittleEndian(Slice(offset, Unsafe.SizeOf<long>()))) :
+            typeof(T1) == typeof(byte) ? Unsafe.BitCast<byte, T1>(Slice(offset, Unsafe.SizeOf<byte>())[0]) :
+            typeof(T1) == typeof(ushort) ? Unsafe.BitCast<ushort, T1>(BinaryPrimitives.ReadUInt16LittleEndian(Slice(offset, Unsafe.SizeOf<ushort>()))) :
+            typeof(T1) == typeof(uint) ? Unsafe.BitCast<uint, T1>(BinaryPrimitives.ReadUInt32LittleEndian(Slice(offset, Unsafe.SizeOf<uint>()))) :
+            typeof(T1) == typeof(ulong) ? Unsafe.BitCast<ulong, T1>(BinaryPrimitives.ReadUInt64LittleEndian(Slice(offset, Unsafe.SizeOf<ulong>()))) :
+            typeof(T1) == typeof(Half) ? Unsafe.BitCast<Half, T1>(BinaryPrimitives.ReadHalfLittleEndian(Slice(offset, Unsafe.SizeOf<Half>()))) :
+            typeof(T1) == typeof(float) ? Unsafe.BitCast<float, T1>(BinaryPrimitives.ReadSingleLittleEndian(Slice(offset, Unsafe.SizeOf<float>()))) :
+            typeof(T1) == typeof(double) ? Unsafe.BitCast<double, T1>(BinaryPrimitives.ReadDoubleLittleEndian(Slice(offset, Unsafe.SizeOf<double>()))) :
+            typeof(T1) == typeof(byte[]) ? UnsafeAs<byte[], T1>(PeekBlob(offset).ToArray()) :
+            typeof(T1) == typeof(string) ? UnsafeAs<string, T1>(Encoding.UTF8.GetString(PeekBlob(offset))) :
             throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
+
+        static TOut UnsafeAs<TIn, TOut>(TIn value)
+        {
+            return Unsafe.As<TIn, TOut>(ref value);
+        }
     }
 
-    public T Read<T>() where T : unmanaged
+    private ReadOnlySpan<byte> PeekBlob(int offset = 0)
     {
-        T value = Peek<T>();
-        Advance(Unsafe.SizeOf<T>());
+        int length = Peek<int>();
+        int totalOffset = 0 + Unsafe.SizeOf<int>();
+        for (int i = 0; i < offset; i++)
+        {
+            totalOffset += length;
+            length = Peek<int>(totalOffset);
+            totalOffset += Unsafe.SizeOf<int>();
+        }
+
+        return Slice(totalOffset, length).ToArray();
+    }
+
+    public T1 Read<T1>()
+    {
+        T1 value = Peek<T1>();
+        AdvanceRaw(Unsafe.SizeOf<T1>(), Unsafe.SizeOf<T1>() / Unsafe.SizeOf<T>());
         return value;
     }
 
-    public ReadOnlySpan<T> Read<T>(int count)
-        where T : unmanaged
+    public IEnumerable<T1> Read<T1>(int count)
     {
-        if (BitConverter.IsLittleEndian)
-        {
-            ReadOnlySpan<byte> slice = Slice(0, count * Unsafe.SizeOf<T>());
-            Advance(count * Unsafe.SizeOf<T>());
-            return MemoryMarshal.Cast<byte, T>(slice);
-        }
-
-        T[] values = new T[count];
         for (int i = 0; i < count; i++)
         {
-            values[i] = Read<T>();
+            yield return Read<T1>();
         }
-
-        return values;
     }
 
-    public ReadOnlySpan<byte> ReadBlob()
-    {
-        int length = Read<int>();
-        return Read<byte>(length);
-    }
-
-    public byte[][] ReadBlob(int length)
-    {
-        byte[][] values = new byte[length][];
-        for (int i = 0; i < length; i++)
-        {
-            values[i] = ReadBlob().ToArray();
-        }
-
-        return values;
-    }
-
-    public string ReadString()
-    {
-        ReadOnlySpan<byte> blob = ReadBlob();
-        return Encoding.UTF8.GetString(blob);
-    }
-
-    public string[] ReadString(int length)
-    {
-        string[] values = new string[length];
-        for (int i = 0; i < length; i++)
-        {
-            values[i] = ReadString();
-        }
-
-        return values;
-    }
-
-    public void AdvanceUnits(int count = 1)
+    public void Advance(int units = 1)
     {
         if (_logicalType.TryGetSize(out int size))
         {
-            Advance(count * size);
+            AdvanceRaw(units * size, 1);
             return;
         }
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < units; i++)
         {
-            int length = Read<int>();
-            Advance(length);
+            int length = Peek<int>();
+            AdvanceRaw(length + Unsafe.SizeOf<int>(), 1);
         }
     }
 
@@ -142,7 +118,7 @@ public sealed class DataColumnReader : IColumnReader
     {
         if (_logicalType.TryGetSize(out int size))
         {
-            return Read<byte>(count * size);
+            return Slice(0, count * size);
         }
 
         int length = 0;
@@ -151,6 +127,19 @@ public sealed class DataColumnReader : IColumnReader
             length += Peek<int>(length) + Unsafe.SizeOf<int>();
         }
 
-        return Read<byte>(length);
+        return Slice(0, length);
+    }
+
+    public T Peek(int offset = 0)
+    {
+        return Peek<T>(offset * Unsafe.SizeOf<T>());
+    }
+
+    public IEnumerable<T> Peek(int count, int offset)
+    {
+        for (int i = 0; i < offset; i++)
+        {
+            yield return Peek(i);
+        }
     }
 }

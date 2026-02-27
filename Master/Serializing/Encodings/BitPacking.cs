@@ -31,7 +31,7 @@ internal sealed class BitPacking : IEncoding
         return column;
     }
 
-    public IColumnReader CreateDecoder(IEnumerable<IColumnReader> childReader, LogicalType type, DataColumnReader metadataReader)
+    public IColumnReader CreateDecoder(LogicalType type, DataColumnReader<byte> metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
@@ -71,17 +71,17 @@ internal sealed class BitPacking : IEncoding
     private static void EncodeData<T>(DataColumn dataColumn, BitPackingColumn metadata)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        DataColumnReader reader = dataColumn.OpenReader();
+        IColumnReader<T> reader = dataColumn.OpenReader<T>();
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
-        int length = (int)double.Ceiling(reader.PhysicalSize * (packedSize / (double)size)) + 1;
+        int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
         DataColumnBuilder builder = new DataColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
-        T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
+        T flag = (~T.Zero << metadata.PrefixLength) >>> metadata.PrefixLength;
         T currentValue = default;
         int shift = 0;
-        while (!reader.AtEnd)
+        while (!reader.IsAtEnd)
         {
-             T value = reader.Read<T>() & flag;
+             T value = reader.Read() & flag;
              if (shift + packedSize < size)
              {
                  currentValue = (currentValue << packedSize) | value;
@@ -138,11 +138,11 @@ internal sealed class BitPacking : IEncoding
         where T : unmanaged, INumber<T>, IBinaryInteger<T>
     {
         // TODO: Optimize using SIMD and PopCount.
-        DataColumnReader reader = column.OpenReader();
+        IColumnReader<T> reader = column.OpenReader<T>();
         int size = Unsafe.SizeOf<T>() * 8;
         for (int i = 0; i < column.LogicalLength; i++)
         {
-            T value = reader.Read<T>();
+            T value = reader.Read();
             // TODO: Skip leading zeros.
             for (int j = 1; j <= size; j++)
             {
@@ -179,14 +179,14 @@ internal sealed class BitPacking : IEncoding
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
         int length = metadata.LogicalLength;
-        DataColumnReader reader = dataColumn.OpenReader();
+        IColumnReader<T> reader = dataColumn.OpenReader<T>();
         DataColumnBuilder builder =
             new DataColumnBuilder(metadata.LogicalType, length * size / 8);
 
         T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
         ulong p = metadata.Prefix << (size - metadata.PrefixLength);
         T prefix = Unsafe.As<ulong, T>(ref p);
-        T currentValue = reader.Read<T>();
+        T currentValue = reader.Read();
         int shift = size - packedSize;
         for (int i = 0; i < length; i++)
         {
@@ -199,7 +199,7 @@ internal sealed class BitPacking : IEncoding
             {
                 int shift1 = int.Abs(shift);
                 value = currentValue << shift1;
-                currentValue = reader.Read<T>();
+                currentValue = reader.Read();
                 shift = size - shift1;
                 value |= (currentValue >> shift);
             }
