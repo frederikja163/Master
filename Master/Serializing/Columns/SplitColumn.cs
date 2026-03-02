@@ -23,7 +23,7 @@ internal sealed class SplitColumn : IColumnParent
     public LogicalType LogicalType { get; }
     public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
 
-    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    void IColumn.WriteMetadata(ref DataColumnBuilder builder)
     {
     }
 
@@ -33,13 +33,13 @@ internal sealed class SplitColumn : IColumnParent
         yield return ByteColumn;
     }
 
-    void IColumnParent.Swap(IColumn existingColumn, IColumn newColumn)
+    void IColumnParent.Swap(ref IColumn existingColumn, IColumn newColumn)
     {
-        if (existingColumn == LengthColumn)
+        if (existingColumn.Equals(LengthColumn))
         {
             LengthColumn = newColumn;
         }
-        if (existingColumn == ByteColumn)
+        if (existingColumn.Equals(ByteColumn))
         {
             ByteColumn = newColumn;
         }

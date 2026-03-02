@@ -26,10 +26,10 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
         }
     }
 
-    string IColumnReader<string>.Peek(int offset)
+    string IColumnReader<string>.Peek(int byteOffset)
     {
-        int length = _lengthColumn.Peek(offset);
-        return Encoding.UTF8.GetString(_byteColumn.Peek(length, offset).ToArray());
+        int length = _lengthColumn.Peek(byteOffset);
+        return Encoding.UTF8.GetString(_byteColumn.Peek(length, byteOffset).ToArray());
     }
 
     IEnumerable<string> IColumnReader<string>.Peek(int count, int offset)

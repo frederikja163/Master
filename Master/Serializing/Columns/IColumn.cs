@@ -15,5 +15,5 @@ public interface IColumn
     public EncodingId Id { get; }
     public LogicalType LogicalType { get; }
     public IEnumerable<DataColumn> GetDataColumns();
-    internal void WriteMetadata(DataColumnBuilder builder);
+    internal void WriteMetadata(ref DataColumnBuilder builder);
 }

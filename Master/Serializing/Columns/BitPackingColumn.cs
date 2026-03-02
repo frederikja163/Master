@@ -25,9 +25,9 @@ internal sealed class BitPackingColumn : IColumnParent
         yield return Column;
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public void Swap(ref IColumn existingColumn, IColumn newColumn)
     {
-        Debug.Assert(existingColumn == Column);
+        Debug.Assert(existingColumn.Equals(Column));
         Column = newColumn;
     }
 
@@ -50,7 +50,7 @@ internal sealed class BitPackingColumn : IColumnParent
     public int LogicalLength { get; }
     public LogicalType LogicalType { get; }
         
-    public void WriteMetadata(DataColumnBuilder builder)
+    public void WriteMetadata(ref DataColumnBuilder builder)
     {
         builder.Write(PrefixLength);
         builder.Write(Prefix);

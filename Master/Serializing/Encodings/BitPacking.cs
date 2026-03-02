@@ -12,7 +12,7 @@ internal sealed class BitPacking : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.BitPacking;
     
-    public IColumn Encode(DataColumn dataColumn)
+    public IColumn Encode(ref DataColumn dataColumn)
     {
         if (!dataColumn.LogicalType.TryGetSize(out int size))
         {

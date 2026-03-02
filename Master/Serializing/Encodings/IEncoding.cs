@@ -16,7 +16,7 @@ public enum EncodingId
 public interface IEncoding
 {
     public EncodingId Id { get; }
-    IColumn Encode(DataColumn dataColumn);
+    IColumn Encode(ref DataColumn dataColumn);
 
     IColumnReader CreateDecoder(LogicalType type, DataColumnReader<byte> metadataReader, params IEnumerable<IColumnReader> childColumns);
 

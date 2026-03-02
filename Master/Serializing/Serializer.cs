@@ -44,12 +44,13 @@ public sealed class Serializer
         EncodingId id = metadataSample.Id;
         
         IEncoding encoding = _encodingsById[id];
-        var columns = encoding.Encode(inData);
+        var columns = encoding.Encode(ref inData);
         if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
         {
             foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
             {
-                parent.Swap(child.First, Encode(child.First, child.Second));
+                IColumn column = child.First;
+                parent.Swap(ref column, Encode(child.First, child.Second));
             }
         }
         return columns;
@@ -70,12 +71,13 @@ public sealed class Serializer
         
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            IColumn encodedColumn = encoding.Encode(sample);
+            IColumn encodedColumn = encoding.Encode(ref sample);
             if (encodedColumn is IColumnParent parent)
             {
                 foreach (var child in encodedColumn.GetDataColumns())
                 {
-                    parent.Swap(child, PickEncoding(child, cascades - 1));
+                    IColumn column = child;
+                    parent.Swap(ref column, PickEncoding(child, cascades - 1));
                 }
             }
             int length = encodedColumn.CalculateTotalLength();

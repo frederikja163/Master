@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Master.Serializing.Encodings;
@@ -9,7 +10,7 @@ namespace Master.Serializing.Columns;
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
 /// </summary>
-public sealed class DataColumn : IColumn
+public struct DataColumn : IColumn
 {
     public EncodingId Id => EncodingId.Binary;
     public LogicalType LogicalType { get; }
@@ -173,8 +174,18 @@ public sealed class DataColumn : IColumn
         yield return this;
     }
 
-    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    void IColumn.WriteMetadata(ref DataColumnBuilder builder)
     {
         throw new NotImplementedException();
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        return obj is DataColumn other &&
+               other.Data.Equals(Data) &&
+               other.Id == Id &&
+               other.PhysicalSize == PhysicalSize &&
+               other.LogicalLength == LogicalLength &&
+               other.LogicalType == LogicalType;
     }
 }

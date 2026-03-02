@@ -29,11 +29,11 @@ internal sealed class DataColumnReaderTests
     [Test]
     public void ReadPrimitiveTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.SInt32, 405, false);
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 405, false);
         builder.Write<byte>(123);
         builder.Write(123);
         builder.Write(Enumerable.Range(0, 100).ToArray());
-        DataColumnReader<int> reader = builder.Build().OpenDataColumnReader<int>();
+        DataColumnReader<byte> reader = builder.Build().OpenDataColumnReader<byte>();
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));
         Assert.That(reader.Peek<int>(1), Is.EqualTo((int)123));
         Assert.That(reader.AtEnd, Is.False);

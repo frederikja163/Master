@@ -90,7 +90,7 @@ internal sealed class DataColumnTests
         {
             
             Assert.That(nulls, Is.Not.Null);
-            DataColumn nullsCol = nulls;
+            DataColumn nullsCol = nulls.Value;
             Assert.That(nullsCol.LogicalType, Is.EqualTo(LogicalType.UInt8));
             Assert.That(nullsCol.LogicalLength, Is.EqualTo(array.Length / 8 + 1));
             Assert.That(nullsCol.PhysicalSize, Is.EqualTo(array.Length / 8 + 1));
