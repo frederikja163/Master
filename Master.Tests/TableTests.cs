@@ -91,9 +91,10 @@ public class TableTests
         var blobReader = blobColumn.OpenReader();
         for (int i = 0; i < 3; i++)
         {
-            Assert.That(blobReader.Read<int>(), Is.EqualTo(Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>())); // Size of blob
+            Assert.That(blobReader.Read<int>(), Is.EqualTo(Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>())); // Size of blob
             Assert.That(blobReader.Read<int>(), Is.EqualTo(length * Unsafe.SizeOf<int>())); // PhysicalSize
             Assert.That(blobReader.Read<int>(), Is.EqualTo(length)); // LogicalLength
+            Assert.That(blobReader.Read<long>(), Is.EqualTo(0)); // Offset, although the Column is not written out
         }
         // length of names + 2 commas + integer string length = 30
         Assert.That(blobReader.Read<int>(), Is.EqualTo(names.Sum(name => name.Length + 2) + (names.Length / 10 + 1) * names.Length)); 
