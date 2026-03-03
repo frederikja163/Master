@@ -6,7 +6,7 @@ using Master.Serializing.Columns;
 
 namespace Master.Serializing;
 
-internal ref struct DataColumnBuilder
+internal struct DataColumnBuilder
 {
     private readonly LogicalType _type;
     private Memory<byte> _data = Memory<byte>.Empty;

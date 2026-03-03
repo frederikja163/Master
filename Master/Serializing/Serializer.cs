@@ -8,6 +8,12 @@ public sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
+    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 50, true);
+    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 50, true);
+    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.SInt16, 50, true);
+    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.SInt8, 50, true);
+    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, true);
+    private int _currentId = 0;
 
     public Serializer():
         this(new SplitEncoding(), new BitPacking())
@@ -47,6 +53,13 @@ public sealed class Serializer
         if (column is DataColumn dataColumn)
             return dataColumn;
         return _encodingsById[column.EncodingId].Decode(column);
+    }
+    public void Decode(ref Table table)
+    {
+        foreach (IColumn column in ((IColumnParent) table).GetChildColumns())
+        {
+            table.Swap(column, Decode(column));
+        }
     }
 
     private IColumn Encode(DataColumn inData, IColumn metadataSample)
@@ -130,40 +143,27 @@ public sealed class Serializer
 
         return builder.Build();
     }
-
-    internal static void CreateSchema(Table table, ref int idCounter, ref DataColumnBuilder idBuilder, ref DataColumnBuilder parentIdBuilder,
-        ref DataColumnBuilder encodingIdBuilder, ref DataColumnBuilder logicalTypeBuilder,
-        ref DataColumnBuilder blobBuilder)
+    internal void WriteMetadata(Table table)
     {
-        foreach (IColumn column in ((IColumnParent)table).GetChildColumns(true).Append(table))
+        WriteMetaDataForColumn(table, -1);
+    }
+    internal void WriteMetaDataForColumn(IColumn column, int parentId)
+    {
+        int id = _currentId++;
+        if (column is IColumnParent parent)
         {
-            encodingIdBuilder.Write((byte) column.EncodingId);
-            logicalTypeBuilder.Write((byte) column.LogicalType);
-            column.WriteMetadata(ref blobBuilder);
-            switch (column)
-            {
-                case DataColumn dataColumn:
-                    break;
-                case BitPackingColumn bitPackingColumn:
-                    parentIdBuilder.Write(idCounter);
-                    break;
-                case SplitColumn splitColumn:
-                    parentIdBuilder.Write(idCounter);
-                    parentIdBuilder.Write(idCounter);
-                    break;
-                case Table table1:
-                    parentIdBuilder.Write(-1);
-                    for (int i = 0; i < table1.ColumnCount; i++)
-                    {
-                        parentIdBuilder.Write(idCounter);
-                    }
-                    break;
-                case IColumnParent columnParent:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(column));
-            }
-            idBuilder.Write(idCounter++);
+            foreach (IColumn childColumn in parent.GetChildColumns()) 
+                WriteMetaDataForColumn(childColumn, id);
         }
+        _idBuilder.Write(id);
+        _parentIdBuilder.Write(parentId);
+        _encodingIdBuilder.Write((byte) column.EncodingId);
+        _logicalTypeBuilder.Write((byte) column.LogicalType);
+        column.WriteMetadata(ref _blobBuilder);
+    }
+
+    internal Table GetMetadata()
+    {
+        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"]);
     }
 }
