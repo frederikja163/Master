@@ -62,6 +62,35 @@ public sealed class Serializer
         }
     }
 
+    public void Write(Table table, Stream stream)
+    {
+        // Data
+        foreach (DataColumn dataColumn in table.GetDataColumns())
+        {
+            dataColumn.Write(stream);
+        }
+
+        // Metadata
+        long metadataStart = stream.Position; // for Postscript
+        WriteMetadata(table);
+        Table metadata = GetMetadata();
+        foreach (DataColumn dataColumn in metadata.GetDataColumns())
+        {
+            dataColumn.Write(stream);
+        }
+        
+        // Postscript
+        long metadataLength = stream.Position - metadataStart;
+        long metadataLogicalLength = table.ColumnCount;
+        
+        DataColumnBuilder postScript = new(LogicalType.SInt64, 24);
+        postScript.Write(metadataStart);
+        postScript.Write(metadataLength);
+        postScript.Write(metadataLogicalLength);
+        
+        stream.Write(postScript.Build().Data.Span);
+    }
+
     private IColumn Encode(DataColumn inData, IColumn metadataSample)
     {
         if (metadataSample is DataColumn col)

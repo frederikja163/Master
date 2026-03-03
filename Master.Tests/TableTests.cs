@@ -135,4 +135,27 @@ public class TableTests
         // Only Tables write their own parentId, therefore this it is intended that the columns are not evenly long in this unittest
         Assert.That(parentIdColumn.OpenReader().Read<int>(6).ToArray(), Is.EqualTo(new [] { 3, 2, 1, 0, 5, 0 }));
     }
+
+    [TestCase(1, 5)]
+    [TestCase(1, 10)]
+    [TestCase(1, 1000)]
+    [TestCase(1000, 10)]
+    public void WriteTableTest(int start, int length)
+    {
+        int[] data = Enumerable.Range(start, length).ToArray();
+        DataColumn[] dataColumns =
+        [
+            DataColumn.Create<int>(data.AsSpan()),
+            DataColumn.Create<int>(data.AsSpan()),
+            DataColumn.Create<int>(data.AsSpan())
+        ];
+        string[] names = ["columnA", "columnB", "columnC"];
+        Table table = new Table(dataColumns, names);
+        Serializer serializer = new();
+        serializer.Encode(ref table);
+
+        Stream stream = new MemoryStream();
+        serializer.Write(table, stream);
+        Assert.That(stream.Position, Is.AtLeast(5));
+    }
 }
