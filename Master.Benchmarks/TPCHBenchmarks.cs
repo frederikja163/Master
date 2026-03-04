@@ -66,7 +66,11 @@ public class TPCHBenchmarks
                 var column = (columnName: values[0], type: StringToType(values[1]));
                 columns.Add(column);
             }
-            yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
+
+            if (tableName == "LINEITEM")
+            {
+                yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
+            }
         }
     }
 
@@ -116,8 +120,8 @@ public class TPCHBenchmarks
         // yield return new RawParquet(CompressionMethod.LZ4);
         // yield return new RawParquet(CompressionMethod.Lz4Raw);
         // yield return new RawParquet(CompressionMethod.Brotli);
-        yield return new RawCsv();
-        yield return new RawSqlite();
-        yield return new RawHdf5Benchmark();
+        // yield return new RawCsv();
+        // yield return new RawSqlite();
+        // yield return new RawHdf5Benchmark();
     }
 }

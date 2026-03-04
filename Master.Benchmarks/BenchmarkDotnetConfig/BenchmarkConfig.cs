@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 
@@ -11,7 +12,7 @@ internal sealed class BenchmarkConfig : ManualConfig
         AddExporter(new Exporter());
         AddJob(new Job(Job.ShortRun));
         AddDiagnoser(new FileSizeDiagnoser());
-        // AddDiagnoser(new MemoryDiagnoser(new MemoryDiagnoserConfig()));
+        AddDiagnoser(new MemoryDiagnoser(new MemoryDiagnoserConfig()));
         WithOrderer(new DefaultOrderer(SummaryOrderPolicy.Method, MethodOrderPolicy.Declared));
     }
 }

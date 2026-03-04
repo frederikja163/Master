@@ -6,15 +6,15 @@ using Master.Serializing.Columns;
 
 namespace Master.Serializing;
 
-public ref struct DataColumnReader
+public struct GenericReader
 {
-    private readonly ReadOnlySpan<byte> _data;
+    private readonly ReadOnlyMemory<byte> _data;
     private readonly LogicalType _logicalType;
     private int _index = 0;
 
-    public DataColumnReader(DataColumn dataColumn)
+    public GenericReader(DataColumn dataColumn)
     {
-        _data = dataColumn.Data.Span;
+        _data = dataColumn.Data;
         _logicalType = dataColumn.LogicalType;
     }
     
@@ -36,14 +36,14 @@ public ref struct DataColumnReader
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
-        ReadOnlySpan<byte> slice = _data.Slice(start, size);
+        ReadOnlySpan<byte> slice = _data.Slice(start, size).Span;
         return slice;
     }
 
-    public T Peek<T>(int offset = 0)
+    public T Peek<T>(int byteOffset = 0)
         where T : unmanaged
     {
-        ReadOnlySpan<byte> slice = Slice(offset, Unsafe.SizeOf<T>());
+        ReadOnlySpan<byte> slice = Slice(byteOffset, Unsafe.SizeOf<T>());
         return 
             typeof(T) == typeof(sbyte) ? Unsafe.BitCast<sbyte, T>((sbyte)slice[0]) :
             typeof(T) == typeof(short) ? Unsafe.BitCast<short, T>(BinaryPrimitives.ReadInt16LittleEndian(slice)) :
