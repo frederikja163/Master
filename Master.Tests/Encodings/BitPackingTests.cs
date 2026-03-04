@@ -23,7 +23,7 @@ internal sealed class BitPackingTests
         DataColumn metadataColumn = metadataBuilder.Build();
         IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
             LogicalType.SInt32,
-            metadataColumn.OpenDataColumnReader<byte>(), columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
+            metadataColumn.OpenGenericReader(), columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
         
         Assert.That(reader.Read(length).ToArray(), Is.EquivalentTo(data));
     }

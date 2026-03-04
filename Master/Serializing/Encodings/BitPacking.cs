@@ -31,7 +31,7 @@ internal sealed class BitPacking : IEncoding
         return column;
     }
 
-    public IColumnReader CreateDecoder(LogicalType type, DataColumnReader<byte> metadataReader, IEnumerable<IColumnReader> childReader)
+    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
@@ -71,7 +71,7 @@ internal sealed class BitPacking : IEncoding
     private static void EncodeData<T>(DataColumn dataColumn, BitPackingColumn metadata)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        IColumnReader<T> reader = dataColumn.OpenReader<T>();
+        IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
         int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
@@ -138,7 +138,7 @@ internal sealed class BitPacking : IEncoding
         where T : unmanaged, INumber<T>, IBinaryInteger<T>
     {
         // TODO: Optimize using SIMD and PopCount.
-        IColumnReader<T> reader = column.OpenReader<T>();
+        IColumnReader<T> reader = new PrimitiveReader<T>(column.Data);
         int size = Unsafe.SizeOf<T>() * 8;
         for (int i = 0; i < column.LogicalLength; i++)
         {

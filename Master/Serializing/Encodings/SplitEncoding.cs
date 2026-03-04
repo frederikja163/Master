@@ -10,7 +10,7 @@ internal sealed class SplitEncoding : IEncoding
     public EncodingId Id { get; } = EncodingId.Split;
     public IColumn Encode(ref DataColumn dataColumn)
     {
-        DataColumnReader<byte[]> columnReader = dataColumn.OpenDataColumnReader<byte[]>();
+        GenericReader columnReader = dataColumn.OpenGenericReader();
         int length = dataColumn.LogicalLength;
         DataColumnBuilder lengthBuilder = new DataColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
         DataColumnBuilder byteBuilder = new DataColumnBuilder(LogicalType.UInt8, dataColumn.PhysicalSize - lengthBuilder.PhysicalSize);
@@ -25,7 +25,7 @@ internal sealed class SplitEncoding : IEncoding
     }
 
     public IColumnReader CreateDecoder(LogicalType type,
-        DataColumnReader<byte> metadataReader, IEnumerable<IColumnReader> childColumns)
+        GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         IColumnReader lengthReader = childColumnEnumerator.Current;

@@ -156,12 +156,31 @@ public struct DataColumn : IColumn
 
     public IColumnReader<T> OpenReader<T>()
     {
-        return new DataColumnReader<T>(this);
+        if (typeof(T) != LogicalType.ToCsType())
+        {
+            throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {LogicalType}, expected {LogicalType.ToCsType().FullName}", nameof(T));
+        }
+        
+        return
+            typeof(T) == typeof(sbyte) ? (new PrimitiveReader<sbyte>(Data) as IColumnReader<T>)! :
+            typeof(T) == typeof(short) ? (new PrimitiveReader<short>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(int) ? (new PrimitiveReader<int>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(long) ? (new PrimitiveReader<long>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(byte) ? (new PrimitiveReader<byte>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(ushort) ? (new PrimitiveReader<ushort>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(uint) ? (new PrimitiveReader<uint>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(ulong) ? (new PrimitiveReader<ulong>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(Half) ? (new PrimitiveReader<Half>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(float) ? (new PrimitiveReader<float>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(double) ? (new PrimitiveReader<double>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(string) ? (new VarLengthReader(Data, LogicalLength)  as IColumnReader<T>)! :
+            typeof(T) == typeof(byte[]) ? (new VarLengthReader(Data, LogicalLength)  as IColumnReader<T>)! :
+            throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
     }
 
-    internal DataColumnReader<T> OpenDataColumnReader<T>()
+    internal GenericReader OpenGenericReader()
     {
-        return new DataColumnReader<T>(this);
+        return new GenericReader(this);
     }
 
     public int CalculateTotalLength()

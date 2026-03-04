@@ -4,7 +4,7 @@ using Master.Serializing.Readers;
 
 namespace Master.Tests;
 
-internal sealed class DataColumnReaderTests
+internal sealed class GenericReaderTests
 {
     [Test]
     public void AdvanceTest()
@@ -20,10 +20,10 @@ internal sealed class DataColumnReaderTests
     [Test]
     public void OverFlowTest()
     {
-        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenReader<int>().Advance(1));
-        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenReader<int>().Advance(1));
-        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenReader<int>().Peek());
-        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenReader<int>().Read());
+        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenGenericReader().Advance(1));
+        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenGenericReader().Advance(1));
+        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenGenericReader().Peek<int>());
+        Assert.Throws<IndexOutOfRangeException>(() => DataColumn.Empty.OpenGenericReader().Read<int>());
     }
     
     [Test]
@@ -33,7 +33,7 @@ internal sealed class DataColumnReaderTests
         builder.Write<byte>(123);
         builder.Write(123);
         builder.Write(Enumerable.Range(0, 100).ToArray());
-        DataColumnReader<byte> reader = builder.Build().OpenDataColumnReader<byte>();
+        GenericReader reader = builder.Build().OpenGenericReader();
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));
         Assert.That(reader.Peek<int>(1), Is.EqualTo((int)123));
         Assert.That(reader.AtEnd, Is.False);
@@ -52,7 +52,7 @@ internal sealed class DataColumnReaderTests
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
         DataColumn column = DataColumn.Create(strings);
-        DataColumnReader<string> reader = column.OpenDataColumnReader<string>();
+        GenericReader reader = column.OpenGenericReader();
         Assert.That(reader.ReadUnits(3).ToArray(),
             Is.EquivalentTo(column.Data.Span.Slice(0, 36).ToArray()));
     }
@@ -72,12 +72,12 @@ internal sealed class DataColumnReaderTests
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
         DataColumn column = DataColumn.Create(strings);
-        IColumnReader<string> reader = column.OpenReader<string>();
+        GenericReader reader = column.OpenGenericReader();
 
-        Assert.That(reader.Read(), Is.EqualTo("test"));
-        reader.Advance(2);
-        Assert.That(reader.Read(4), Is.EquivalentTo(new string[] { "This", "Is", "Test", "Data" }));
-        Assert.That(reader.IsAtEnd);
+        Assert.That(reader.ReadString(), Is.EqualTo("test"));
+        reader.AdvanceUnits(2);
+        Assert.That(reader.ReadString(4), Is.EquivalentTo(new string[] { "This", "Is", "Test", "Data" }));
+        Assert.That(reader.AtEnd);
     }
 
     [Test]
@@ -85,12 +85,11 @@ internal sealed class DataColumnReaderTests
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
         DataColumn column = DataColumn.Create(strings);
-        IColumnReader<byte[]> reader = column.OpenReader<byte[]>();
+        GenericReader reader = column.OpenGenericReader();
 
-        Assert.That(reader.Read(), Is.EquivalentTo("test"u8.ToArray()));
-        Assert.That(reader.Peek(2), Is.EquivalentTo("This"u8.ToArray()));
-        reader.Advance(2);
-        Assert.That(reader.Read(4), Is.EquivalentTo(new byte[][] { "This"u8.ToArray(), "Is"u8.ToArray(), "Test"u8.ToArray(), "Data"u8.ToArray() }));
-        Assert.That(reader.IsAtEnd);
+        Assert.That(reader.ReadBlob().ToArray(), Is.EquivalentTo("test"u8.ToArray()));
+        reader.AdvanceUnits(2);
+        Assert.That(reader.ReadBlob(4), Is.EquivalentTo(new byte[][] { "This"u8.ToArray(), "Is"u8.ToArray(), "Test"u8.ToArray(), "Data"u8.ToArray() }));
+        Assert.That(reader.AtEnd);
     }
 }
