@@ -45,6 +45,7 @@ public class TableTests
         Table table = new Table(dataColumns, names);
         Serializer serializer = new();
         serializer.Encode(ref table);
+        // TODO: Read
         // serializer.Decode(ref table);
         // Assert.That(table.Columns, Is.EqualTo(dataColumns));
         // Assert.That(table.GetDataColumns(), Is.EqualTo(dataColumns));

@@ -11,7 +11,7 @@ public interface IColumnReader
 public interface IColumnReader<T> : IColumnReader
 {
     public T Peek(int offset = 0);
-    public IEnumerable<T> Peek(int count, int offset);
+    public IEnumerable<T> Peek(int offset, int count);
 
     public T Read()
     {

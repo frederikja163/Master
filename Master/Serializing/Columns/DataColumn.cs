@@ -10,7 +10,7 @@ namespace Master.Serializing.Columns;
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
 /// </summary>
-public readonly struct DataColumn : IColumn
+public readonly struct DataColumn : IColumn, IEquatable<DataColumn>
 {
     public EncodingId EncodingId => EncodingId.Binary;
     public ReadOnlyMemory<byte> Data { get; }
@@ -157,26 +157,33 @@ public readonly struct DataColumn : IColumn
 
     public IColumnReader<T> OpenReader<T>()
     {
-        if (typeof(T) != LogicalType.ToCsType())
+        if (typeof(T) != LogicalType.ToCsType() || OpenReader() is not IColumnReader<T> reader)
         {
             throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {LogicalType}, expected {LogicalType.ToCsType().FullName}", nameof(T));
         }
-        
-        return
-            typeof(T) == typeof(sbyte) ? (new PrimitiveReader<sbyte>(Data) as IColumnReader<T>)! :
-            typeof(T) == typeof(short) ? (new PrimitiveReader<short>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(int) ? (new PrimitiveReader<int>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(long) ? (new PrimitiveReader<long>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(byte) ? (new PrimitiveReader<byte>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(ushort) ? (new PrimitiveReader<ushort>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(uint) ? (new PrimitiveReader<uint>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(ulong) ? (new PrimitiveReader<ulong>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(Half) ? (new PrimitiveReader<Half>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(float) ? (new PrimitiveReader<float>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(double) ? (new PrimitiveReader<double>(Data)  as IColumnReader<T>)! :
-            typeof(T) == typeof(string) ? (new VarLengthReader(Data, LogicalLength)  as IColumnReader<T>)! :
-            typeof(T) == typeof(byte[]) ? (new VarLengthReader(Data, LogicalLength)  as IColumnReader<T>)! :
-            throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
+
+        return reader;
+    }
+
+    public IColumnReader OpenReader()
+    {
+        return LogicalType switch
+        {
+            LogicalType.SInt8 => new PrimitiveReader<sbyte>(Data),
+            LogicalType.SInt16 => new PrimitiveReader<short>(Data),
+            LogicalType.SInt32 => new PrimitiveReader<int>(Data),
+            LogicalType.SInt64 => new PrimitiveReader<long>(Data),
+            LogicalType.UInt8 => new PrimitiveReader<byte>(Data),
+            LogicalType.UInt16 => new PrimitiveReader<ushort>(Data),
+            LogicalType.UInt32 => new PrimitiveReader<uint>(Data),
+            LogicalType.UInt64 => new PrimitiveReader<ulong>(Data),
+            LogicalType.Float16 => new PrimitiveReader<Half>(Data),
+            LogicalType.Float32 => new PrimitiveReader<float>(Data),
+            LogicalType.Float64 => new PrimitiveReader<double>(Data),
+            LogicalType.Blob => new VarLengthReader(Data, LogicalLength),
+            LogicalType.String => new VarLengthReader(Data, LogicalLength),
+            _ => throw new ArgumentOutOfRangeException(nameof(LogicalType), typeof(LogicalType), null)
+        };
     }
 
     internal GenericReader OpenGenericReader()
@@ -205,10 +212,20 @@ public readonly struct DataColumn : IColumn
     public override bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is DataColumn other &&
-               other.Data.Equals(Data) &&
+               Equals(other);
+    }
+
+    public bool Equals(DataColumn other)
+    {
+        return other.Data.Equals(Data) &&
                other.EncodingId == EncodingId &&
                other.PhysicalSize == PhysicalSize &&
                other.LogicalLength == LogicalLength &&
                other.LogicalType == LogicalType;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Data, EncodingId, PhysicalSize, (int)LogicalType, LogicalLength, LogicalType);
     }
 }

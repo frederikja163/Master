@@ -29,10 +29,10 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
     string IColumnReader<string>.Peek(int byteOffset)
     {
         int length = _lengthColumn.Peek(byteOffset);
-        return Encoding.UTF8.GetString(_byteColumn.Peek(length, byteOffset).ToArray());
+        return Encoding.UTF8.GetString(_byteColumn.Peek(byteOffset, length).ToArray());
     }
 
-    IEnumerable<string> IColumnReader<string>.Peek(int count, int offset)
+    IEnumerable<string> IColumnReader<string>.Peek(int offset, int count)
     {
         IColumnReader<string> stringReader = this;
         for (int i = 0; i < count; i++)
@@ -44,10 +44,10 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
     byte[] IColumnReader<byte[]>.Peek(int offset)
     {
         int length = _lengthColumn.Peek(offset);
-        return _byteColumn.Peek(length, offset).ToArray();
+        return _byteColumn.Peek(offset, length).ToArray();
     }
 
-    IEnumerable<byte[]> IColumnReader<byte[]>.Peek(int count, int offset)
+    IEnumerable<byte[]> IColumnReader<byte[]>.Peek(int offset, int count)
     {
         IColumnReader<byte[]> blobReader = this;
         for (int i = 0; i < count; i++)

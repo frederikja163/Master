@@ -51,7 +51,7 @@ internal struct PrimitiveReader<T> : IColumnReader<T>
             throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
     }
 
-    public IEnumerable<T> Peek(int count, int offset)
+    public IEnumerable<T> Peek(int offset, int count)
     {
         T[] arr = new T[count];
         for (int i = 0; i < count; i++)

@@ -62,8 +62,7 @@ public sealed class Serializer
         {
             foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
             {
-                IColumn column = child.First;
-                parent.Swap(ref column, Encode(child.First, child.Second));
+                parent.Swap(child.First, Encode(child.First, child.Second));
             }
         }
         return columns;
@@ -90,7 +89,7 @@ public sealed class Serializer
                 foreach (var child in parent.GetDataColumns())
                 {
                     IColumn column = child;
-                    parent.Swap(ref column, PickEncoding(child, cascades - 1));
+                    parent.Swap(column, PickEncoding(child, cascades - 1));
                 }
             }
             int length = encodedColumn.CalculateTotalLength();
