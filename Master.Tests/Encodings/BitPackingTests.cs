@@ -1,6 +1,8 @@
-﻿using Master.Serializing;
+﻿using System.Runtime.CompilerServices;
+using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Tests.Encodings;
 
@@ -9,15 +11,22 @@ internal sealed class BitPackingTests
     [TestCase(1, 5)]
     [TestCase(1, 10)]
     [TestCase(1, 1000)]
+    [TestCase(1, 256)]
     [TestCase(1000, 10)]
     public void BitPackEncodingRoundTripTest(int start, int length)
     {
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn dataColumn = DataColumn.Create<int>(data.AsSpan());
         IEncoding encoding = new BitPacking();
-        IColumn columns = encoding.Encode(dataColumn);
-        DataColumnReader decoded = encoding.Decode(columns).OpenReader();
-        Assert.That(decoded.Read<int>(length).ToArray(), Is.EquivalentTo(data));
+        IColumn columns = encoding.Encode(ref dataColumn);
+        DataColumnBuilder metadataBuilder = new DataColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
+        columns.WriteMetadata(ref metadataBuilder);
+        DataColumn metadataColumn = metadataBuilder.Build();
+        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
+            LogicalType.SInt32,
+            metadataColumn.OpenGenericReader(), columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
+        
+        Assert.That(reader.Read(length).ToArray(), Is.EquivalentTo(data));
     }
 
     [Test]

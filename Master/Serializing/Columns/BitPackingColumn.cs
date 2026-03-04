@@ -6,20 +6,28 @@ namespace Master.Serializing.Columns;
 
 internal sealed class BitPackingColumn : IColumnParent
 {
-    public byte PrefixLength { get; set; }
-    public ulong Prefix { get; set; }
-    public int LogicalLength { get; set; }
-    public LogicalType LogicalType { get; set; }
+    public byte PrefixLength { get; }
+    public ulong Prefix { get; }
+    public int LogicalLength { get; }
+    public LogicalType LogicalType { get; }
     public EncodingId EncodingId => EncodingId.BitPacking;
     public IColumn Column { get; set; }
-    private static readonly int Size = Unsafe.SizeOf<byte>() +
+    internal static readonly int Size = Unsafe.SizeOf<byte>() +
                                        Unsafe.SizeOf<ulong>() +
                                        Unsafe.SizeOf<int>();
 
-    public BitPackingColumn(IColumn placeholder)
+    public BitPackingColumn(IColumn column, byte prefixLength, ulong prefix, int logicalLength)
     {
-        Column = placeholder;
+        Column = column;
+        PrefixLength = prefixLength;
+        Prefix = prefix;
+        LogicalLength = logicalLength;
+        LogicalType = column.LogicalType;
+        
     }
+    
+    public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix) : this(column, prefixLength, prefix, column.LogicalLength)
+    { }
     
     IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
     {
@@ -33,9 +41,9 @@ internal sealed class BitPackingColumn : IColumnParent
         yield return Column;
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public void Swap(in IColumn existingColumn, in IColumn newColumn)
     {
-        Debug.Assert(existingColumn == Column);
+        Debug.Assert(existingColumn.Equals(Column));
         Column = newColumn;
     }
 
@@ -55,6 +63,5 @@ internal sealed class BitPackingColumn : IColumnParent
         blobBuilder.WriteRaw(PrefixLength);
         blobBuilder.WriteRaw(Prefix);
         blobBuilder.WriteRaw(LogicalLength);
-        
     }
 }

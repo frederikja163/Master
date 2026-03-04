@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Columns;
 
@@ -154,9 +155,33 @@ public readonly struct DataColumn : IColumn
         return valueBuilder.Build();
     }
 
-    public DataColumnReader OpenReader()
+    public IColumnReader<T> OpenReader<T>()
     {
-        return new DataColumnReader(this);
+        if (typeof(T) != LogicalType.ToCsType())
+        {
+            throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {LogicalType}, expected {LogicalType.ToCsType().FullName}", nameof(T));
+        }
+        
+        return
+            typeof(T) == typeof(sbyte) ? (new PrimitiveReader<sbyte>(Data) as IColumnReader<T>)! :
+            typeof(T) == typeof(short) ? (new PrimitiveReader<short>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(int) ? (new PrimitiveReader<int>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(long) ? (new PrimitiveReader<long>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(byte) ? (new PrimitiveReader<byte>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(ushort) ? (new PrimitiveReader<ushort>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(uint) ? (new PrimitiveReader<uint>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(ulong) ? (new PrimitiveReader<ulong>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(Half) ? (new PrimitiveReader<Half>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(float) ? (new PrimitiveReader<float>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(double) ? (new PrimitiveReader<double>(Data)  as IColumnReader<T>)! :
+            typeof(T) == typeof(string) ? (new VarLengthReader(Data, LogicalLength)  as IColumnReader<T>)! :
+            typeof(T) == typeof(byte[]) ? (new VarLengthReader(Data, LogicalLength)  as IColumnReader<T>)! :
+            throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
+    }
+
+    internal GenericReader OpenGenericReader()
+    {
+        return new GenericReader(this);
     }
 
     public int CalculateTotalLength()
@@ -175,5 +200,15 @@ public readonly struct DataColumn : IColumn
         blobBuilder.WriteRaw(PhysicalSize);
         blobBuilder.WriteRaw(LogicalLength);
         // TODO blobBuilder.WriteRaw(Offset); - remember to also add its size to BlobSize
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        return obj is DataColumn other &&
+               other.Data.Equals(Data) &&
+               other.EncodingId == EncodingId &&
+               other.PhysicalSize == PhysicalSize &&
+               other.LogicalLength == LogicalLength &&
+               other.LogicalType == LogicalType;
     }
 }
