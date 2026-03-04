@@ -6,7 +6,7 @@ using Master.Serializing.Columns;
 
 namespace Master.Serializing;
 
-internal ref struct DataColumnBuilder
+internal struct DataColumnBuilder
 {
     private readonly LogicalType _type;
     private Memory<byte> _data = Memory<byte>.Empty;
@@ -132,6 +132,13 @@ internal ref struct DataColumnBuilder
         // We add values.length in Write(values), but for writeRaw we want to override this with the provided length.
         _logicalLength -= values.Length;
         _logicalLength += logicalLength;
+    }
+    
+    public void WriteRaw<T>(T value)
+        where T : unmanaged
+    {
+        Write(value);
+        _logicalLength -= 1;
     }
 
     public DataColumn Build()

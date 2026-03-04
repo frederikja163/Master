@@ -35,7 +35,7 @@ internal sealed class BitPackingTests
     {
         BitPackingColumn metadata = BitPacking.GetMetadata<byte>(DataColumn.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
         Assert.That(metadata.LogicalLength, Is.EqualTo(21));
-        Assert.That(metadata.Type, Is.EqualTo(LogicalType.UInt8));
+        Assert.That(metadata.LogicalType, Is.EqualTo(LogicalType.UInt8));
         Assert.That(metadata.Prefix, Is.EqualTo(0b100));
         Assert.That(metadata.PrefixLength, Is.EqualTo(3));
     }

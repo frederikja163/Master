@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Master.Serializing.Encodings;
@@ -10,11 +11,12 @@ namespace Master.Serializing.Columns;
 /// </summary>
 public readonly struct DataColumn : IColumn
 {
-    public EncodingId Id => EncodingId.Binary;
+    public EncodingId EncodingId => EncodingId.Binary;
     public ReadOnlyMemory<byte> Data { get; }
-    public readonly LogicalType LogicalType;
+    public LogicalType LogicalType { get; }
     public int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
+    private static readonly int BlobSize = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>();
 
     public static DataColumn Empty { get; } = new (LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
 
@@ -167,8 +169,11 @@ public readonly struct DataColumn : IColumn
         yield return this;
     }
 
-    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
-        throw new NotImplementedException();
+        blobBuilder.Write(BlobSize);
+        blobBuilder.WriteRaw(PhysicalSize);
+        blobBuilder.WriteRaw(LogicalLength);
+        // TODO blobBuilder.WriteRaw(Offset); - remember to also add its size to BlobSize
     }
 }

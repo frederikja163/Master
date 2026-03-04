@@ -4,9 +4,10 @@ namespace Master.Serializing.Columns;
 
 internal sealed class SplitColumn : IColumnParent
 {
-    public IColumn LengthColumn;
-    public IColumn ByteColumn;
-    public readonly LogicalType LogicalType;
+    public IColumn LengthColumn { get; set; }
+    public IColumn ByteColumn { get; set; }
+    public LogicalType LogicalType { get; }
+    public EncodingId EncodingId => EncodingId.Split;
 
     public SplitColumn(IColumn lengthColumn, IColumn byteColumn, LogicalType logicalType)
     {
@@ -20,16 +21,33 @@ internal sealed class SplitColumn : IColumnParent
         return GetDataColumns().Sum(d => d.CalculateTotalLength());
     }
 
-    public EncodingId Id => EncodingId.Split;
     public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
 
-    void IColumn.WriteMetadata(DataColumnBuilder builder)
+    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
-        throw new NotImplementedException();
+        blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
     }
 
-    IEnumerable<IColumn> IColumnParent.GetChildColumns()
+    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
     {
+        if (recursive)
+        {
+            if (LengthColumn is IColumnParent columnParent)
+            {
+                foreach (IColumn childColumn in columnParent.GetChildColumns(true))
+                {
+                    yield return childColumn;
+                }
+            }
+        
+            if (ByteColumn is IColumnParent columnParent2)
+            {
+                foreach (IColumn childColumn in columnParent2.GetChildColumns(true))
+                {
+                    yield return childColumn;
+                }
+            }
+        }
         yield return LengthColumn;
         yield return ByteColumn;
     }

@@ -61,4 +61,32 @@ internal sealed class EncodingTests
         
         Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
     }
+    
+    [Test]
+    public void IntRoundtripTest()
+    {
+        int[] data = [1,2,3,0];
+        
+        Serializer serializer = new Serializer();
+
+        DataColumn expected = DataColumn.Create(data);
+        IColumn column = serializer.Encode(expected);
+        //TODO: read
+        //DataColumn dataColumn = serializer.Decode(column);
+        //Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
+    }
+    
+    [Test]
+    public void UIntRoundtripTest()
+    {
+        uint[] data = [1,2,3,0];
+        
+        Serializer serializer = new Serializer();
+
+        DataColumn expected = DataColumn.Create(data);
+        IColumn column = serializer.Encode(expected);
+        //TODO: read
+        //DataColumn dataColumn = serializer.Decode(column);
+        //Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
+    }
 }
