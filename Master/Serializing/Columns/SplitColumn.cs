@@ -52,13 +52,13 @@ internal sealed class SplitColumn : IColumnParent
         yield return ByteColumn;
     }
 
-    void IColumnParent.Swap(IColumn existingColumn, IColumn newColumn)
+    void IColumnParent.Swap(in IColumn existingColumn, in IColumn newColumn)
     {
-        if (existingColumn == LengthColumn)
+        if (existingColumn.Equals(LengthColumn))
         {
             LengthColumn = newColumn;
         }
-        if (existingColumn == ByteColumn)
+        if (existingColumn.Equals(ByteColumn))
         {
             ByteColumn = newColumn;
         }

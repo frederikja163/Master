@@ -8,11 +8,11 @@ public sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
-    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 50, true);
-    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 50, true);
-    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.SInt16, 50, true);
-    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.SInt8, 50, true);
-    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, true);
+    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 50, false);
+    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 50, false);
+    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 50, false);
+    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 50, false);
+    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, false);
     private int _currentId = 0;
 
     public Serializer():
@@ -48,20 +48,6 @@ public sealed class Serializer
         }
     }
 
-    public DataColumn Decode(IColumn column)
-    {
-        if (column is DataColumn dataColumn)
-            return dataColumn;
-        return _encodingsById[column.EncodingId].Decode(column);
-    }
-    public void Decode(ref Table table)
-    {
-        foreach (IColumn column in ((IColumnParent) table).GetChildColumns())
-        {
-            table.Swap(column, Decode(column));
-        }
-    }
-
     private IColumn Encode(DataColumn inData, IColumn metadataSample)
     {
         if (metadataSample is DataColumn col)
@@ -71,12 +57,13 @@ public sealed class Serializer
         EncodingId id = metadataSample.EncodingId;
         
         IEncoding encoding = _encodingsById[id];
-        var columns = encoding.Encode(inData);
+        var columns = encoding.Encode(ref inData);
         if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
         {
             foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
             {
-                parent.Swap(child.First, Encode(child.First, child.Second));
+                IColumn column = child.First;
+                parent.Swap(ref column, Encode(child.First, child.Second));
             }
         }
         return columns;
@@ -97,12 +84,13 @@ public sealed class Serializer
         
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            IColumn encodedColumn = encoding.Encode(sample);
+            IColumn encodedColumn = encoding.Encode(ref sample);
             if (encodedColumn is IColumnParent parent)
             {
                 foreach (var child in parent.GetDataColumns())
                 {
-                    parent.Swap(child, PickEncoding(child, cascades - 1));
+                    IColumn column = child;
+                    parent.Swap(ref column, PickEncoding(child, cascades - 1));
                 }
             }
             int length = encodedColumn.CalculateTotalLength();
@@ -129,8 +117,8 @@ public sealed class Serializer
         sampleLength = Math.Min(sampleLength, MaxSampleLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, true);
-        DataColumnReader reader = data.OpenReader();
+        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, false);
+        GenericReader reader = data.OpenGenericReader();
         
         int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)

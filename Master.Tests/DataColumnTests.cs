@@ -84,12 +84,12 @@ internal sealed class DataColumnTests
 
         if (!array.GetType().GetElementType()!.IsNullable())
         {
-            Assert.That(nulls.HasValue, Is.EqualTo(false));
+            Assert.That(nulls, Is.Null);
         }
         else
         {
             
-            Assert.That(nulls.HasValue, Is.EqualTo(true));
+            Assert.That(nulls, Is.Not.Null);
             DataColumn nullsCol = nulls.Value;
             Assert.That(nullsCol.LogicalType, Is.EqualTo(LogicalType.UInt8));
             Assert.That(nullsCol.LogicalLength, Is.EqualTo(array.Length / 8 + 1));
