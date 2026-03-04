@@ -58,6 +58,7 @@ internal sealed class EncodingTests
 
         DataColumn expected = DataColumn.Create(data);
         IColumn column = serializer.Encode(expected);
+        // TODO: Read
         // DataColumnBuilder builder = new DataColumnBuilder(100);
         // column.WriteMetadata(builder);
         // DataColumn dataColumn = serializer.Decode(column);

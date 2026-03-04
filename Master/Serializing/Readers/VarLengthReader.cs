@@ -40,8 +40,10 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
     {
         for (int i = 0; i < units; i++)
         {
-            int length = BinaryPrimitives.ReadInt32LittleEndian(_data.Span.Slice(_byteIndex, Unsafe.SizeOf<int>()));
+            int length = ReadIntAt(0);
             _byteIndex += length;
+            _byteIndex += Unsafe.SizeOf<int>();
+            Index += 1;
         }
     }
 
@@ -50,9 +52,13 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
         return Encoding.UTF8.GetString(ReadBlobOffset(offset));
     }
 
-    IEnumerable<string> IColumnReader<string>.Peek(int count, int offset)
+    IEnumerable<string> IColumnReader<string>.Peek(int offset, int count)
     {
-        throw new NotImplementedException();
+        IColumnReader<string> blobReader = this;
+        for (int i = 0; i < count; i++)
+        {
+            yield return blobReader.Peek(offset + i);
+        }
     }
 
     byte[] IColumnReader<byte[]>.Peek(int offset)
@@ -60,8 +66,12 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
         return ReadBlobOffset(offset).ToArray();
     }
 
-    IEnumerable<byte[]> IColumnReader<byte[]>.Peek(int count, int offset)
+    IEnumerable<byte[]> IColumnReader<byte[]>.Peek(int offset, int count)
     {
-        throw new NotImplementedException();
+        IColumnReader<byte[]> blobReader = this;
+        for (int i = 0; i < count; i++)
+        {
+            yield return blobReader.Peek(offset + i);
+        }
     }
 }

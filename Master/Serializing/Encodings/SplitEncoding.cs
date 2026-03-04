@@ -28,16 +28,11 @@ internal sealed class SplitEncoding : IEncoding
         GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
-        IColumnReader lengthReader = childColumnEnumerator.Current;
-        if (!childColumnEnumerator.MoveNext() || lengthReader is not IColumnReader<int> lengths)
-            goto error;
-        IColumnReader byteReader = childColumnEnumerator.Current;
-        if (childColumnEnumerator.MoveNext() || byteReader is not IColumnReader<byte> bytes)
-            goto error;
+        if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> lengths ||
+            !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<byte> bytes ||
+            childColumnEnumerator.MoveNext())
+            throw new Exception("Child columns not configured correctly for split column.");
         return new SplitColumnReader(lengths, bytes);
-        
-        error:
-        throw new Exception();
     }
 
     public IEnumerable<LogicalType> GetSupportedTypes()

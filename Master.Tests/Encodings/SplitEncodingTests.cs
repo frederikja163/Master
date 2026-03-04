@@ -39,7 +39,12 @@ internal sealed class SplitEncodingTests
         SplitEncoding encoding = new SplitEncoding();
         DataColumn dataColumn = DataColumn.Create(strs);
         IColumn columns = encoding.Encode(ref dataColumn);
-        // DataColumnReader decoded = encoding.Decode(columns).OpenReader();
-        // Assert.That(decoded.ReadString(2), Is.EquivalentTo(strs));
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100);
+        columns.WriteMetadata(ref builder);
+        DataColumn metadataColumn = builder.Build();
+        IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, metadataColumn.OpenGenericReader(),
+            columns.GetDataColumns().Select(c => c.OpenReader()));
+        Assert.That(reader.Read(2), Is.EquivalentTo(strs));
+        Assert.That(reader.IsAtEnd, Is.True);
     }
 }

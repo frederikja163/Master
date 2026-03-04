@@ -53,7 +53,7 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
         return value;
     }
 
-    public IEnumerable<T> Peek(int count, int offset)
+    public IEnumerable<T> Peek(int offset, int count)
     {
         // TODO: Implement faster SIMD version of peekn here.
         for (int i = 0; i < count; i++)
