@@ -36,7 +36,7 @@ public struct GenericReader
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
-        ReadOnlySpan<byte> slice = _data.Slice(start, size).Span;
+        ReadOnlySpan<byte> slice = _data.Span.Slice(start, size);
         return slice;
     }
 

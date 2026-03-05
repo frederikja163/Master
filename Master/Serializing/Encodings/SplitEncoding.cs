@@ -8,7 +8,7 @@ namespace Master.Serializing.Encodings;
 internal sealed class SplitEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.Split;
-    public IColumn Encode(ref DataColumn dataColumn)
+    public IColumn Encode(in DataColumn dataColumn)
     {
         GenericReader columnReader = dataColumn.OpenGenericReader();
         int length = dataColumn.LogicalLength;
@@ -25,7 +25,7 @@ internal sealed class SplitEncoding : IEncoding
     }
 
     public IColumnReader CreateDecoder(LogicalType type,
-        GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
+        ref GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> lengths ||

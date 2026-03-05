@@ -22,9 +22,10 @@ internal sealed class BitPackingTests
         DataColumnBuilder metadataBuilder = new DataColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
         columns.WriteMetadata(ref metadataBuilder);
         DataColumn metadataColumn = metadataBuilder.Build();
+        GenericReader genericReader = metadataColumn.OpenGenericReader();
         IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
             LogicalType.SInt32,
-            metadataColumn.OpenGenericReader(), columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
+            ref genericReader, columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
         
         Assert.That(reader.Read(length).ToArray(), Is.EquivalentTo(data));
     }

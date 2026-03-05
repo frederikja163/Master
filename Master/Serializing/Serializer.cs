@@ -34,7 +34,7 @@ public sealed class Serializer
     public int SampleCount { get; init; } = 10;
     public int MaxSampleLength = 1024;
     
-    public IColumn Encode(DataColumn column)
+    public IColumn Encode(in DataColumn column)
     {
         DataColumn sample = CreateSample(column);
         IColumn metadataSample = PickEncoding(sample, CascadingEncodings);
@@ -103,7 +103,7 @@ public sealed class Serializer
         return bestEncoding;
     }
 
-    internal DataColumn CreateSample(DataColumn data)
+    internal DataColumn CreateSample(in DataColumn data)
     {
         int length = data.LogicalLength;
         if (length < SampleCount)

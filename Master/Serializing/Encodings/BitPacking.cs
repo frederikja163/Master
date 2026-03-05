@@ -12,7 +12,7 @@ internal sealed class BitPacking : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.BitPacking;
     
-    public IColumn Encode(ref DataColumn dataColumn)
+    public IColumn Encode(in DataColumn dataColumn)
     {
         if (!dataColumn.LogicalType.TryGetSize(out int size))
         {
@@ -31,7 +31,7 @@ internal sealed class BitPacking : IEncoding
         return column;
     }
 
-    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
+    public IColumnReader CreateDecoder(LogicalType type, ref GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
@@ -62,7 +62,7 @@ internal sealed class BitPacking : IEncoding
         };
     }
 
-    private static IColumn Encode<T>(DataColumn dataColumn)
+    private static IColumn Encode<T>(in DataColumn dataColumn)
         where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T>
     {
         BitPackingColumn metadata = GetMetadata<T>(dataColumn);
@@ -70,7 +70,7 @@ internal sealed class BitPacking : IEncoding
         return metadata;
     }
 
-    private static void EncodeData<T>(DataColumn dataColumn, BitPackingColumn metadata)
+    private static void EncodeData<T>(in DataColumn dataColumn, BitPackingColumn metadata)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
         IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
@@ -107,7 +107,7 @@ internal sealed class BitPacking : IEncoding
         metadata.Column = builder.Build();
     }
 
-    internal static BitPackingColumn GetMetadata<T>(DataColumn data) where T : unmanaged, IBinaryInteger<T>
+    internal static BitPackingColumn GetMetadata<T>(in DataColumn data) where T : unmanaged, IBinaryInteger<T>
     {
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
         GetBitCounts<T>(data, bitCounts);
@@ -137,7 +137,7 @@ internal sealed class BitPacking : IEncoding
         return new BitPackingColumn(data, prefixLength, prefix);
     }
 
-    internal static void GetBitCounts<T>(DataColumn column, Span<int> bitCounts)
+    internal static void GetBitCounts<T>(in DataColumn column, Span<int> bitCounts)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>
     {
         // TODO: Optimize using SIMD and PopCount.
