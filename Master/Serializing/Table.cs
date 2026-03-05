@@ -66,7 +66,6 @@ public struct Table : IColumnParent
             sb.Append(idCounter + "," + name.Replace("\\", "\\\\").Replace(",", "\\,") + ","); // TODO: consider making name optional
             idCounter++;
         }
-        Console.WriteLine(sb.ToString());
         blobBuilder.WriteString(sb.ToString());
     }
 

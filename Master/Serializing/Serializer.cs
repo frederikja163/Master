@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Master.Serializing.Columns;
+﻿using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 
 namespace Master.Serializing;
@@ -8,12 +7,6 @@ public sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
-    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 50, true);
-    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 50, true);
-    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.SInt16, 50, true);
-    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.SInt8, 50, true);
-    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, true);
-    private int _currentId = 0;
 
     public Serializer():
         this(new SplitEncoding(), new BitPacking())
@@ -60,35 +53,6 @@ public sealed class Serializer
         {
             table.Swap(column, Decode(column));
         }
-    }
-
-    public void Write(Table table, Stream stream)
-    {
-        // Data
-        foreach (DataColumn dataColumn in table.GetDataColumns())
-        {
-            dataColumn.Write(stream);
-        }
-
-        // Metadata
-        long metadataStart = stream.Position; // for Postscript
-        WriteMetadata(table);
-        Table metadata = GetMetadata();
-        foreach (DataColumn dataColumn in metadata.GetDataColumns())
-        {
-            dataColumn.Write(stream);
-        }
-        
-        // Postscript
-        long metadataLength = stream.Position - metadataStart;
-        long metadataLogicalLength = table.ColumnCount;
-        
-        DataColumnBuilder postScript = new(LogicalType.SInt64, 24);
-        postScript.Write(metadataStart);
-        postScript.Write(metadataLength);
-        postScript.Write(metadataLogicalLength);
-        
-        stream.Write(postScript.Build().Data.Span);
     }
 
     private IColumn Encode(DataColumn inData, IColumn metadataSample)
@@ -171,28 +135,5 @@ public sealed class Serializer
         }
 
         return builder.Build();
-    }
-    internal void WriteMetadata(Table table)
-    {
-        WriteMetaDataForColumn(table, -1);
-    }
-    internal void WriteMetaDataForColumn(IColumn column, int parentId)
-    {
-        int id = _currentId++;
-        if (column is IColumnParent parent)
-        {
-            foreach (IColumn childColumn in parent.GetChildColumns()) 
-                WriteMetaDataForColumn(childColumn, id);
-        }
-        _idBuilder.Write(id);
-        _parentIdBuilder.Write(parentId);
-        _encodingIdBuilder.Write((byte) column.EncodingId);
-        _logicalTypeBuilder.Write((byte) column.LogicalType);
-        column.WriteMetadata(ref _blobBuilder);
-    }
-
-    internal Table GetMetadata()
-    {
-        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"]);
     }
 }
