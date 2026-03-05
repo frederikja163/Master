@@ -162,7 +162,7 @@ public class TableTests
         BinaryReader reader = new BinaryReader(stream);
         
         // Magic Number
-        Assert.That(reader.ReadChars(8), Is.EqualTo(TableWriter.MagicNumber));
+        Assert.That(reader.ReadBytes(8), Is.EqualTo(TableWriter.MagicNumber.ToArray()));
         
         // Data
         for (int i = 0; i < 3; i++)
@@ -218,7 +218,7 @@ public class TableTests
         });
         
         // Magic Number
-        Assert.That(reader.ReadChars(8), Is.EqualTo(TableWriter.MagicNumber));
+        Assert.That(reader.ReadChars(8), Is.EqualTo(TableWriter.MagicNumber.ToArray()));
         
         Assert.That(reader.BaseStream.Position, Is.EqualTo(12 * length // data length
                                                            + 134 // metadata size (

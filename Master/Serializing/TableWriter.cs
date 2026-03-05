@@ -18,9 +18,20 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, true);
     private int _columnCount = 0;
     
-    private const string Identifier = "OTAP";
-    private const int FileVersion = 001;
-    internal static readonly string MagicNumber = $"{Identifier}R{FileVersion:D3}"; // OTAP R001
+    private const byte MajorVersion = 1;
+    private const byte MinorVersion = 0;
+    private const byte PatchVersion = 0;
+    internal static ReadOnlySpan<byte> MagicNumber =>
+    [
+        (byte)'O',
+        (byte)'T',
+        (byte)'A',
+        (byte)'P',
+        (byte)'R',
+        MajorVersion,
+        MinorVersion,
+        PatchVersion
+    ]; // OTAP R100
 
     public TableWriter(Stream output) : this(output, Encoding.UTF8)
     {
@@ -38,7 +49,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         _encoding = encoding;
         _leaveOpen = leaveOpen;
         
-        _outStream.Write(Encoding.UTF8.GetBytes(MagicNumber));
+        _outStream.Write(MagicNumber);
     }
 
     // Closes this writer and releases any system resources associated with the
@@ -70,7 +81,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         postScript.Write(metadataLogicalLength);
         
         _outStream.Write(postScript.Build().Data.Span);
-        _outStream.Write(Encoding.UTF8.GetBytes(MagicNumber));
+        _outStream.Write(MagicNumber);
         
         if (!disposing) 
             return;
