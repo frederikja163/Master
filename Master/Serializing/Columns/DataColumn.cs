@@ -3,19 +3,20 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Columns;
 
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
 /// </summary>
-public struct DataColumn : IColumn
+public struct DataColumn : IColumn, IEquatable<DataColumn>
 {
     public readonly EncodingId EncodingId => EncodingId.Binary;
     public ReadOnlyMemory<byte> Data { get; }
     public LogicalType LogicalType { get; }
 
-    public long Offset { get; private set; }
+    public long Offset { get; private set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
 
     public readonly int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
@@ -157,9 +158,40 @@ public struct DataColumn : IColumn
         return valueBuilder.Build();
     }
 
-    public DataColumnReader OpenReader()
+    public IColumnReader<T> OpenReader<T>()
     {
-        return new DataColumnReader(this);
+        if (typeof(T) != LogicalType.ToCsType() || OpenReader() is not IColumnReader<T> reader)
+        {
+            throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {LogicalType}, expected {LogicalType.ToCsType().FullName}", nameof(T));
+        }
+
+        return reader;
+    }
+
+    public IColumnReader OpenReader()
+    {
+        return LogicalType switch
+        {
+            LogicalType.SInt8 => new PrimitiveReader<sbyte>(Data),
+            LogicalType.SInt16 => new PrimitiveReader<short>(Data),
+            LogicalType.SInt32 => new PrimitiveReader<int>(Data),
+            LogicalType.SInt64 => new PrimitiveReader<long>(Data),
+            LogicalType.UInt8 => new PrimitiveReader<byte>(Data),
+            LogicalType.UInt16 => new PrimitiveReader<ushort>(Data),
+            LogicalType.UInt32 => new PrimitiveReader<uint>(Data),
+            LogicalType.UInt64 => new PrimitiveReader<ulong>(Data),
+            LogicalType.Float16 => new PrimitiveReader<Half>(Data),
+            LogicalType.Float32 => new PrimitiveReader<float>(Data),
+            LogicalType.Float64 => new PrimitiveReader<double>(Data),
+            LogicalType.Blob => new VarLengthReader(Data, LogicalLength),
+            LogicalType.String => new VarLengthReader(Data, LogicalLength),
+            _ => throw new ArgumentOutOfRangeException(nameof(LogicalType), typeof(LogicalType), null)
+        };
+    }
+
+    internal GenericReader OpenGenericReader()
+    {
+        return new GenericReader(Data.Span);
     }
 
     public int CalculateTotalLength()
@@ -184,5 +216,25 @@ public struct DataColumn : IColumn
     {
         Offset = stream.Position;
         stream.Write(Data.Span);
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        return obj is DataColumn other &&
+               Equals(other);
+    }
+
+    public bool Equals(DataColumn other)
+    {
+        return other.Data.Equals(Data) &&
+               other.EncodingId == EncodingId &&
+               other.PhysicalSize == PhysicalSize &&
+               other.LogicalLength == LogicalLength &&
+               other.LogicalType == LogicalType;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Data, EncodingId, PhysicalSize, (int)LogicalType, LogicalLength, LogicalType);
     }
 }

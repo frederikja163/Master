@@ -7,6 +7,12 @@ public sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
+    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 50, false);
+    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 50, false);
+    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 50, false);
+    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 50, false);
+    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, false);
+    private int _currentId = 0;
 
     public Serializer():
         this(new SplitEncoding(), new BitPacking())
@@ -27,7 +33,7 @@ public sealed class Serializer
     public int SampleCount { get; init; } = 10;
     public int MaxSampleLength = 1024;
     
-    public IColumn Encode(DataColumn column)
+    public IColumn Encode(in DataColumn column)
     {
         DataColumn sample = CreateSample(column);
         IColumn metadataSample = PickEncoding(sample, CascadingEncodings);
@@ -38,20 +44,6 @@ public sealed class Serializer
         foreach (DataColumn dataColumn in table.GetDataColumns())
         {
             table.Swap(dataColumn, Encode(dataColumn));
-        }
-    }
-
-    public DataColumn Decode(IColumn column)
-    {
-        if (column is DataColumn dataColumn)
-            return dataColumn;
-        return _encodingsById[column.EncodingId].Decode(column);
-    }
-    public void Decode(ref Table table)
-    {
-        foreach (IColumn column in ((IColumnParent) table).GetChildColumns())
-        {
-            table.Swap(column, Decode(column));
         }
     }
 
@@ -109,7 +101,7 @@ public sealed class Serializer
         return bestEncoding;
     }
 
-    internal DataColumn CreateSample(DataColumn data)
+    internal DataColumn CreateSample(in DataColumn data)
     {
         int length = data.LogicalLength;
         if (length < SampleCount)
@@ -122,16 +114,16 @@ public sealed class Serializer
         sampleLength = Math.Min(sampleLength, MaxSampleLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, true);
-        DataColumnReader reader = data.OpenReader();
+        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, false);
+        GenericReader reader = data.OpenGenericReader();
         
         int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)
         {
             int index = Random.Shared.Next(0, sectionLength - sampleLength);
-            reader.AdvanceUnits(index);
-            builder.WriteRaw(reader.ReadUnits(sampleLength), sampleLength);
-            reader.AdvanceUnits(sectionLength - index - sampleLength);
+            reader.AdvanceUnits(data.LogicalType, index);
+            builder.WriteRaw(reader.ReadUnits(data.LogicalType, sampleLength), sampleLength);
+            reader.AdvanceUnits(data.LogicalType, sectionLength - index - sampleLength);
         }
 
         return builder.Build();

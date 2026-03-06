@@ -31,12 +31,12 @@ public struct Table : IColumnParent
         }
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public void Swap(in IColumn existingColumn, in IColumn newColumn)
     {
         for (var i = 0; i < _columns.Length; i++)
         {
             IColumn column = _columns[i];
-            if (!ReferenceEquals(column, existingColumn)) 
+            if (!existingColumn.Equals(column)) 
                 continue;
             _columns[i] = column;
             break;
@@ -71,8 +71,8 @@ public struct Table : IColumnParent
 
     internal Table(IEnumerable<DataColumn> columns, IEnumerable<string> names)
     {
-        Debug.Assert(columns.Count() == names.Count());
         _columns = columns.OfType<IColumn>().ToArray();
         _names = names.ToArray();
+        Debug.Assert(_columns.Count() == _names.Count());
     }
 }

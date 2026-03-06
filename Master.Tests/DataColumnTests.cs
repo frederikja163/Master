@@ -20,7 +20,7 @@ internal sealed class DataColumnTests
         Assert.That(column.LogicalLength, Is.EqualTo(strings.Length));
         
         byte[] data = strings.SelectMany(DataHelper.GetBytes).ToArray();
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(data));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(data));
     }
     
     [Test]
@@ -34,7 +34,7 @@ internal sealed class DataColumnTests
         Assert.That(column.LogicalLength, Is.EqualTo(blobs.Length));
 
         byte[] data = blobs.SelectMany(DataHelper.GetBytes).ToArray();
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(data));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(data));
     }
 
     public static IEnumerable<(Array, byte[], LogicalType type)> CreatePrimitivesTestSource()
@@ -79,17 +79,17 @@ internal sealed class DataColumnTests
         (Array array, byte[] bytes, LogicalType type) = tuple;
         DataColumn column = DataColumn.Create(array, out DataColumn? nulls);
         Assert.That(column.LogicalType, Is.EqualTo(type));
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(bytes));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(bytes));
         Assert.That(column.LogicalLength, Is.EqualTo(array.Length));
 
         if (!array.GetType().GetElementType()!.IsNullable())
         {
-            Assert.That(nulls.HasValue, Is.EqualTo(false));
+            Assert.That(nulls, Is.Null);
         }
         else
         {
             
-            Assert.That(nulls.HasValue, Is.EqualTo(true));
+            Assert.That(nulls, Is.Not.Null);
             DataColumn nullsCol = nulls.Value;
             Assert.That(nullsCol.LogicalType, Is.EqualTo(LogicalType.UInt8));
             Assert.That(nullsCol.LogicalLength, Is.EqualTo(array.Length / 8 + 1));

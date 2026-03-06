@@ -1,6 +1,8 @@
-﻿using Master.Serializing;
+﻿using System.Runtime.CompilerServices;
+using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Tests.Encodings;
 
@@ -9,6 +11,7 @@ internal sealed class BitPackingTests
     [TestCase(1, 5)]
     [TestCase(1, 10)]
     [TestCase(1, 1000)]
+    [TestCase(1, 256)]
     [TestCase(1000, 10)]
     public void BitPackEncodingRoundTripTest(int start, int length)
     {
@@ -16,8 +19,15 @@ internal sealed class BitPackingTests
         DataColumn dataColumn = DataColumn.Create<int>(data.AsSpan());
         IEncoding encoding = new BitPacking();
         IColumn columns = encoding.Encode(dataColumn);
-        DataColumnReader decoded = encoding.Decode(columns).OpenReader();
-        Assert.That(decoded.Read<int>(length).ToArray(), Is.EquivalentTo(data));
+        DataColumnBuilder metadataBuilder = new DataColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
+        columns.WriteMetadata(ref metadataBuilder);
+        DataColumn metadataColumn = metadataBuilder.Build();
+        GenericReader genericReader = metadataColumn.OpenGenericReader();
+        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
+            LogicalType.SInt32,
+            ref genericReader, columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
+        
+        Assert.That(reader.Read(length).ToArray(), Is.EqualTo(data));
     }
 
     [Test]
@@ -26,7 +36,7 @@ internal sealed class BitPackingTests
         Span<int> bitCounts = stackalloc int[sizeof(ulong) * 8];
         BitPacking.GetBitCounts<byte>(DataColumn.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()),
             bitCounts);
-        Assert.That(bitCounts.Slice(0, 8).ToArray(), Is.EquivalentTo(new int[8] {21, 0, 0, 5, 8, 9, 10, 10 }));
+        Assert.That(bitCounts.Slice(0, 8).ToArray(), Is.EqualTo(new int[8] {21, 0, 0, 5, 8, 9, 10, 10 }));
         Assert.That(bitCounts.Slice(8).ToArray().All(i => i == 0), Is.True);
     }
 
