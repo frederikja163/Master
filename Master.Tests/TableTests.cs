@@ -5,6 +5,7 @@ using System.Text;
 using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Tests;
 

@@ -188,7 +188,7 @@ public readonly struct DataColumn : IColumn, IEquatable<DataColumn>
 
     internal GenericReader OpenGenericReader()
     {
-        return new GenericReader(this);
+        return new GenericReader(Data.Span);
     }
 
     public int CalculateTotalLength()

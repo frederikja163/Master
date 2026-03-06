@@ -12,19 +12,21 @@ public interface IColumnReader<T> : IColumnReader
 {
     public T Peek(int offset = 0);
     public IEnumerable<T> Peek(int offset, int count);
+}
 
-    public T Read()
+public static class ColumnReaderExtensions {
+    public static T Read<T>(this IColumnReader<T> reader)
     {
-        T value = Peek();
-        Advance(1);
+        T value = reader.Peek();
+        reader.Advance(1);
         return value;
     }
 
-    public IEnumerable<T> Read(int count)
+    public static IEnumerable<T> Read<T>(this IColumnReader<T> reader, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            yield return Read();
+            yield return reader.Read();
         }
     }
 }

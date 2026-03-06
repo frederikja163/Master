@@ -18,7 +18,7 @@ internal sealed class BitPackingTests
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn dataColumn = DataColumn.Create<int>(data.AsSpan());
         IEncoding encoding = new BitPacking();
-        IColumn columns = encoding.Encode(ref dataColumn);
+        IColumn columns = encoding.Encode(dataColumn);
         DataColumnBuilder metadataBuilder = new DataColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
         columns.WriteMetadata(ref metadataBuilder);
         DataColumn metadataColumn = metadataBuilder.Build();

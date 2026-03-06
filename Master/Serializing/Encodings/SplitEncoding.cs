@@ -16,7 +16,7 @@ internal sealed class SplitEncoding : IEncoding
         DataColumnBuilder byteBuilder = new DataColumnBuilder(LogicalType.UInt8, dataColumn.PhysicalSize - lengthBuilder.PhysicalSize);
         for (int i = 0; i < length; i++)
         {
-            ReadOnlySpan<byte> blob = columnReader.ReadUnits();
+            ReadOnlySpan<byte> blob = columnReader.ReadUnits(dataColumn.LogicalType);
             lengthBuilder.WriteRaw(blob.Slice(0, Unsafe.SizeOf<int>()), 1);
             byteBuilder.Write(blob.Slice(Unsafe.SizeOf<int>()));
         }

@@ -53,7 +53,7 @@ internal sealed class GenericReaderTests
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
         DataColumn column = DataColumn.Create(strings);
         GenericReader reader = column.OpenGenericReader();
-        Assert.That(reader.ReadUnits(3).ToArray(),
+        Assert.That(reader.ReadUnits(LogicalType.String, 3).ToArray(),
             Is.EquivalentTo(column.Data.Span.Slice(0, 36).ToArray()));
     }
 
@@ -75,7 +75,7 @@ internal sealed class GenericReaderTests
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadString(), Is.EqualTo("test"));
-        reader.AdvanceUnits(2);
+        reader.AdvanceUnits(LogicalType.String, 2);
         Assert.That(reader.ReadString(4), Is.EquivalentTo(new string[] { "This", "Is", "Test", "Data" }));
         Assert.That(reader.AtEnd);
     }
@@ -88,7 +88,7 @@ internal sealed class GenericReaderTests
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadBlob().ToArray(), Is.EquivalentTo("test"u8.ToArray()));
-        reader.AdvanceUnits(2);
+        reader.AdvanceUnits(LogicalType.Blob, 2);
         Assert.That(reader.ReadBlob(4), Is.EquivalentTo(new byte[][] { "This"u8.ToArray(), "Is"u8.ToArray(), "Test"u8.ToArray(), "Data"u8.ToArray() }));
         Assert.That(reader.AtEnd);
     }

@@ -57,7 +57,7 @@ public sealed class Serializer
         EncodingId id = metadataSample.EncodingId;
         
         IEncoding encoding = _encodingsById[id];
-        var columns = encoding.Encode(ref inData);
+        var columns = encoding.Encode(inData);
         if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
         {
             foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
@@ -83,7 +83,7 @@ public sealed class Serializer
         
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            IColumn encodedColumn = encoding.Encode(ref sample);
+            IColumn encodedColumn = encoding.Encode(sample);
             if (encodedColumn is IColumnParent parent)
             {
                 foreach (var child in parent.GetDataColumns())
@@ -123,9 +123,9 @@ public sealed class Serializer
         for (int i = 0; i < SampleCount; i++)
         {
             int index = Random.Shared.Next(0, sectionLength - sampleLength);
-            reader.AdvanceUnits(index);
-            builder.WriteRaw(reader.ReadUnits(sampleLength), sampleLength);
-            reader.AdvanceUnits(sectionLength - index - sampleLength);
+            reader.AdvanceUnits(data.LogicalType, index);
+            builder.WriteRaw(reader.ReadUnits(data.LogicalType, sampleLength), sampleLength);
+            reader.AdvanceUnits(data.LogicalType, sectionLength - index - sampleLength);
         }
 
         return builder.Build();
