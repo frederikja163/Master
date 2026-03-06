@@ -13,8 +13,8 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     private int _currentId = 0;
     private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 200, true);
     private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200, true);
-    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.SInt16, 200, true);
-    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.SInt8, 200, true);
+    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200, true);
+    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200, true);
     private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 200, true);
     
     private const byte MajorVersion = 1;
