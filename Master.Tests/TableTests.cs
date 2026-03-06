@@ -24,7 +24,7 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names);
+        Table table = new Table(dataColumns, names, "table");
         Assert.That(table.Columns, Is.EqualTo(dataColumns));
         Assert.That(table.GetDataColumns(), Is.EqualTo(dataColumns));
         Assert.That(table.Names, Is.EqualTo(names));
@@ -43,7 +43,7 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names);
+        Table table = new Table(dataColumns, names, "table");
         Serializer serializer = new();
         serializer.Encode(ref table);
         // TODO: Read
@@ -66,7 +66,7 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names);
+        Table table = new Table(dataColumns, names, "table");
         Serializer serializer = new();
         // Encoding is skipped
         serializer.WriteMetadata(table);

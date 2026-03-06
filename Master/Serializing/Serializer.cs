@@ -151,6 +151,6 @@ public sealed class Serializer
 
     internal Table GetMetadata()
     {
-        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"]);
+        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"], "metadata");
     }
 }

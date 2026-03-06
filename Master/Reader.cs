@@ -1,0 +1,149 @@
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using Master.Serializing;
+using Master.Serializing.Encodings;
+
+namespace Master;
+
+public sealed class TableInfo
+{
+    private readonly ColumnInfo[] _columns;
+    public string Name { get; }
+    public EncodingInfo Encoding { get; }
+
+    internal TableInfo(EncodingInfo encoding)
+    {
+        Encoding = encoding;
+        GenericReader reader = new GenericReader(encoding.Blob.Span);
+        Name = reader.ReadString();
+        _columns = new ColumnInfo[encoding.GetSubEncodings().Count()];
+        int i = 0;
+        foreach (EncodingInfo subEncoding in encoding.GetSubEncodings())
+        {
+            string name = reader.ReadString();
+            _columns[i] = new ColumnInfo(name, subEncoding, this);
+        }
+    }
+
+    public IEnumerable<ColumnInfo> GetColumns()
+    {
+        return _columns;
+    }
+}
+
+public sealed class ColumnInfo
+{
+    public string Name { get; }
+    public EncodingInfo Encoding { get; }
+    public TableInfo TableInfo { get; }
+    
+    internal ColumnInfo(string name, EncodingInfo encoding, TableInfo tableInfo)
+    {
+        Name = name;
+        Encoding = encoding;
+        TableInfo = tableInfo;
+    }
+}
+
+public sealed class EncodingInfo
+{
+    private readonly List<EncodingInfo> _subEncodings = new();
+    public int Id { get; }
+    public int ParentId { get; }
+    public EncodingId Encoding { get; }
+    public LogicalType Type { get; }
+    public ReadOnlyMemory<byte> Blob { get; }
+    public EncodingInfo? ParentEncoding { get; private set; } = null;
+
+    public EncodingInfo(int id, int parentId, EncodingId encoding, LogicalType type, ReadOnlyMemory<byte> blob)
+    {
+        Id = id;
+        ParentId = parentId;
+        Encoding = encoding;
+        Type = type;
+        Blob = blob;
+    }
+
+    public IEnumerable<EncodingInfo> GetSubEncodings()
+    {
+        return _subEncodings;
+    }
+
+    internal void AddSubEncoding(EncodingInfo subEncoding)
+    {
+        _subEncodings.Add(subEncoding);
+        subEncoding.ParentEncoding = this;
+    }
+}
+
+public sealed class Reader
+{
+    private readonly Stream _stream;
+    private readonly Dictionary<string, TableInfo> _tables;
+
+    private Reader(Stream stream, IEnumerable<TableInfo> tables)
+    {
+        _stream = stream;
+        _tables = tables.ToDictionary(t => t.Name, t => t);
+    }
+
+    public IEnumerable<TableInfo> GetTables()
+    {
+        return _tables.Values;
+    }
+
+    public bool TryGetTable(string name, [NotNullWhen(true)] out TableInfo? table)
+    {
+        return _tables.TryGetValue(name, out table);
+    }
+
+    public static async Task<Reader> CreateReaderAsync(Stream stream)
+    {
+        int postfixSize = Unsafe.SizeOf<ulong>() + Unsafe.SizeOf<int>() * 3;
+        stream.Seek(postfixSize, SeekOrigin.End);
+        Span<byte> postfix = stackalloc byte[postfixSize];
+        stream.ReadExactly(postfix);
+        GenericReader postfixReader = new GenericReader(postfix);
+        int start = postfixReader.Read<int>();
+        int length = postfixReader.Read<int>();
+        int logicalLength = postfixReader.Read<int>();
+        ulong magicNumber = postfixReader.Read<ulong>();
+        // TODO: Check magic number;
+        
+        stream.Seek(start, SeekOrigin.Begin);
+        byte[] schema = new byte[length];
+        await stream.ReadExactlyAsync(schema);
+        GenericReader schemaReader = new GenericReader(schema);
+        ReadOnlySpan<int> ids = schemaReader.Read<int>(logicalLength);
+        ReadOnlySpan<int> parentIds = schemaReader.Read<int>(logicalLength);
+        ReadOnlySpan<byte> encodingIds = schemaReader.Read<byte>(logicalLength);
+        ReadOnlySpan<byte> types = schemaReader.Read<byte>(logicalLength);
+
+        Dictionary<int, EncodingInfo> encodingsById = new Dictionary<int, EncodingInfo>();
+        for (int i = 0; i < logicalLength; i++)
+        {
+            int blobLength = schemaReader.Read<int>();
+            ReadOnlyMemory<byte> blob = new ReadOnlyMemory<byte>(schema, schemaReader.ByteIndex, blobLength);
+            schemaReader.Advance(blobLength);
+            encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingId)encodingIds[i], (LogicalType)types[i], blob));
+        }
+        
+        List<EncodingInfo> tableEncodings = new List<EncodingInfo>();
+        foreach (EncodingInfo value in encodingsById.Values)
+        {
+            if (value.ParentId == -1)
+            {
+                // We need to populate all child columns before we create the TableInfo.
+                tableEncodings.Add(value);
+                continue;
+            }
+
+            if (!encodingsById.TryGetValue(value.ParentId, out EncodingInfo? info))
+                throw new Exception($"No parent column (id {value.ParentId}) found for column {value.Id}");
+            EncodingInfo parent = info;
+            parent.AddSubEncoding(value);
+        }
+        
+        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)));
+    }
+}

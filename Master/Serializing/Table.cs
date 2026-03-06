@@ -12,6 +12,7 @@ public struct Table : IColumnParent
     internal IEnumerable<IColumn> Columns => _columns;
     private readonly string[] _names;
     public IEnumerable<string> Names => _names;
+    private readonly string Name { get; }
 
 
     public EncodingId EncodingId => EncodingId.Table;
@@ -58,22 +59,16 @@ public struct Table : IColumnParent
 
     void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
-        StringBuilder sb = new();
-        int idCounter = 0;
-        
-        foreach (string name in _names)
-        {
-            sb.Append(idCounter + "," + name.Replace("\\", "\\\\").Replace(",", "\\,") + ","); // TODO: consider making name optional
-            idCounter++;
-        }
-        Console.WriteLine(sb.ToString());
-        blobBuilder.WriteString(sb.ToString());
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100, false);
+        builder.WriteStrings(_names);
+        blobBuilder.WriteBlob(builder.Build().Data.ToArray());
     }
 
-    internal Table(IEnumerable<DataColumn> columns, IEnumerable<string> names)
+    internal Table(IEnumerable<DataColumn> columns, IEnumerable<string> names, string name)
     {
         _columns = columns.OfType<IColumn>().ToArray();
         _names = names.ToArray();
+        Name = name;
         Debug.Assert(_columns.Count() == _names.Count());
     }
 }
