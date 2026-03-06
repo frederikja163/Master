@@ -27,7 +27,7 @@ internal sealed class BitPackingTests
             LogicalType.SInt32,
             ref genericReader, columns.GetDataColumns().FirstOrDefault().OpenReader<int>());
         
-        Assert.That(reader.Read(length).ToArray(), Is.EquivalentTo(data));
+        Assert.That(reader.Read(length).ToArray(), Is.EqualTo(data));
     }
 
     [Test]
@@ -36,7 +36,7 @@ internal sealed class BitPackingTests
         Span<int> bitCounts = stackalloc int[sizeof(ulong) * 8];
         BitPacking.GetBitCounts<byte>(DataColumn.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()),
             bitCounts);
-        Assert.That(bitCounts.Slice(0, 8).ToArray(), Is.EquivalentTo(new int[8] {21, 0, 0, 5, 8, 9, 10, 10 }));
+        Assert.That(bitCounts.Slice(0, 8).ToArray(), Is.EqualTo(new int[8] {21, 0, 0, 5, 8, 9, 10, 10 }));
         Assert.That(bitCounts.Slice(8).ToArray().All(i => i == 0), Is.True);
     }
 

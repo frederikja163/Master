@@ -88,8 +88,7 @@ public sealed class Serializer
             {
                 foreach (var child in parent.GetDataColumns())
                 {
-                    IColumn column = child;
-                    parent.Swap(column, PickEncoding(child, cascades - 1));
+                    parent.Swap(child, PickEncoding(child, cascades - 1));
                 }
             }
             int length = encodedColumn.CalculateTotalLength();
@@ -134,6 +133,7 @@ public sealed class Serializer
     {
         WriteMetaDataForColumn(table, -1);
     }
+    
     internal void WriteMetaDataForColumn(IColumn column, int parentId)
     {
         int id = _currentId++;

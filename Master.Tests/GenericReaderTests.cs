@@ -43,7 +43,7 @@ internal sealed class GenericReaderTests
         Assert.That(reader.AtEnd, Is.False);
 
         Assert.That(reader.Read<int>(), Is.EqualTo(123));
-        Assert.That(reader.Read<int>(100).ToArray(), Is.EquivalentTo(Enumerable.Range(0, 100)));
+        Assert.That(reader.Read<int>(100).ToArray(), Is.EqualTo(Enumerable.Range(0, 100)));
         Assert.That(reader.AtEnd, Is.True);
     }
 
@@ -54,7 +54,7 @@ internal sealed class GenericReaderTests
         DataColumn column = DataColumn.Create(strings);
         GenericReader reader = column.OpenGenericReader();
         Assert.That(reader.ReadUnits(LogicalType.String, 3).ToArray(),
-            Is.EquivalentTo(column.Data.Span.Slice(0, 36).ToArray()));
+            Is.EqualTo(column.Data.Span.Slice(0, 36).ToArray()));
     }
 
     [Test]
@@ -64,7 +64,7 @@ internal sealed class GenericReaderTests
         DataColumn column = DataColumn.Create(data);
         IColumnReader<float> reader = column.OpenReader<float>();
         
-        Assert.That(reader.Read(40).ToArray(), Is.EquivalentTo(data.Take(40)));
+        Assert.That(reader.Read(40).ToArray(), Is.EqualTo(data.Take(40)));
     }
 
     [Test]
@@ -76,7 +76,7 @@ internal sealed class GenericReaderTests
 
         Assert.That(reader.ReadString(), Is.EqualTo("test"));
         reader.AdvanceUnits(LogicalType.String, 2);
-        Assert.That(reader.ReadString(4), Is.EquivalentTo(new string[] { "This", "Is", "Test", "Data" }));
+        Assert.That(reader.ReadString(4), Is.EqualTo(new string[] { "This", "Is", "Test", "Data" }));
         Assert.That(reader.AtEnd);
     }
 
@@ -87,9 +87,9 @@ internal sealed class GenericReaderTests
         DataColumn column = DataColumn.Create(strings);
         GenericReader reader = column.OpenGenericReader();
 
-        Assert.That(reader.ReadBlob().ToArray(), Is.EquivalentTo("test"u8.ToArray()));
+        Assert.That(reader.ReadBlob().ToArray(), Is.EqualTo("test"u8.ToArray()));
         reader.AdvanceUnits(LogicalType.Blob, 2);
-        Assert.That(reader.ReadBlob(4), Is.EquivalentTo(new byte[][] { "This"u8.ToArray(), "Is"u8.ToArray(), "Test"u8.ToArray(), "Data"u8.ToArray() }));
+        Assert.That(reader.ReadBlob(4), Is.EqualTo(new byte[][] { "This"u8.ToArray(), "Is"u8.ToArray(), "Test"u8.ToArray(), "Data"u8.ToArray() }));
         Assert.That(reader.AtEnd);
     }
 }

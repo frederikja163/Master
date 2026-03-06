@@ -16,9 +16,9 @@ internal sealed class ColumnReaderTests
         Assert.That(reader.Peek(1), Is.EqualTo(start + 1));
         reader.Advance(1);
         Assert.That(reader.Peek(), Is.EqualTo(start + 1));
-        Assert.That(reader.Peek(0, arr.Length - 1), Is.EquivalentTo(arr.Skip(1)));
+        Assert.That(reader.Peek(0, arr.Length - 1), Is.EqualTo(arr.Skip(1)));
         Assert.That(reader.IsAtEnd, Is.False);
-        Assert.That(reader.Read(arr.Length - 1), Is.EquivalentTo(arr.Skip(1)));
+        Assert.That(reader.Read(arr.Length - 1), Is.EqualTo(arr.Skip(1)));
         Assert.That(reader.IsAtEnd, Is.True);
     }
     
@@ -33,9 +33,9 @@ internal sealed class ColumnReaderTests
         Assert.That(reader.Peek(1), Is.EqualTo("is"));
         reader.Advance(1);
         Assert.That(reader.Peek(), Is.EqualTo("is"));
-        Assert.That(reader.Peek(0, arr.Length - 1), Is.EquivalentTo(arr.Skip(1)));
+        Assert.That(reader.Peek(0, arr.Length - 1), Is.EqualTo(arr.Skip(1)));
         Assert.That(reader.IsAtEnd, Is.False);
-        Assert.That(reader.Read(arr.Length - 1), Is.EquivalentTo(arr.Skip(1)));
+        Assert.That(reader.Read(arr.Length - 1), Is.EqualTo(arr.Skip(1)));
         Assert.That(reader.IsAtEnd, Is.True);
     }
 

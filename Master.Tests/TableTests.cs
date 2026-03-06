@@ -86,9 +86,9 @@ public class TableTests
          * | 3  | 0        | Binary   | SInt32      | { PhysicalSize, LogicalLength }
          * | 0  | -1       | Table    | SInt32      | { (id, name)[] }
          */
-        Assert.That(idColumn.OpenReader<int>().Read(4), Is.EquivalentTo(new [] { 1, 2, 3, 0 }));
-        Assert.That(parentIdColumn.OpenReader<int>().Read(4), Is.EquivalentTo(new [] { 0, 0, 0, -1 }));
-        Assert.That(encodingIdColumn.OpenReader<byte>().Read(4), Is.EquivalentTo( new byte[] { (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Table }));
+        Assert.That(idColumn.OpenReader<int>().Read(4), Is.EqualTo(new [] { 1, 2, 3, 0 }));
+        Assert.That(parentIdColumn.OpenReader<int>().Read(4), Is.EqualTo(new [] { 0, 0, 0, -1 }));
+        Assert.That(encodingIdColumn.OpenReader<byte>().Read(4), Is.EqualTo( new byte[] { (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Table }));
         Assert.That(logicalTypeColumn.OpenReader<byte>().Read(4), Is.EqualTo(new byte[] { (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.UInt8 }));
         var blobReader = blobColumn.OpenGenericReader();
         for (int i = 0; i < 3; i++)
@@ -128,13 +128,13 @@ public class TableTests
         DataColumn logicalTypeColumn = metadataColumns[3];
         DataColumn blobColumn = metadataColumns[4];
         
-        Assume.That(idColumn.OpenReader<int>().Read(7), Is.EquivalentTo(new [] { 4, 3, 2, 1, 6, 5, 0 }));
-        Assume.That(encodingIdColumn.OpenReader<byte>().Read(7), Is.EquivalentTo( new byte[]
+        Assume.That(idColumn.OpenReader<int>().Read(7), Is.EqualTo(new [] { 4, 3, 2, 1, 6, 5, 0 }));
+        Assume.That(encodingIdColumn.OpenReader<byte>().Read(7), Is.EqualTo( new byte[]
         {
             (byte)EncodingId.Binary, (byte)EncodingId.BitPacking, (byte)EncodingId.BitPacking, (byte)EncodingId.BitPacking, (byte)EncodingId.Binary, (byte)EncodingId.BitPacking, (byte)EncodingId.Split
         }));
         
         // Only Tables write their own parentId, therefore this it is intended that the columns are not evenly long in this unittest
-        Assert.That(parentIdColumn.OpenReader<int>().Read(6), Is.EquivalentTo(new [] { 3, 2, 1, 0, 5, 0 }));
+        Assert.That(parentIdColumn.OpenReader<int>().Read(6), Is.EqualTo(new [] { 3, 2, 1, 0, 5, 0 }));
     }
 }

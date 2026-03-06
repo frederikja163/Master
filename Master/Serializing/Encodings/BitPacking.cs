@@ -78,7 +78,7 @@ internal sealed class BitPacking : IEncoding
         int packedSize = size - metadata.PrefixLength;
         int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
         DataColumnBuilder builder = new DataColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
-        T flag = (~T.Zero << metadata.PrefixLength) >>> metadata.PrefixLength;
+        T flag = (T.AllBitsSet << metadata.PrefixLength) >>> metadata.PrefixLength;
         T currentValue = default;
         int shift = 0;
         while (!reader.IsAtEnd)

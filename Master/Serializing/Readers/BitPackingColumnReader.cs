@@ -20,7 +20,7 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
     public BitPackingColumnReader(IColumnReader reader, int logicalLength, LogicalType type, byte prefixLength, T prefix)
     {
         if (reader is not IColumnReader<T> columnReader)
-            throw new Exception(
+            throw new ArgumentException(
                 $"Expected child column of {nameof(BitPackingColumnReader<T>)} to be of type {nameof(IColumnReader<T>)} but found {reader.GetType().FullName}");
         ColumnReader = columnReader;
         PrefixLength = prefixLength;
@@ -28,7 +28,7 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
         Length = logicalLength;
         Type = type;
         _valueSize = BitSize - prefixLength;
-        _valueMask = ((~T.Zero) << prefixLength) >>> prefixLength;
+        _valueMask = (T.AllBitsSet << prefixLength) >>> prefixLength;
     }
     
     public T Peek(int byteOffset = 0)
