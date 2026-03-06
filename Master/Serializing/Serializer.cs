@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Master.Serializing.Columns;
+﻿using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 
 namespace Master.Serializing;
@@ -128,29 +127,5 @@ public sealed class Serializer
         }
 
         return builder.Build();
-    }
-    internal void WriteMetadata(Table table)
-    {
-        WriteMetaDataForColumn(table, -1);
-    }
-    
-    internal void WriteMetaDataForColumn(IColumn column, int parentId)
-    {
-        int id = _currentId++;
-        if (column is IColumnParent parent)
-        {
-            foreach (IColumn childColumn in parent.GetChildColumns()) 
-                WriteMetaDataForColumn(childColumn, id);
-        }
-        _idBuilder.Write(id);
-        _parentIdBuilder.Write(parentId);
-        _encodingIdBuilder.Write((byte) column.EncodingId);
-        _logicalTypeBuilder.Write((byte) column.LogicalType);
-        column.WriteMetadata(ref _blobBuilder);
-    }
-
-    internal Table GetMetadata()
-    {
-        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"]);
     }
 }
