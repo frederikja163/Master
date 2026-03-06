@@ -154,9 +154,9 @@ public class TableTests
         serializer.Encode(ref table);
 
         Stream stream = new MemoryStream();
-        TableWriter writer = new(stream);
+        TableWriter writer = new(stream, Encoding.Default, leaveOpen: true);
         writer.Write(table);
-        writer.Dispose(disposing: false);
+        writer.Dispose();
 
         stream.Seek(0, SeekOrigin.Begin);
         BinaryReader reader = new BinaryReader(stream);

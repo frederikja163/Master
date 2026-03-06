@@ -51,15 +51,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         _outStream.Write(MagicNumber);
     }
 
-    // Closes this writer and releases any system resources associated with the
-    // writer. Following a call to Close, any operations on the writer
-    // may raise exceptions.
-    public void Close()
-    {
-        Dispose(true);
-    }
-
-    internal void Dispose(bool disposing)
+    public void Dispose()
     {
         // Metadata
         long metadataStart = _outStream.Position; // for Postscript
@@ -83,18 +75,12 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         _outStream.Write(postScript.Build().Data.Span);
         _outStream.Write(MagicNumber);
         
-        if (!disposing) 
-            return;
         if (_leaveOpen)
             _outStream.Flush();
         else
             _outStream.Close();
     }
-
-    public void Dispose()
-    {
-        Dispose(true);
-    }
+    
 
     public async ValueTask DisposeAsync()
     {
