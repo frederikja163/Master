@@ -8,7 +8,7 @@ internal sealed class DataColumnReaderTests
     [Test]
     public void AdvanceTest()
     {
-        DataColumn column = DataColumn.Create(Enumerable.Range(0, 100).ToArray());
+        DataColumn column = DataColumn.Create<int>(Enumerable.Range(0, 100).ToArray());
         DataColumnReader reader = column.OpenReader();
         reader.Advance(12);
         Assert.That(reader.Read<int>(), Is.EqualTo(3));
@@ -31,7 +31,7 @@ internal sealed class DataColumnReaderTests
         DataColumnBuilder builder = new DataColumnBuilder(LogicalType.SInt32, 405, false);
         builder.Write<byte>(123);
         builder.Write(123);
-        builder.Write(Enumerable.Range(0, 100).ToArray());
+        builder.Write<int>(Enumerable.Range(0, 100).ToArray());
         DataColumnReader reader = builder.Build().OpenReader();
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));
         Assert.That(reader.Peek<int>(1), Is.EqualTo((int)123));
@@ -60,7 +60,7 @@ internal sealed class DataColumnReaderTests
     public void ReadMultiplePrimitivesTest()
     {
         float[] data = Enumerable.Range(0, 100).Select(i => MathF.Sin(i / 10f)).ToArray();
-        DataColumn column = DataColumn.Create(data);
+        DataColumn column = DataColumn.Create<float>(data);
         DataColumnReader reader = column.OpenReader();
         
         Assert.That(reader.Read<float>(40).ToArray(), Is.EquivalentTo(data.Take(40)));

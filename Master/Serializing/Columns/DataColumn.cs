@@ -9,14 +9,17 @@ namespace Master.Serializing.Columns;
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
 /// </summary>
-public readonly struct DataColumn : IColumn
+public struct DataColumn : IColumn
 {
-    public EncodingId EncodingId => EncodingId.Binary;
+    public readonly EncodingId EncodingId => EncodingId.Binary;
     public ReadOnlyMemory<byte> Data { get; }
     public LogicalType LogicalType { get; }
-    public int PhysicalSize => Data.Length;
+
+    public long Offset { get; private set; }
+
+    public readonly int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
-    private static readonly int BlobSize = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>();
+    private static readonly int BlobSize = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>();
 
     public static DataColumn Empty { get; } = new (LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
 
@@ -174,6 +177,12 @@ public readonly struct DataColumn : IColumn
         blobBuilder.Write(BlobSize);
         blobBuilder.WriteRaw(PhysicalSize);
         blobBuilder.WriteRaw(LogicalLength);
-        // TODO blobBuilder.WriteRaw(Offset); - remember to also add its size to BlobSize
+        blobBuilder.WriteRaw(Offset);
+    }
+
+    internal void Write(Stream stream)
+    {
+        Offset = stream.Position;
+        stream.Write(Data.Span);
     }
 }

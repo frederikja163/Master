@@ -113,7 +113,7 @@ internal sealed class DataColumnBuilderTests
     {
         Assert.Throws<IndexOutOfRangeException>(() => { 
             DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 1, false);
-            builder.Write(new byte[] { 123, 23 });
+            builder.Write<byte>([123, 23]);
         });
     }
 }
