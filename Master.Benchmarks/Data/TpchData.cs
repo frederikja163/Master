@@ -15,7 +15,7 @@ public class TpchData : ICustomData
         foreach (string line in File.ReadLines(path))
         { 
             var values = line.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries); 
-            for (int i = 0; i < tempColumns.Length; i++)
+            for (int i = 0; i < values.Length; i++)
             {
                 tempColumns[i].Add(Parse(values[i], _columnTypes[i]));
             }

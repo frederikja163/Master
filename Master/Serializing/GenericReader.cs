@@ -6,33 +6,31 @@ using Master.Serializing.Columns;
 
 namespace Master.Serializing;
 
-public ref struct DataColumnReader
+public ref struct GenericReader
 {
     private readonly ReadOnlySpan<byte> _data;
-    private readonly LogicalType _logicalType;
-    private int _index = 0;
+    public int ByteIndex { get; private set; } = 0;
 
-    public DataColumnReader(DataColumn dataColumn)
+    public GenericReader(ReadOnlySpan<byte> data)
     {
-        _data = dataColumn.Data.Span;
-        _logicalType = dataColumn.LogicalType;
+        _data = data;
     }
     
     public int PhysicalSize => _data.Length;
-    public bool AtEnd => _index == _data.Length;
+    public bool AtEnd => ByteIndex == _data.Length;
     
     public void Advance(int byteCount)
     {
-        int newIndex = _index + byteCount;
+        int newIndex = ByteIndex + byteCount;
         if ((uint)newIndex > _data.Length)
             throw new IndexOutOfRangeException();
-        _index = newIndex;
+        ByteIndex = newIndex;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private ReadOnlySpan<byte> Slice(int offset, int size)
     {
-        int start = _index + offset;
+        int start = ByteIndex + offset;
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
@@ -40,10 +38,10 @@ public ref struct DataColumnReader
         return slice;
     }
 
-    public T Peek<T>(int offset = 0)
+    public T Peek<T>(int byteOffset = 0)
         where T : unmanaged
     {
-        ReadOnlySpan<byte> slice = Slice(offset, Unsafe.SizeOf<T>());
+        ReadOnlySpan<byte> slice = Slice(byteOffset, Unsafe.SizeOf<T>());
         return 
             typeof(T) == typeof(sbyte) ? Unsafe.BitCast<sbyte, T>((sbyte)slice[0]) :
             typeof(T) == typeof(short) ? Unsafe.BitCast<short, T>(BinaryPrimitives.ReadInt16LittleEndian(slice)) :
@@ -119,9 +117,9 @@ public ref struct DataColumnReader
         return values;
     }
 
-    public void AdvanceUnits(int count = 1)
+    public void AdvanceUnits(LogicalType type, int count = 1)
     {
-        if (_logicalType.TryGetSize(out int size))
+        if (type.TryGetSize(out int size))
         {
             Advance(count * size);
             return;
@@ -134,9 +132,9 @@ public ref struct DataColumnReader
         }
     }
 
-    public ReadOnlySpan<byte> ReadUnits(int count = 1)
+    public ReadOnlySpan<byte> ReadUnits(LogicalType type, int count = 1)
     {
-        if (_logicalType.TryGetSize(out int size))
+        if (type.TryGetSize(out int size))
         {
             return Read<byte>(count * size);
         }
@@ -148,5 +146,12 @@ public ref struct DataColumnReader
         }
 
         return Read<byte>(length);
+    }
+
+    public GenericReader Clone()
+    {
+        GenericReader clone = new GenericReader(_data);
+        clone.ByteIndex = ByteIndex;
+        return clone;
     }
 }

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using Master.Serializing.Columns;
+using Master.Serializing.Readers;
 
 namespace Master.Serializing.Encodings;
 
@@ -11,7 +12,7 @@ internal sealed class BitPacking : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.BitPacking;
     
-    public IColumn Encode(DataColumn dataColumn)
+    public IColumn Encode(in DataColumn dataColumn)
     {
         if (!dataColumn.LogicalType.TryGetSize(out int size))
         {
@@ -30,7 +31,38 @@ internal sealed class BitPacking : IEncoding
         return column;
     }
 
-    private static IColumn Encode<T>(DataColumn dataColumn)
+    public IColumnReader CreateDecoder(LogicalType type, ref GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
+    {
+        IColumnReader? reader = childReader.FirstOrDefault();
+        if (reader is null)
+            throw new Exception("Expected a child column to a bitpack encoded column, but found none.");
+        if (metadataReader.Read<int>() != BitPackingColumn.Size)
+            throw new Exception("BitPacking metadata was malformed.");
+        byte prefixLength = metadataReader.Read<byte>();
+        ulong prefix = metadataReader.Read<ulong>();
+        int logicalLength = metadataReader.Read<int>();
+        return type switch
+        {
+            LogicalType.SInt8 => new BitPackingColumnReader<sbyte>(reader, logicalLength, type, prefixLength, (sbyte)prefix),
+            LogicalType.SInt16 => new BitPackingColumnReader<short>(reader, logicalLength, type, prefixLength, (short)prefix),
+            LogicalType.SInt32 => new BitPackingColumnReader<int>(reader, logicalLength, type, prefixLength, (int)prefix),
+            LogicalType.SInt64 => new BitPackingColumnReader<long>(reader, logicalLength, type, prefixLength, (long)prefix),
+            LogicalType.UInt8 => new BitPackingColumnReader<byte>(reader, logicalLength, type, prefixLength, (byte)prefix),
+            LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
+            LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
+            LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
+            
+            // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
+            LogicalType.Float16 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Float32 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Float64 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
+    }
+
+    private static IColumn Encode<T>(in DataColumn dataColumn)
         where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T>
     {
         BitPackingColumn metadata = GetMetadata<T>(dataColumn);
@@ -38,20 +70,20 @@ internal sealed class BitPacking : IEncoding
         return metadata;
     }
 
-    private static void EncodeData<T>(DataColumn dataColumn, BitPackingColumn metadata)
+    private static void EncodeData<T>(in DataColumn dataColumn, BitPackingColumn metadata)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        DataColumnReader reader = dataColumn.OpenReader();
+        IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
-        int length = (int)double.Ceiling(reader.PhysicalSize * (packedSize / (double)size)) + 1;
+        int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
         DataColumnBuilder builder = new DataColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
-        T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
+        T flag = (T.AllBitsSet << metadata.PrefixLength) >>> metadata.PrefixLength;
         T currentValue = default;
         int shift = 0;
-        while (!reader.AtEnd)
+        while (!reader.IsAtEnd)
         {
-             T value = reader.Read<T>() & flag;
+             T value = reader.Read() & flag;
              if (shift + packedSize < size)
              {
                  currentValue = (currentValue << packedSize) | value;
@@ -75,47 +107,45 @@ internal sealed class BitPacking : IEncoding
         metadata.Column = builder.Build();
     }
 
-    internal static BitPackingColumn GetMetadata<T>(DataColumn data) where T : unmanaged, IBinaryInteger<T>
+    internal static BitPackingColumn GetMetadata<T>(in DataColumn data) where T : unmanaged, IBinaryInteger<T>
     {
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
         GetBitCounts<T>(data, bitCounts);
         int count = data.LogicalLength;
-        BitPackingColumn metadata = new (data)
-        {
-            LogicalType = data.LogicalType,
-            LogicalLength = data.LogicalLength
-        };
+        
+        byte prefixLength = 0;
+        ulong prefix = 0;
 
         for (int i = 0; i < Unsafe.SizeOf<T>() * 8 - 1; i++)
         {
             int bitCount = bitCounts[i];
             if (bitCount == count)
             {
-                metadata.PrefixLength += 1;
-                metadata.Prefix = (metadata.Prefix << 1) | 1;
+                prefixLength += 1;
+                prefix = (prefix << 1) | 1;
             }
             else if (bitCount == 0)
             {
-                metadata.PrefixLength += 1;
-                metadata.Prefix <<= 1;
+                prefixLength += 1;
+                prefix <<= 1;
             }
             else
             {
                 break;
             }
         }
-        return metadata;
+        return new BitPackingColumn(data, prefixLength, prefix);
     }
 
-    internal static void GetBitCounts<T>(DataColumn column, Span<int> bitCounts)
+    internal static void GetBitCounts<T>(in DataColumn column, Span<int> bitCounts)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>
     {
         // TODO: Optimize using SIMD and PopCount.
-        DataColumnReader reader = column.OpenReader();
+        IColumnReader<T> reader = new PrimitiveReader<T>(column.Data);
         int size = Unsafe.SizeOf<T>() * 8;
         for (int i = 0; i < column.LogicalLength; i++)
         {
-            T value = reader.Read<T>();
+            T value = reader.Read();
             // TODO: Skip leading zeros.
             for (int j = 1; j <= size; j++)
             {
@@ -123,67 +153,6 @@ internal sealed class BitPacking : IEncoding
                 bitCounts[size - j] += bit;
             }
         }
-    }
-
-    public DataColumn Decode(IColumn data)
-    {
-        if (data is not BitPackingColumn bitPackingColumn)
-            throw new Exception($"Data({nameof(data)}) is not a BitPackingColumn");
-        DataColumn dataColumn = (DataColumn) bitPackingColumn.Column; // TODO: needs to not be casted here
-        if (!bitPackingColumn.LogicalType.TryGetSize(out int size))
-        {
-            throw new Exception("Type must be a primitive");
-        }
-        
-        DataColumn column = size switch
-        {
-            1 => Decode<byte>(dataColumn, bitPackingColumn),
-            2 => Decode<ushort>(dataColumn, bitPackingColumn),
-            4 => Decode<uint>(dataColumn, bitPackingColumn),
-            8 => Decode<ulong>(dataColumn, bitPackingColumn),
-            _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
-        };
-        return column;
-    }
-
-    private DataColumn Decode<T>(DataColumn dataColumn, BitPackingColumn metadata)
-        where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
-    {
-        int size = Unsafe.SizeOf<T>() * 8;
-        int packedSize = size - metadata.PrefixLength;
-        int length = metadata.LogicalLength;
-        DataColumnReader reader = dataColumn.OpenReader();
-        DataColumnBuilder builder =
-            new DataColumnBuilder(metadata.LogicalType, length * size / 8);
-
-        T flag = (T.MaxValue << metadata.PrefixLength) >> metadata.PrefixLength;
-        ulong p = metadata.Prefix << (size - metadata.PrefixLength);
-        T prefix = Unsafe.As<ulong, T>(ref p);
-        T currentValue = reader.Read<T>();
-        int shift = size - packedSize;
-        for (int i = 0; i < length; i++)
-        {
-            T value;
-            if (shift >= 0)
-            {
-                value = (currentValue >> shift);
-            }
-            else
-            {
-                int shift1 = int.Abs(shift);
-                value = currentValue << shift1;
-                currentValue = reader.Read<T>();
-                shift = size - shift1;
-                value |= (currentValue >> shift);
-            }
-
-            value &= flag;
-            value |= prefix;
-            builder.Write(value);
-            shift -= packedSize;
-        }
-        
-        return builder.Build();
     }
 
     public IEnumerable<LogicalType> GetSupportedTypes()

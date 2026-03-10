@@ -11,7 +11,7 @@ internal sealed class DataColumnBuilderTests
     [Test]
     public void WritePrimitiveTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 44, false);
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 44);
         builder.Write<sbyte>(1);
         builder.Write<short>(2);
         builder.Write<int>(3);
@@ -44,7 +44,7 @@ internal sealed class DataColumnBuilderTests
             7, 0, 0, 0,
             8, 0, 0, 0, 0, 0, 0, 0,
         }.Concat(bytes);
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(new byte[]{
+        Assert.That(column.Data.ToArray(), Is.EqualTo(new byte[]{
             1,
             2, 0,
             3, 0, 0, 0,
@@ -62,14 +62,14 @@ internal sealed class DataColumnBuilderTests
         string[] strs = ["test", "hello world", "abcd1234"];
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, length, false);
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, length);
         builder.WriteStrings(strs);
         Assert.That(builder.IsAtEnd, Is.True);
         DataColumn column = builder.Build();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(strs.SelectMany(DataHelper.GetBytes)));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(strs.SelectMany(DataHelper.GetBytes)));
     }
 
     [Test]
@@ -78,20 +78,20 @@ internal sealed class DataColumnBuilderTests
         string[] strs = ["test", "hello world", "abcd1234"];
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.Blob, length, false);
+        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.Blob, length);
         builder.WriteBlobs(strs.Select(Encoding.UTF8.GetBytes));
         Assert.That(builder.IsAtEnd, Is.True);
         DataColumn column = builder.Build();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(strs.SelectMany(DataHelper.GetBytes)));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(strs.SelectMany(DataHelper.GetBytes)));
     }
 
     [Test]
     public void CanResizeTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(1, true);
+        DataColumnBuilder builder = new DataColumnBuilder(1, false);
         builder.Write<byte>(123);
         Assert.That(builder.IsAtEnd, Is.True);
         Assert.That(builder.PhysicalSize, Is.EqualTo(1));
@@ -111,9 +111,9 @@ internal sealed class DataColumnBuilderTests
     [Test]
     public void IndexOutOfBoundsExceptionTest()
     {
-        Assert.Throws<IndexOutOfRangeException>(() => { 
-            DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 1, false);
-            builder.Write(new byte[] { 123, 23 });
+        Assert.Throws<IndexOutOfRangeException>(() => {
+            DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 1, true);
+            builder.Write<byte>([123, 23]);
         });
     }
 }
