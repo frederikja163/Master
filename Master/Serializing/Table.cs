@@ -60,6 +60,7 @@ public struct Table : IColumnParent
     void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
         DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100, false);
+        builder.WriteString(Name);
         builder.WriteStrings(_names);
         blobBuilder.WriteBlob(builder.Build().Data.ToArray());
     }

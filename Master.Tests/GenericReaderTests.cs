@@ -34,6 +34,7 @@ internal sealed class GenericReaderTests
         builder.Write(123);
         builder.Write(Enumerable.Range(0, 100).ToArray());
         GenericReader reader = builder.Build().OpenGenericReader();
+
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));
         Assert.That(reader.Peek<int>(1), Is.EqualTo((int)123));
         Assert.That(reader.AtEnd, Is.False);

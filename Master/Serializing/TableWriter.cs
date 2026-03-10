@@ -1,0 +1,131 @@
+﻿using System.Text;
+using Master.Serializing.Columns;
+
+namespace Master.Serializing;
+
+// Based on System.IO.BinaryWriter
+public sealed class TableWriter : IDisposable, IAsyncDisposable
+{
+    private readonly Stream _outStream;
+    private readonly Encoding _encoding;
+    private readonly bool _leaveOpen;
+    
+    private int _currentId = 0;
+    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 200, true);
+    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200, true);
+    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200, true);
+    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200, true);
+    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 200, true);
+    
+    private const byte MajorVersion = 1;
+    private const byte MinorVersion = 0;
+    private const byte PatchVersion = 0;
+    internal static ReadOnlySpan<byte> MagicNumber =>
+    [
+        (byte)'O',
+        (byte)'T',
+        (byte)'A',
+        (byte)'P',
+        (byte)'R',
+        MajorVersion,
+        MinorVersion,
+        PatchVersion
+    ]; // OTAP R100
+
+    public TableWriter(Stream output) : this(output, Encoding.UTF8)
+    {
+    }
+
+    public TableWriter(Stream output, Encoding encoding, bool leaveOpen = false)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(encoding);
+
+        if (!output.CanWrite)
+            throw new ArgumentException("Stream not writeable");
+
+        _outStream = output;
+        _encoding = encoding;
+        _leaveOpen = leaveOpen;
+        
+        _outStream.Write(MagicNumber);
+    }
+
+    public void Dispose()
+    {
+        // Metadata
+        long metadataStart = _outStream.Position; // for Postscript
+
+        DataColumn idColumn = _idBuilder.Build();
+        idColumn.Write(_outStream);
+        _parentIdBuilder.Build().Write(_outStream);
+        _encodingIdBuilder.Build().Write(_outStream);
+        _logicalTypeBuilder.Build().Write(_outStream);
+        _blobBuilder.Build() .Write(_outStream);
+        
+        // Postscript
+        long metadataLength = _outStream.Position - metadataStart;
+        long metadataLogicalLength = idColumn.LogicalLength;
+        
+        DataColumnBuilder postScript = new(LogicalType.SInt64, 24);
+        postScript.Write(metadataStart);
+        postScript.Write(metadataLength);
+        postScript.Write(metadataLogicalLength);
+        
+        _outStream.Write(postScript.Build().Data.Span);
+        _outStream.Write(MagicNumber);
+        
+        if (_leaveOpen)
+            _outStream.Flush();
+        else
+            _outStream.Close();
+    }
+    
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_leaveOpen)
+        {
+            await _outStream.FlushAsync();
+        }
+        _outStream.Close();
+    }
+
+    // Clears all buffers for this writer and causes any buffered data to be
+    // written to the underlying device.
+    public void Flush()
+    {
+        _outStream.Flush();
+    }
+    
+    public void Write(Table table)
+    {
+        foreach (DataColumn dataColumn in table.GetDataColumns())
+        {
+            dataColumn.Write(_outStream);
+        }
+
+        SaveMetaDataForColumn(table, -1);
+    }
+    
+    internal void SaveMetaDataForColumn(IColumn column, int parentId)
+    {
+        int id = _currentId++;
+        if (column is IColumnParent parent)
+        {
+            foreach (IColumn childColumn in parent.GetChildColumns()) 
+                SaveMetaDataForColumn(childColumn, id);
+        }
+        _idBuilder.Write(id);
+        _parentIdBuilder.Write(parentId);
+        _encodingIdBuilder.Write((byte) column.EncodingId);
+        _logicalTypeBuilder.Write((byte) column.LogicalType);
+        column.WriteMetadata(ref _blobBuilder);
+    }
+    
+    internal Table GetMetadata()
+    {
+        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"], "schema");
+    }
+}
+

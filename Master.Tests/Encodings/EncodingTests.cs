@@ -73,7 +73,7 @@ internal sealed class EncodingTests
         
         Serializer serializer = new Serializer();
 
-        DataColumn expected = DataColumn.Create(data);
+        DataColumn expected = DataColumn.Create<int>(data);
         IColumn column = serializer.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
@@ -87,7 +87,7 @@ internal sealed class EncodingTests
         
         Serializer serializer = new Serializer();
 
-        DataColumn expected = DataColumn.Create(data);
+        DataColumn expected = DataColumn.Create<uint>(data);
         IColumn column = serializer.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
