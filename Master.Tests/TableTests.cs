@@ -22,7 +22,7 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names, "table");
+        Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
         Assert.That(table.Columns, Is.EqualTo(dataColumns));
         Assert.That(table.GetDataColumns(), Is.EqualTo(dataColumns));
         Assert.That(table.Names, Is.EqualTo(names));
@@ -41,7 +41,7 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names, "table");
+        Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
         Serializer serializer = new();
         serializer.Encode(ref table);
         // TODO: Read
@@ -64,7 +64,7 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names, "table");
+        Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
         // Encoding is skipped
         TableWriter tableWriter = new TableWriter(Stream.Null);
         tableWriter.Write(table);
@@ -154,10 +154,10 @@ public class TableTests
             DataColumn.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns, names, "table");
+        Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
 
         Stream stream = new MemoryStream();
-        TableWriter writer = new(stream, Encoding.Default, leaveOpen: true);
+        TableWriter writer = new(stream, leaveOpen: true);
         writer.Write(table);
         writer.Dispose();
 

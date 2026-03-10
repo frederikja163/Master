@@ -65,9 +65,9 @@ public struct Table : IColumnParent
         blobBuilder.WriteBlob(builder.Build().Data.ToArray());
     }
 
-    internal Table(IEnumerable<DataColumn> columns, IEnumerable<string> names, string name)
+    internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
     {
-        _columns = columns.OfType<IColumn>().ToArray();
+        _columns = columns.ToArray();
         _names = names.ToArray();
         Name = name;
         Debug.Assert(_columns.Count() == _names.Count());

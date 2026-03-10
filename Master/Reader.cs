@@ -7,7 +7,7 @@ namespace Master;
 
 public sealed class TableInfo
 {
-    private readonly ColumnInfo[] _columns;
+    private readonly Dictionary<string, ColumnInfo> _columns;
     public string Name { get; }
     public EncodingInfo Encoding { get; }
 
@@ -16,18 +16,24 @@ public sealed class TableInfo
         Encoding = encoding;
         GenericReader reader = new GenericReader(encoding.Blob.Span);
         Name = reader.ReadString();
-        _columns = new ColumnInfo[encoding.GetSubEncodings().Count()];
+        _columns = new Dictionary<string, ColumnInfo>();
         int i = 0;
         foreach (EncodingInfo subEncoding in encoding.GetSubEncodings())
         {
             string name = reader.ReadString();
-            _columns[i] = new ColumnInfo(name, subEncoding, this);
+            ColumnInfo columnInfo = new ColumnInfo(name, subEncoding, this);
+            _columns.Add(name, columnInfo);
         }
     }
 
     public IEnumerable<ColumnInfo> GetColumns()
     {
-        return _columns;
+        return _columns.Values;
+    }
+
+    public bool TryGetColumn(string name, [NotNullWhen(true)] out ColumnInfo? columnInfo)
+    {
+        return _columns.TryGetValue(name, out columnInfo);
     }
 }
 
@@ -99,14 +105,14 @@ public sealed class Reader
 
     public static async Task<Reader> CreateReaderAsync(Stream stream)
     {
-        int postfixSize = Unsafe.SizeOf<ulong>() + Unsafe.SizeOf<int>() * 3;
-        stream.Seek(postfixSize, SeekOrigin.End);
+        int postfixSize = Unsafe.SizeOf<long>() * 4;
+        stream.Seek(-postfixSize, SeekOrigin.End);
         Span<byte> postfix = stackalloc byte[postfixSize];
         stream.ReadExactly(postfix);
         GenericReader postfixReader = new GenericReader(postfix);
-        int start = postfixReader.Read<int>();
-        int length = postfixReader.Read<int>();
-        int logicalLength = postfixReader.Read<int>();
+        long start = postfixReader.Read<long>();
+        long length = postfixReader.Read<long>();
+        int logicalLength = (int)postfixReader.Read<long>();
         ulong magicNumber = postfixReader.Read<ulong>();
         // TODO: Check magic number;
         

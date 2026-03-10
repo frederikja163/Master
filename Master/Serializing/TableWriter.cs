@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Master.Serializing.Columns;
+﻿using Master.Serializing.Columns;
 
 namespace Master.Serializing;
 
@@ -7,7 +6,6 @@ namespace Master.Serializing;
 public sealed class TableWriter : IDisposable, IAsyncDisposable
 {
     private readonly Stream _outStream;
-    private readonly Encoding _encoding;
     private readonly bool _leaveOpen;
     
     private int _currentId = 0;
@@ -32,20 +30,14 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         PatchVersion
     ]; // OTAP R100
 
-    public TableWriter(Stream output) : this(output, Encoding.UTF8)
-    {
-    }
-
-    public TableWriter(Stream output, Encoding encoding, bool leaveOpen = false)
+    public TableWriter(Stream output, bool leaveOpen = false)
     {
         ArgumentNullException.ThrowIfNull(output);
-        ArgumentNullException.ThrowIfNull(encoding);
 
         if (!output.CanWrite)
             throw new ArgumentException("Stream not writeable");
 
         _outStream = output;
-        _encoding = encoding;
         _leaveOpen = leaveOpen;
         
         _outStream.Write(MagicNumber);
@@ -67,7 +59,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = idColumn.LogicalLength;
         
-        DataColumnBuilder postScript = new(LogicalType.SInt64, 24);
+        DataColumnBuilder postScript = new(LogicalType.UInt64, 24);
         postScript.Write(metadataStart);
         postScript.Write(metadataLength);
         postScript.Write(metadataLogicalLength);
