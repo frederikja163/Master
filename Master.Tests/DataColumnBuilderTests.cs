@@ -44,7 +44,7 @@ internal sealed class DataColumnBuilderTests
             7, 0, 0, 0,
             8, 0, 0, 0, 0, 0, 0, 0,
         }.Concat(bytes);
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(new byte[]{
+        Assert.That(column.Data.ToArray(), Is.EqualTo(new byte[]{
             1,
             2, 0,
             3, 0, 0, 0,
@@ -69,7 +69,7 @@ internal sealed class DataColumnBuilderTests
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(strs.SelectMany(DataHelper.GetBytes)));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(strs.SelectMany(DataHelper.GetBytes)));
     }
 
     [Test]
@@ -85,7 +85,7 @@ internal sealed class DataColumnBuilderTests
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
-        Assert.That(column.Data.ToArray(), Is.EquivalentTo(strs.SelectMany(DataHelper.GetBytes)));
+        Assert.That(column.Data.ToArray(), Is.EqualTo(strs.SelectMany(DataHelper.GetBytes)));
     }
 
     [Test]

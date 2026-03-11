@@ -16,7 +16,7 @@ public struct DataColumn : IColumn, IEquatable<DataColumn>
     public ReadOnlyMemory<byte> Data { get; }
     public LogicalType LogicalType { get; }
 
-    public long Offset { get; private set; }
+    public long Offset { get; private set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
 
     public readonly int PhysicalSize => Data.Length;
     public int LogicalLength { get; }

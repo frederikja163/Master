@@ -82,8 +82,7 @@ public sealed class Serializer
             {
                 foreach (var child in parent.GetDataColumns())
                 {
-                    IColumn column = child;
-                    parent.Swap(column, PickEncoding(child, cascades - 1));
+                    parent.Swap(child, PickEncoding(child, cascades - 1));
                 }
             }
             int length = encodedColumn.CalculateTotalLength();

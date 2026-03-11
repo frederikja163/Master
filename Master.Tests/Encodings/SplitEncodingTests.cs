@@ -24,10 +24,10 @@ internal sealed class SplitEncodingTests
         IColumnReader<byte> strReader = strColumn.OpenReader<byte>();
         Assert.That(lengthColumn.LogicalType, Is.EqualTo(LogicalType.SInt32));
         Assert.That(lengthColumn.LogicalLength, Is.EqualTo(2));
-        Assert.That(lengthReader.Read(2).ToArray(), Is.EquivalentTo(new int[]{str1.Length, str2.Length}));
+        Assert.That(lengthReader.Read(2).ToArray(), Is.EqualTo(new int[]{str1.Length, str2.Length}));
         Assert.That(strColumn.LogicalType, Is.EqualTo(LogicalType.UInt8));
         Assert.That(strColumn.LogicalLength, Is.EqualTo(str1.Length + str2.Length));
-        Assert.That(strReader.Read(str1.Length + str2.Length).ToArray(), Is.EquivalentTo(Encoding.UTF8.GetBytes(str1).Concat(Encoding.UTF8.GetBytes(str2))));
+        Assert.That(strReader.Read(str1.Length + str2.Length).ToArray(), Is.EqualTo(Encoding.UTF8.GetBytes(str1).Concat(Encoding.UTF8.GetBytes(str2))));
     }
 
     [Test]
@@ -45,7 +45,7 @@ internal sealed class SplitEncodingTests
         GenericReader genericReader = metadataColumn.OpenGenericReader();
         IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, ref genericReader,
             columns.GetDataColumns().Select(c => c.OpenReader()));
-        Assert.That(reader.Read(2), Is.EquivalentTo(strs));
+        Assert.That(reader.Read(2), Is.EqualTo(strs));
         Assert.That(reader.IsAtEnd, Is.True);
     }
 }

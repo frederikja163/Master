@@ -63,7 +63,7 @@ internal sealed class EncodingTests
         // column.WriteMetadata(builder);
         // DataColumn dataColumn = serializer.Decode(column);
         //
-        // Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
+        // Assert.That(dataColumn.Data.ToArray(), Is.EqualTo(expected.Data.ToArray()));
     }
     
     [Test]
@@ -77,7 +77,7 @@ internal sealed class EncodingTests
         IColumn column = serializer.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
-        //Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
+        //Assert.That(dataColumn.Data.ToArray(), Is.EqualTo(expected.Data.ToArray()));
     }
     
     [Test]
@@ -91,6 +91,6 @@ internal sealed class EncodingTests
         IColumn column = serializer.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
-        //Assert.That(dataColumn.Data.ToArray(), Is.EquivalentTo(expected.Data.ToArray()));
+        //Assert.That(dataColumn.Data.ToArray(), Is.EqualTo(expected.Data.ToArray()));
     }
 }
