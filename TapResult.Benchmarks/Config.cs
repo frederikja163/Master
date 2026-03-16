@@ -1,4 +1,4 @@
-﻿namespace Master.Benchmarks;
+﻿namespace TapResult.Benchmarks;
 
 internal static class Config
 {

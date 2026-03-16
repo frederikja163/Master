@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
+using Master;
+using Master.Columns;
 using Master.Extensions;
-using Master.Serializing;
-using Master.Serializing.Columns;
 
-namespace Master.Tests;
+namespace TapResult.Tests;
 
 internal sealed class DataColumnTests
 {

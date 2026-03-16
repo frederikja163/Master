@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Master.Serializing;
-using Master.Serializing.Columns;
-using Master.Serializing.Encodings;
-using Master.Serializing.Readers;
+using Master.Columns;
+using Master.Encodings;
+using Master.Readers;
 
 namespace Master;
 

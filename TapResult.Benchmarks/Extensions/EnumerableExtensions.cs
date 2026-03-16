@@ -1,4 +1,4 @@
-﻿namespace Master.Benchmarks.Extensions;
+﻿namespace TapResult.Benchmarks.Extensions;
 
 internal static class EnumerableExtensions
 {

@@ -1,10 +1,9 @@
 ﻿using System.Data;
 using System.Data.SQLite;
-using Master.Benchmarks.Data;
-using Master.Benchmarks.Extensions;
 using Master.Extensions;
+using TapResult.Benchmarks.Data;
 
-namespace Master.Benchmarks.Raw;
+namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawSqlite : IRawBenchmark
 {

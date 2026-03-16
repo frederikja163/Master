@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace Master.Serializing;
+namespace Master;
 
 public enum LogicalType : byte
 {

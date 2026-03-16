@@ -1,10 +1,9 @@
-﻿using BenchmarkDotNet.Columns;
-using Master.Benchmarks.Data;
-using Master.Serializing;
-using Master.Serializing.Columns;
-using IColumn = Master.Serializing.Columns.IColumn;
+﻿using Master;
+using Master.Columns;
+using TapResult.Benchmarks.Data;
+using IColumn = Master.Columns.IColumn;
 
-namespace Master.Benchmarks.Raw;
+namespace TapResult.Benchmarks.Raw;
 
 internal sealed class CascadingBenchmark : IRawBenchmark
 {

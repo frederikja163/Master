@@ -1,7 +1,6 @@
-﻿using System.Data;
-using System.Text;
+﻿using System.Text;
 
-namespace Master.Serializing.Readers;
+namespace Master.Readers;
 
 internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<byte[]>
 {

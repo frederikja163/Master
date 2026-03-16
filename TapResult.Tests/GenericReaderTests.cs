@@ -1,8 +1,8 @@
-﻿using Master.Serializing;
-using Master.Serializing.Columns;
-using Master.Serializing.Readers;
+﻿using Master;
+using Master.Columns;
+using Master.Readers;
 
-namespace Master.Tests;
+namespace TapResult.Tests;
 
 internal sealed class GenericReaderTests
 {

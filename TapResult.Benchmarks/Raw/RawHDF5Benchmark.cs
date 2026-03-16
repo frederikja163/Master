@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using HDF.PInvoke;
-using Master.Benchmarks.Data;
-using Master.Benchmarks.Extensions;
 using Master.Extensions;
+using TapResult.Benchmarks.Data;
 
-namespace Master.Benchmarks.Raw;
+namespace TapResult.Benchmarks.Raw;
 
 
 internal sealed class RawHdf5Benchmark : IRawBenchmark

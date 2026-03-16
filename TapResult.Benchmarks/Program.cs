@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Running;
-using Master.Benchmarks.Raw;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 internal static class Program
 {

@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Master.Serializing.Readers;
+namespace Master.Readers;
 
 internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 {

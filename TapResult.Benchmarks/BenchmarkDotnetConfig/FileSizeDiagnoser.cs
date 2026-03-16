@@ -8,7 +8,7 @@ using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Validators;
 
-namespace Master.Benchmarks.BenchmarkDotnetConfig;
+namespace TapResult.Benchmarks.BenchmarkDotnetConfig;
 
 internal sealed class FileSizeDiagnoser : IDiagnoser
 {

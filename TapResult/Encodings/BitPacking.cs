@@ -1,12 +1,9 @@
-﻿using System.Diagnostics;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using Master.Serializing.Columns;
-using Master.Serializing.Readers;
+using Master.Columns;
+using Master.Readers;
 
-namespace Master.Serializing.Encodings;
+namespace Master.Encodings;
 
 internal sealed class BitPacking : IEncoding
 {

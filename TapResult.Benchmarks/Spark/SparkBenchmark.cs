@@ -1,11 +1,9 @@
-using Master.Benchmarks.Data;
-using Master.Benchmarks.Extensions;
-using Master.Benchmarks.Raw;
 using Master.Extensions;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using TapResult.Benchmarks.Data;
 
-namespace Master.Benchmarks.Spark;
+namespace TapResult.Benchmarks.Spark;
 
 public class SparkBenchmark
 {

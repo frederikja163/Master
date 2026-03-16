@@ -1,4 +1,4 @@
-﻿namespace Master.Benchmarks;
+﻿namespace TapResult.Benchmarks;
 
 internal sealed class Disposable<T> : IDisposable
 {

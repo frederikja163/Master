@@ -1,9 +1,8 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Master.Serializing.Columns;
-using Master.Serializing.Readers;
+﻿using System.Runtime.CompilerServices;
+using Master.Columns;
+using Master.Readers;
 
-namespace Master.Serializing.Encodings;
+namespace Master.Encodings;
 
 internal sealed class SplitEncoding : IEncoding
 {

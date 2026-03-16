@@ -1,4 +1,4 @@
-﻿namespace Master.Benchmarks.Data;
+﻿namespace TapResult.Benchmarks.Data;
 
 public interface ICustomData
 {

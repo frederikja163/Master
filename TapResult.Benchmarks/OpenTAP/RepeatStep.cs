@@ -1,6 +1,6 @@
 ﻿using OpenTap;
 
-namespace Master.Benchmarks.OpenTAP;
+namespace TapResult.Benchmarks.OpenTAP;
 
 [AllowAnyChild]
 internal sealed class RepeatStep : TestStep

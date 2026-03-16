@@ -1,11 +1,8 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text;
-using Master.Serializing;
-using Master.Serializing.Columns;
-using Master.Serializing.Encodings;
-using Master.Serializing.Readers;
+﻿using Master;
+using Master.Columns;
+using Master.Readers;
 
-namespace Master.Tests.Encodings;
+namespace TapResult.Tests.Encodings;
 
 internal sealed class EncodingTests
 {

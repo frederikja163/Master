@@ -1,6 +1,6 @@
-﻿using Master.Serializing.Columns;
+﻿using Master.Columns;
 
-namespace Master.Serializing;
+namespace Master;
 
 // Based on System.IO.BinaryWriter
 public sealed class TableWriter : IDisposable, IAsyncDisposable

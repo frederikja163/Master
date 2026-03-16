@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
-using Master.Benchmarks.Extensions;
 
-namespace Master.Benchmarks.Raw;
+namespace TapResult.Benchmarks.Raw;
 
 // For now there is no way to read this data back as there is no schema for the extended binary writer.
 internal sealed class ExtendedBinaryWriter : IDisposable

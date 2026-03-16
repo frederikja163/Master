@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 
-namespace Master.Benchmarks.Data;
+namespace TapResult.Benchmarks.Data;
 
 public class TpchData : ICustomData
 {

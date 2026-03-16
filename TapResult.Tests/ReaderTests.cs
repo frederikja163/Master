@@ -1,9 +1,9 @@
-﻿using Master.Serializing;
-using Master.Serializing.Columns;
-using Master.Serializing.Encodings;
-using Master.Serializing.Readers;
+﻿using Master;
+using Master.Columns;
+using Master.Encodings;
+using Master.Readers;
 
-namespace Master.Tests;
+namespace TapResult.Tests;
 
 internal sealed class MyColumn : IColumnParent
 {

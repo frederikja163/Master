@@ -1,9 +1,6 @@
-using Master.Benchmarks.Data;
-using OpenTap;
+using TapResult.Benchmarks.Extensions;
 
-using Master.Benchmarks.Extensions;
-
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks.Data;
 
 public sealed class RawData : ICustomData
 {

@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Master.Serializing.Encodings;
+using Master.Encodings;
 
-namespace Master.Serializing.Columns;
+namespace Master.Columns;
 
 internal sealed class BitPackingColumn : IColumnParent
 {

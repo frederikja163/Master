@@ -1,11 +1,11 @@
 ﻿using System.Text.RegularExpressions;
 using BenchmarkDotNet.Attributes;
-using Master.Benchmarks.BenchmarkDotnetConfig;
-using Master.Benchmarks.Data;
-using Master.Benchmarks.Raw;
 using Parquet;
+using TapResult.Benchmarks.BenchmarkDotnetConfig;
+using TapResult.Benchmarks.Data;
+using TapResult.Benchmarks.Raw;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 [Config(typeof(BenchmarkConfig))]
 public class TPCHBenchmarks

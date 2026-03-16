@@ -2,9 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Master.Serializing.Columns;
+using Master.Columns;
 
-namespace Master.Serializing;
+namespace Master;
 
 internal struct DataColumnBuilder
 {

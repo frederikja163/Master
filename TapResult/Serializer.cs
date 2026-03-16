@@ -1,7 +1,8 @@
-﻿using Master.Serializing.Columns;
-using Master.Serializing.Encodings;
+﻿using Master.Columns;
+using Master.Encodings;
+using Master.Readers;
 
-namespace Master.Serializing;
+namespace Master;
 
 public sealed class Serializer
 {

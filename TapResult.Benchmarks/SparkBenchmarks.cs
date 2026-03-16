@@ -1,10 +1,9 @@
 using BenchmarkDotNet.Attributes;
-using Master.Benchmarks.Raw;
-using Master.Benchmarks.Spark;
 using Microsoft.Spark;
 using Microsoft.Spark.Sql;
+using TapResult.Benchmarks.Spark;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 public class SparkBenchmarks : AllBenchmarks
 {

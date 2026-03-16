@@ -1,9 +1,8 @@
-using Master.Benchmarks.Data;
-using Master.Benchmarks.Extensions;
 using Master.Extensions;
+using TapResult.Benchmarks.Data;
 using Vortex.Net;
 
-namespace Master.Benchmarks.Raw;
+namespace TapResult.Benchmarks.Raw;
 
 public sealed class RawVortexWriter : IRawBenchmark
 {

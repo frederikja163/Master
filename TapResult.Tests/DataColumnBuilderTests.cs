@@ -1,10 +1,10 @@
 ﻿using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Master.Serializing;
-using Master.Serializing.Columns;
+using Master;
+using Master.Columns;
 
-namespace Master.Tests;
+namespace TapResult.Tests;
 
 internal sealed class DataColumnBuilderTests
 {

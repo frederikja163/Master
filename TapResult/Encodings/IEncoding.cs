@@ -1,7 +1,7 @@
-﻿using Master.Serializing.Columns;
-using Master.Serializing.Readers;
+﻿using Master.Columns;
+using Master.Readers;
 
-namespace Master.Serializing.Encodings;
+namespace Master.Encodings;
 
 /// <summary>
 /// Describes what <b>IEncoding</b> to use. The encoding does not determine the type of IColumn as IColumns can be reused in different encodings.

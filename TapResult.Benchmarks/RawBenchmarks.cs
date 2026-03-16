@@ -1,8 +1,8 @@
 using BenchmarkDotNet.Attributes;
-using Master.Benchmarks.Raw;
 using Parquet;
+using TapResult.Benchmarks.Raw;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 public class RawBenchmarks : AllBenchmarks
 {

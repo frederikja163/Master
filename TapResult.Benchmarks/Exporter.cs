@@ -1,11 +1,9 @@
 ﻿using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Loggers;
-using BenchmarkDotNet.Parameters;
 using BenchmarkDotNet.Reports;
-using BenchmarkDotNet.Running;
-using Master.Benchmarks.Extensions;
+using TapResult.Benchmarks.Extensions;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 internal sealed class Exporter : ExporterBase
 {
@@ -18,7 +16,7 @@ internal sealed class Exporter : ExporterBase
         Dictionary<int, string> parameterNames =
             summary.BenchmarksCases
                 .SelectMany(b => b.Parameters.Items.Select((p, index) => (p.Name, index)))
-                .TryToDictionary(t => Array.IndexOf(headerRow, t.Name), t => t.Name);
+                .TryToDictionary(t => Array.IndexOf<string>(headerRow, t.Name), t => t.Name);
         for (var row = 0; row < summary.Table.FullContentWithHeader.Length; row++)
         {
             string[] rows = summary.Table.FullContentWithHeader[row];

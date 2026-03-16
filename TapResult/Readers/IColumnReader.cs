@@ -1,4 +1,4 @@
-﻿namespace Master.Serializing.Readers;
+﻿namespace Master.Readers;
 
 public interface IColumnReader
 {

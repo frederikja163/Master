@@ -1,6 +1,6 @@
-﻿using Master.Benchmarks.Data;
+﻿using TapResult.Benchmarks.Data;
 
-namespace Master.Benchmarks.Raw;
+namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawCsv : IRawBenchmark
 {

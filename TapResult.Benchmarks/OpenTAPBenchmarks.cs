@@ -1,12 +1,13 @@
 using BenchmarkDotNet.Attributes;
 using Keysight.OpenTap.Plugins.Csv;
 using Keysight.OpenTap.Plugins.ResultListeners;
-using Master.Benchmarks.OpenTAP;
 using OpenTap;
 using OpenTap.Hdf5;
+using TapResult.Benchmarks.OpenTAP;
+
 // using OpenTap.Plugins.Parquet;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 public class OpenTAPBenchmarks : AllBenchmarks
 {

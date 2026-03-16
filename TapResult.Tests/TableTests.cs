@@ -1,11 +1,11 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text;
-using Master.Serializing;
-using Master.Serializing.Columns;
-using Master.Serializing.Encodings;
-using Master.Serializing.Readers;
+using Master;
+using Master.Columns;
+using Master.Encodings;
+using Master.Readers;
 
-namespace Master.Tests;
+namespace TapResult.Tests;
 
 public class TableTests
 {

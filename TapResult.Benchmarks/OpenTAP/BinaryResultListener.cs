@@ -1,7 +1,7 @@
-﻿using Master.Benchmarks.Raw;
-using OpenTap;
+﻿using OpenTap;
+using TapResult.Benchmarks.Raw;
 
-namespace Master.Benchmarks.OpenTAP;
+namespace TapResult.Benchmarks.OpenTAP;
 
 internal sealed class BinaryResultListener : ResultListener
 {

@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics;
-using System.Text;
-using Master.Serializing.Columns;
-using Master.Serializing.Encodings;
+using Master.Columns;
+using Master.Encodings;
 
-namespace Master.Serializing;
+namespace Master;
 
 public sealed class Table : IColumnParent
 {

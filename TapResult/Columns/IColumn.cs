@@ -1,6 +1,6 @@
-﻿using Master.Serializing.Encodings;
+﻿using Master.Encodings;
 
-namespace Master.Serializing.Columns;
+namespace Master.Columns;
 
 public interface IColumn
 {

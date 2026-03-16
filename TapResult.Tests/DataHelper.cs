@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Master.Tests;
+namespace TapResult.Tests;
 
 public static class DataHelper
 {

@@ -1,7 +1,7 @@
-﻿using Master.Benchmarks.Data;
-using OpenTap;
+﻿using OpenTap;
+using TapResult.Benchmarks.Data;
 
-namespace Master.Benchmarks.OpenTAP;
+namespace TapResult.Benchmarks.OpenTAP;
 
 public sealed class ResultStep : TestStep
 {

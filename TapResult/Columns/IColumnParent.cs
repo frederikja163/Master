@@ -1,4 +1,4 @@
-﻿namespace Master.Serializing.Columns;
+﻿namespace Master.Columns;
 
 public interface IColumnParent : IColumn
 {

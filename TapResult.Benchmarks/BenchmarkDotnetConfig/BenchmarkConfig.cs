@@ -3,7 +3,7 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 
-namespace Master.Benchmarks.BenchmarkDotnetConfig;
+namespace TapResult.Benchmarks.BenchmarkDotnetConfig;
 
 internal sealed class BenchmarkConfig : ManualConfig
 {

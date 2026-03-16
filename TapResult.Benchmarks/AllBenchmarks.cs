@@ -1,8 +1,8 @@
 ﻿using BenchmarkDotNet.Attributes;
-using Master.Benchmarks.BenchmarkDotnetConfig;
-using Master.Benchmarks.Data;
+using TapResult.Benchmarks.BenchmarkDotnetConfig;
+using TapResult.Benchmarks.Data;
 
-namespace Master.Benchmarks;
+namespace TapResult.Benchmarks;
 
 [Config(typeof(BenchmarkConfig))]
 public abstract class AllBenchmarks
