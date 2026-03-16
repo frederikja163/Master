@@ -21,6 +21,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Master\Master.csproj" />
+      <ProjectReference Include="..\TapResult\TapResult.csproj" />
     </ItemGroup>
 </Project>

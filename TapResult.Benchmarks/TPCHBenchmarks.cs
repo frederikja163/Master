@@ -39,7 +39,7 @@ public class TPCHBenchmarks
         }
         catch (FileNotFoundException e)
         {
-            Console.WriteLine("Couldn't find TPCH data. Please go to https://www.tpc.org/ and ensure that ddl and .tbl exist in Master.Benchmarks/TPC-H V3.0.1/dbgen");
+            Console.WriteLine("Couldn't find TPCH data. Please go to https://www.tpc.org/ and ensure that ddl and .tbl exist in TapResult.Benchmarks/TPC-H V3.0.1/dbgen");
             Console.WriteLine(e);
             yield break;
         }

@@ -5,14 +5,15 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>Master</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-            <_Parameter1>Master.Tests</_Parameter1>
+            <_Parameter1>TapResult.Tests</_Parameter1>
         </AssemblyAttribute>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-            <_Parameter1>Master.Benchmarks</_Parameter1>
+            <_Parameter1>TapResult.Benchmarks</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
 </Project>

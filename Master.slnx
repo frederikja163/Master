@@ -1,9 +1,0 @@
-<Solution>
-  <Folder Name="/HDF5/">
-    <Project Path="OpenTAP.HDF5\OpenTap.Hdf5\OpenTap.Hdf5.csproj" Type="Classic C#" />
-  </Folder>
-  <Project Path="Master.Benchmarks\Master.Benchmarks.csproj" Type="Classic C#" />
-  <Project Path="Master.OpenTAP\Master.OpenTAP.csproj" Type="Classic C#" />
-  <Project Path="Master.Tests\Master.Tests.csproj" Type="Classic C#" />
-  <Project Path="Master\Master.csproj" Type="Classic C#" />
-</Solution>
