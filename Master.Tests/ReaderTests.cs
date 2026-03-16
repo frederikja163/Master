@@ -133,8 +133,8 @@ public sealed class ReaderTests
         stream.Seek(0, SeekOrigin.Begin);
         Reader reader = await Reader.CreateReaderAsync(stream);
         Assert.That(reader.TryGetTable("table", out var tableInfo), Is.True);
-        Assert.That(tableInfo.TryGetColumn("integers", out var columnInfo), Is.True);
-        IColumnReader<int> colReader = reader.OpenColumnReader<int>(columnInfo);
+        Assert.That(tableInfo!.TryGetColumn("integers", out var columnInfo), Is.True);
+        IColumnReader<int> colReader = reader.OpenColumnReader<int>(columnInfo!);
         Assert.That(colReader.Read(data.Length).ToArray(), Is.EqualTo(data));
     }
 }

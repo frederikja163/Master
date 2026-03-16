@@ -224,9 +224,10 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
                Equals(other);
     }
 
-    public bool Equals(DataColumn other)
+    public bool Equals(DataColumn? other)
     {
-        return other.Data.Equals(Data) &&
+        return other is not null &&
+               other.Data.Equals(Data) &&
                other.EncodingId == EncodingId &&
                other.PhysicalSize == PhysicalSize &&
                other.LogicalLength == LogicalLength &&
