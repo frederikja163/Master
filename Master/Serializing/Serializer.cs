@@ -7,11 +7,6 @@ public sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
-    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 50, false);
-    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 50, false);
-    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 50, false);
-    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 50, false);
-    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 50, false);
     private int _currentId = 0;
 
     public Serializer():
