@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Master.Serializing;
+﻿using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
 using Master.Serializing.Readers;
@@ -87,10 +86,10 @@ internal sealed class ReaderTests
         Assert.That(reader.GetTables().Count(), Is.EqualTo(2));
         
         Assert.That(reader.TryGetTable("table1", out TableInfo? table1), Is.True);
-        Assert.That(table1.GetColumns().Count(), Is.EqualTo(2));
+        Assert.That(table1!.GetColumns().Count(), Is.EqualTo(2));
         
         Assert.That(table1.TryGetColumn("col1", out ColumnInfo? col1), Is.True);
-        EncodingInfo enc1 = col1.Encoding;
+        EncodingInfo enc1 = col1!.Encoding;
         Assert.That(enc1.Blob.ToArray(), Is.EqualTo(new byte[]{0, 1, 2, 3}));
         Assert.That(enc1.Encoding, Is.EqualTo(EncodingId.BitPacking));
         Assert.That(enc1.Type, Is.EqualTo(LogicalType.UInt8));
@@ -103,7 +102,7 @@ internal sealed class ReaderTests
         Assert.That(subCol.GetSubEncodings().Count(), Is.EqualTo(0));
         
         Assert.That(table1.TryGetColumn("col2", out ColumnInfo? col2), Is.True);
-        EncodingInfo enc2 = col2.Encoding;
+        EncodingInfo enc2 = col2!.Encoding;
         Assert.That(enc2.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
         Assert.That(enc2.Encoding, Is.EqualTo(EncodingId.Binary));
         Assert.That(enc2.Type, Is.EqualTo(LogicalType.Blob));
@@ -112,8 +111,8 @@ internal sealed class ReaderTests
         
         Assert.That(reader.TryGetTable("table2", out TableInfo? table2), Is.True);
         
-        Assert.That(table2.TryGetColumn("col3", out ColumnInfo? col3), Is.True);
-        EncodingInfo enc3 = col3.Encoding;
+        Assert.That(table2!.TryGetColumn("col3", out ColumnInfo? col3), Is.True);
+        EncodingInfo enc3 = col3!.Encoding;
         Assert.That(enc3.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
         Assert.That(enc3.Encoding, Is.EqualTo(EncodingId.Binary));
         Assert.That(enc3.Type, Is.EqualTo(LogicalType.Blob));
