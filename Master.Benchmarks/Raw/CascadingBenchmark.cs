@@ -21,9 +21,9 @@ internal sealed class CascadingBenchmark : IRawBenchmark
                 foreach (DataColumn col in column.GetDataColumns())
                 {
                     stream.Write(col.Data.Span);
-                    if (nulls.HasValue)
+                    if (nulls is not null)
                     {
-                        stream.Write(nulls.Value.Data.Span);
+                        stream.Write(nulls.Data.Span);
                     }
                 }
 
@@ -58,9 +58,9 @@ internal sealed class CascadingAsyncBenchmark : IRawBenchmark
                         foreach (DataColumn col in column.GetDataColumns())
                         {
                             stream.Write(col.Data.Span);
-                            if (nulls.HasValue)
+                            if (nulls is not null)
                             {
-                                stream.Write(nulls.Value.Data.Span);
+                                stream.Write(nulls.Data.Span);
                             }
                         }
                     }
@@ -89,9 +89,9 @@ internal sealed class EncodingBenchmark : IRawBenchmark
             {
                 DataColumn dataColumn = DataColumn.Create(array, out var nulls);
                 stream.Write(dataColumn.Data.Span);
-                if (nulls.HasValue)
+                if (nulls is not null)
                 {
-                    stream.Write(nulls.Value.Data.Span);
+                    stream.Write(nulls.Data.Span);
                 }
             }
         }

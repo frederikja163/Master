@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Master.Serializing;
+using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master;
 
@@ -86,11 +88,13 @@ public sealed class Reader
 {
     private readonly Stream _stream;
     private readonly Dictionary<string, TableInfo> _tables;
-
-    private Reader(Stream stream, IEnumerable<TableInfo> tables)
+    private readonly ILookup<EncodingId, IEncoding> _encodingsById;
+    
+    private Reader(Stream stream, IEnumerable<TableInfo> tables, IEnumerable<IEncoding> encodings)
     {
         _stream = stream;
         _tables = tables.ToDictionary(t => t.Name, t => t);
+        _encodingsById = encodings.ToLookup(e => e.Id);
     }
 
     public IEnumerable<TableInfo> GetTables()
@@ -103,7 +107,10 @@ public sealed class Reader
         return _tables.TryGetValue(name, out table);
     }
 
-    public static async Task<Reader> CreateReaderAsync(Stream stream)
+    public static async Task<Reader> CreateReaderAsync(Stream stream) =>
+        await CreateReaderAsync(stream, new BitPacking(), new SplitEncoding());
+
+    public static async Task<Reader> CreateReaderAsync(Stream stream, params IEnumerable<IEncoding> encodings)
     {
         int postfixSize = Unsafe.SizeOf<long>() * 4;
         stream.Seek(-postfixSize, SeekOrigin.End);
@@ -150,6 +157,39 @@ public sealed class Reader
             parent.AddSubEncoding(value);
         }
         
-        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)));
+        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encodings);
+    }
+
+    public IColumnReader<T> OpenColumnReader<T>(ColumnInfo column)
+    {
+        return (OpenColumnReader(column) as IColumnReader<T>) ??
+               throw new Exception($"Column {column.Name} cannot be read as {typeof(T).ToLogicalType()}, must be read as {column.Encoding.Type}");
+    }
+
+    public IColumnReader OpenColumnReader(ColumnInfo column)
+    {
+        return CreateReader(column.Encoding);
+    }
+
+    private IColumnReader CreateReader(EncodingInfo encodingInfo)
+    {
+        GenericReader reader = new GenericReader(encodingInfo.Blob.Span);
+        if (encodingInfo.Encoding == EncodingId.Binary)
+        {
+            int physicalSize = reader.Read<int>();
+            int logicalLength = reader.Read<int>();
+            long offset = reader.Read<long>();
+            _stream.Seek(offset, SeekOrigin.Begin);
+            byte[] data = new byte[physicalSize];
+            _stream.ReadExactly(data);
+            DataColumn col = new DataColumn(encodingInfo.Type, data, logicalLength);
+            return col.OpenReader();
+        }
+        
+        IEnumerable<IColumnReader> childReaders = encodingInfo.GetSubEncodings().Select(CreateReader);
+        IEncoding encoding = _encodingsById[encodingInfo.Encoding]
+            .FirstOrDefault(e => e.GetSupportedTypes().Any(t => t == encodingInfo.Type)) ??
+            throw new NullReferenceException($"Could not find encoding of type {encodingInfo.Id} with logical type {encodingInfo.Type}");
+        return encoding.CreateDecoder(encodingInfo.Type, ref reader, childReaders);
     }
 }

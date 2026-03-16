@@ -2,6 +2,7 @@
 using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Tests;
 
@@ -75,8 +76,10 @@ internal sealed class ReaderTests
         };
         using MemoryStream stream = new MemoryStream();
         TableWriter writer = new TableWriter(stream, true);
-        writer.Write(new Table([column1, column2], ["col1", "col2"], "table1"));
-        writer.Write(new Table([column2], ["col3"], "table2"));
+        Table tab1 = new Table([column1, column2], ["col1", "col2"], "table1");
+        writer.Write(tab1);
+        Table tab2 = new Table([column2], ["col3"], "table2");
+        writer.Write(tab2);
         writer.Dispose();
 
         stream.Seek(0, SeekOrigin.Begin);
@@ -115,5 +118,24 @@ internal sealed class ReaderTests
         Assert.That(enc3.Encoding, Is.EqualTo(EncodingId.Binary));
         Assert.That(enc3.Type, Is.EqualTo(LogicalType.Blob));
         Assert.That(enc3.GetSubEncodings().Count(), Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task IntegerRoundtripTest()
+    {
+        int[] data = Enumerable.Range(0, 1000).Select(t => Random.Shared.Next(0, 255)).ToArray();
+        Table table = new Table([DataColumn.Create(data)], ["integers"], "table");
+        using Stream stream = new MemoryStream();
+        using (TableWriter writer = new TableWriter(stream, leaveOpen: true))
+        {
+            writer.Write(table);
+        }
+
+        stream.Seek(0, SeekOrigin.Begin);
+        Reader reader = await Reader.CreateReaderAsync(stream);
+        Assert.That(reader.TryGetTable("table", out var tableInfo), Is.True);
+        Assert.That(tableInfo.TryGetColumn("integers", out var columnInfo), Is.True);
+        IColumnReader<int> colReader = reader.OpenColumnReader<int>(columnInfo);
+        Assert.That(colReader.Read(data.Length).ToArray(), Is.EqualTo(data));
     }
 }
