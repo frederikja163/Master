@@ -7,11 +7,11 @@ namespace Master.Tests;
 
 internal sealed class MyColumn : IColumnParent
 {
-    public byte[] Blob { get; set; }
-    public List<IColumn> Columns { get; set; }
+    public required byte[] Blob { get; set; }
+    public required List<IColumn> Columns { get; set; }
 
-    public EncodingId EncodingId { get; set; } = EncodingId.Binary;
-    public LogicalType LogicalType { get; set; } = LogicalType.UInt8;
+    public required EncodingId EncodingId { get; set; } = EncodingId.Binary;
+    public required LogicalType LogicalType { get; set; } = LogicalType.UInt8;
     public IEnumerable<DataColumn> GetDataColumns()
     {
         yield break;
@@ -45,7 +45,7 @@ internal sealed class MyColumn : IColumnParent
     }
 }
 
-internal sealed class ReaderTests
+public sealed class ReaderTests
 {
     [Test]
     public async Task MetadataRoundtripTest()
