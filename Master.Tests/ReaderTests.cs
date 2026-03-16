@@ -1,7 +1,7 @@
-﻿using System.Text;
-using Master.Serializing;
+﻿using Master.Serializing;
 using Master.Serializing.Columns;
 using Master.Serializing.Encodings;
+using Master.Serializing.Readers;
 
 namespace Master.Tests;
 
@@ -75,8 +75,10 @@ public sealed class ReaderTests
         };
         using MemoryStream stream = new MemoryStream();
         TableWriter writer = new TableWriter(stream, true);
-        writer.Write(new Table([column1, column2], ["col1", "col2"], "table1"));
-        writer.Write(new Table([column2], ["col3"], "table2"));
+        Table tab1 = new Table([column1, column2], ["col1", "col2"], "table1");
+        writer.Write(tab1);
+        Table tab2 = new Table([column2], ["col3"], "table2");
+        writer.Write(tab2);
         writer.Dispose();
 
         stream.Seek(0, SeekOrigin.Begin);
@@ -84,10 +86,10 @@ public sealed class ReaderTests
         Assert.That(reader.GetTables().Count(), Is.EqualTo(2));
         
         Assert.That(reader.TryGetTable("table1", out TableInfo? table1), Is.True);
-        Assert.That(table1.GetColumns().Count(), Is.EqualTo(2));
+        Assert.That(table1!.GetColumns().Count(), Is.EqualTo(2));
         
         Assert.That(table1.TryGetColumn("col1", out ColumnInfo? col1), Is.True);
-        EncodingInfo enc1 = col1.Encoding;
+        EncodingInfo enc1 = col1!.Encoding;
         Assert.That(enc1.Blob.ToArray(), Is.EqualTo(new byte[]{0, 1, 2, 3}));
         Assert.That(enc1.Encoding, Is.EqualTo(EncodingId.BitPacking));
         Assert.That(enc1.Type, Is.EqualTo(LogicalType.UInt8));
@@ -100,7 +102,7 @@ public sealed class ReaderTests
         Assert.That(subCol.GetSubEncodings().Count(), Is.EqualTo(0));
         
         Assert.That(table1.TryGetColumn("col2", out ColumnInfo? col2), Is.True);
-        EncodingInfo enc2 = col2.Encoding;
+        EncodingInfo enc2 = col2!.Encoding;
         Assert.That(enc2.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
         Assert.That(enc2.Encoding, Is.EqualTo(EncodingId.Binary));
         Assert.That(enc2.Type, Is.EqualTo(LogicalType.Blob));
@@ -109,11 +111,30 @@ public sealed class ReaderTests
         
         Assert.That(reader.TryGetTable("table2", out TableInfo? table2), Is.True);
         
-        Assert.That(table2.TryGetColumn("col3", out ColumnInfo? col3), Is.True);
-        EncodingInfo enc3 = col3.Encoding;
+        Assert.That(table2!.TryGetColumn("col3", out ColumnInfo? col3), Is.True);
+        EncodingInfo enc3 = col3!.Encoding;
         Assert.That(enc3.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
         Assert.That(enc3.Encoding, Is.EqualTo(EncodingId.Binary));
         Assert.That(enc3.Type, Is.EqualTo(LogicalType.Blob));
         Assert.That(enc3.GetSubEncodings().Count(), Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task IntegerRoundtripTest()
+    {
+        int[] data = Enumerable.Range(0, 1000).Select(t => Random.Shared.Next(0, 255)).ToArray();
+        Table table = new Table([DataColumn.Create(data)], ["integers"], "table");
+        using Stream stream = new MemoryStream();
+        using (TableWriter writer = new TableWriter(stream, leaveOpen: true))
+        {
+            writer.Write(table);
+        }
+
+        stream.Seek(0, SeekOrigin.Begin);
+        Reader reader = await Reader.CreateReaderAsync(stream);
+        Assert.That(reader.TryGetTable("table", out var tableInfo), Is.True);
+        Assert.That(tableInfo!.TryGetColumn("integers", out var columnInfo), Is.True);
+        IColumnReader<int> colReader = reader.OpenColumnReader<int>(columnInfo!);
+        Assert.That(colReader.Read(data.Length).ToArray(), Is.EqualTo(data));
     }
 }

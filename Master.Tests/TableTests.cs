@@ -115,7 +115,7 @@ public class TableTests
                         ), 0, 0, 0
                     ), 0, 0, 0
                 ), 
-            new BitPackingColumn(new DataColumn(), 0, 0), 
+            new BitPackingColumn(DataColumn.Empty, 0, 0), 
             LogicalType.Blob
         );
         
@@ -213,7 +213,7 @@ public class TableTests
             Assert.That(reader.ReadInt32(), Is.EqualTo(Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>())); // Size of blob
             Assert.That(reader.ReadInt32(), Is.EqualTo(length * Unsafe.SizeOf<int>())); // PhysicalSize
             Assert.That(reader.ReadInt32(), Is.EqualTo(length)); // LogicalLength
-            Assert.That(reader.ReadInt64(), Is.EqualTo(0)); // Offset, although the Column is not written out
+            Assert.That(reader.ReadInt64(), Is.Not.EqualTo(0)); // Offset, although the Column is not written out
         }
         expectedPosition += (4 + 4 + 4 + 8) * 3;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));

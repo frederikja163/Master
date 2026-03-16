@@ -5,14 +5,14 @@ using Master.Serializing.Encodings;
 
 namespace Master.Serializing;
 
-public struct Table : IColumnParent
+public sealed class Table : IColumnParent
 {
     private readonly IColumn[] _columns;
     public int ColumnCount => _columns.Length;
     internal IEnumerable<IColumn> Columns => _columns;
     private readonly string[] _names;
     public IEnumerable<string> Names => _names;
-    private readonly string Name { get; }
+    private string Name { get; }
 
 
     public EncodingId EncodingId => EncodingId.Table;

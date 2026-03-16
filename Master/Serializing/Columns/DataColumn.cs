@@ -10,15 +10,15 @@ namespace Master.Serializing.Columns;
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
 /// </summary>
-public struct DataColumn : IColumn, IEquatable<DataColumn>
+public sealed class DataColumn : IColumn, IEquatable<DataColumn>
 {
-    public readonly EncodingId EncodingId => EncodingId.Binary;
+    public EncodingId EncodingId => EncodingId.Binary;
     public ReadOnlyMemory<byte> Data { get; }
     public LogicalType LogicalType { get; }
 
     public long Offset { get; private set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
 
-    public readonly int PhysicalSize => Data.Length;
+    public int PhysicalSize => Data.Length;
     public int LogicalLength { get; }
     private static readonly int BlobSize = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>();
 
@@ -224,9 +224,10 @@ public struct DataColumn : IColumn, IEquatable<DataColumn>
                Equals(other);
     }
 
-    public bool Equals(DataColumn other)
+    public bool Equals(DataColumn? other)
     {
-        return other.Data.Equals(Data) &&
+        return other is not null &&
+               other.Data.Equals(Data) &&
                other.EncodingId == EncodingId &&
                other.PhysicalSize == PhysicalSize &&
                other.LogicalLength == LogicalLength &&
