@@ -13,17 +13,35 @@ namespace Master.Columns;
 public sealed class DataColumn : IColumn, IEquatable<DataColumn>
 {
     public EncodingId EncodingId => EncodingId.Binary;
+    /// <summary>
+    /// TODO
+    /// </summary>
     public ReadOnlyMemory<byte> Data { get; }
+    /// <summary>
+    /// TODO
+    /// </summary>
     public LogicalType LogicalType { get; }
 
-    public long Offset { get; private set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
+    private long Offset { get; set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public int PhysicalSize => Data.Length;
+    /// <summary>
+    /// TODO
+    /// </summary>
     public int LogicalLength { get; }
     private static readonly int BlobSize = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>();
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static DataColumn Empty { get; } = new (LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public DataColumn(LogicalType logicalType, ReadOnlyMemory<byte> data, int logicalLength)
     {
         Data = data;
@@ -31,7 +49,10 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         LogicalLength = logicalLength;
     }
     
-    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : struct
+    /// <summary>
+    /// TODO
+    /// </summary>
+    public static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : struct
     {   
         if (!BitConverter.IsLittleEndian)
         {
@@ -42,11 +63,17 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
     {
         return Create(data, typeof(T).ToLogicalType());
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static DataColumn Create(ICollection<string> data)
     {
         int length = 0;
@@ -61,11 +88,17 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         return builder.Build();
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static DataColumn Create(IEnumerable<byte[]> data)
     {
         return Create(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
     }
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static DataColumn Create(ICollection<ReadOnlyMemory<byte>> data)
     {
         int length = 0;
@@ -87,6 +120,9 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         return new DataColumn(LogicalType.Blob, bytes, data.Count);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static DataColumn Create(Array array, out DataColumn? nulls)
     {
         nulls = null;
@@ -115,7 +151,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         };
     }
 
-    internal static DataColumn SplitNulls<T>(T?[] array, out DataColumn? nulls)
+    private static DataColumn SplitNulls<T>(T?[] array, out DataColumn? nulls)
         where T : unmanaged
     {
         int valueSize = 0;
@@ -158,6 +194,9 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         return valueBuilder.Build();
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IColumnReader<T> OpenReader<T>()
     {
         if (typeof(T) != LogicalType.ToCsType() || OpenReader() is not IColumnReader<T> reader)
@@ -168,6 +207,9 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         return reader;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IColumnReader OpenReader()
     {
         return LogicalType switch
@@ -189,17 +231,20 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         };
     }
 
-    internal GenericReader OpenGenericReader()
+    /// <summary>
+    /// TODO
+    /// </summary>
+    public GenericReader OpenGenericReader()
     {
         return new GenericReader(Data.Span);
     }
 
-    public int CalculateTotalLength()
+    int IColumn.CalculateTotalLength()
     {
         return LogicalLength;
     }
 
-    public IEnumerable<DataColumn> GetDataColumns()
+    IEnumerable<DataColumn> IColumn.GetDataColumns()
     {
         yield return this;
     }

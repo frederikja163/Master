@@ -49,7 +49,7 @@ internal sealed class BitPackingColumn : IColumnParent
 
     public int CalculateTotalLength()
     {
-        return GetDataColumns().Sum(column => column.CalculateTotalLength());
+        return GetDataColumns().Sum(column => column.LogicalLength);
     }
 
     public IEnumerable<DataColumn> GetDataColumns()

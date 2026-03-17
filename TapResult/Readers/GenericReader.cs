@@ -5,19 +5,37 @@ using System.Text;
 
 namespace Master.Readers;
 
+/// <summary>
+/// TODO
+/// </summary>
 public ref struct GenericReader
 {
     private readonly ReadOnlySpan<byte> _data;
+    /// <summary>
+    /// TODO
+    /// </summary>
     public int ByteIndex { get; private set; } = 0;
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public GenericReader(ReadOnlySpan<byte> data)
     {
         _data = data;
     }
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public int PhysicalSize => _data.Length;
+    /// <summary>
+    /// TODO
+    /// </summary>
     public bool AtEnd => ByteIndex == _data.Length;
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void Advance(int byteCount)
     {
         int newIndex = ByteIndex + byteCount;
@@ -37,6 +55,9 @@ public ref struct GenericReader
         return slice;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public T Peek<T>(int byteOffset = 0)
         where T : unmanaged
     {
@@ -56,6 +77,9 @@ public ref struct GenericReader
             throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public T Read<T>() where T : unmanaged
     {
         T value = Peek<T>();
@@ -63,6 +87,9 @@ public ref struct GenericReader
         return value;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public ReadOnlySpan<T> Read<T>(int count)
         where T : unmanaged
     {
@@ -82,12 +109,18 @@ public ref struct GenericReader
         return values;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public ReadOnlySpan<byte> ReadBlob()
     {
         int length = Read<int>();
         return Read<byte>(length);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public byte[][] ReadBlob(int length)
     {
         byte[][] values = new byte[length][];
@@ -99,12 +132,18 @@ public ref struct GenericReader
         return values;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public string ReadString()
     {
         ReadOnlySpan<byte> blob = ReadBlob();
         return Encoding.UTF8.GetString(blob);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public string[] ReadString(int length)
     {
         string[] values = new string[length];
@@ -116,6 +155,9 @@ public ref struct GenericReader
         return values;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void AdvanceUnits(LogicalType type, int count = 1)
     {
         if (type.TryGetSize(out int size))
@@ -131,6 +173,9 @@ public ref struct GenericReader
         }
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public ReadOnlySpan<byte> ReadUnits(LogicalType type, int count = 1)
     {
         if (type.TryGetSize(out int size))
@@ -145,12 +190,5 @@ public ref struct GenericReader
         }
 
         return Read<byte>(length);
-    }
-
-    public GenericReader Clone()
-    {
-        GenericReader clone = new GenericReader(_data);
-        clone.ByteIndex = ByteIndex;
-        return clone;
     }
 }

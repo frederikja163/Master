@@ -14,12 +14,27 @@ public enum EncodingId : byte
     BitPacking = 3,
 }
 
+/// <summary>
+/// TODO
+/// </summary>
 public interface IEncoding
 {
+    /// <summary>
+    /// TODO
+    /// </summary>
     public EncodingId Id { get; }
+    /// <summary>
+    /// TODO
+    /// </summary>
     IColumn Encode(in DataColumn dataColumn);
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     IColumnReader CreateDecoder(LogicalType type, ref GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns);
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     IEnumerable<LogicalType> GetSupportedTypes();
 }

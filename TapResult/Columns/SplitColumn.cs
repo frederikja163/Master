@@ -18,7 +18,7 @@ internal sealed class SplitColumn : IColumnParent
     
     public int CalculateTotalLength()
     {
-        return GetDataColumns().Sum(d => d.CalculateTotalLength());
+        return GetDataColumns().Sum(d => d.LogicalLength);
     }
 
     public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());

@@ -5,7 +5,10 @@ using Master.Readers;
 
 namespace Master.Encodings;
 
-internal sealed class BitPacking : IEncoding
+/// <summary>
+/// TODO
+/// </summary>
+public sealed class BitPacking : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.BitPacking;
     

@@ -4,7 +4,10 @@ using Master.Readers;
 
 namespace Master.Encodings;
 
-internal sealed class SplitEncoding : IEncoding
+/// <summary>
+/// TODO
+/// </summary>
+public sealed class SplitEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.Split;
     public IColumn Encode(in DataColumn dataColumn)
