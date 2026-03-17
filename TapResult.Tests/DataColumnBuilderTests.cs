@@ -93,10 +93,10 @@ internal sealed class DataColumnBuilderTests
     {
         DataColumnBuilder builder = new DataColumnBuilder(1, false);
         builder.Write<byte>(123);
-        Assert.That(builder.IsAtEnd, Is.True);
+        Assert.That(builder.IsAtEnd, Is.False);
         Assert.That(builder.PhysicalSize, Is.EqualTo(1));
         builder.Write<byte>(123);
-        Assert.That(builder.IsAtEnd, Is.True);
+        Assert.That(builder.IsAtEnd, Is.False);
         Assert.That(builder.PhysicalSize, Is.EqualTo(2));
         builder.Write<byte>(21);
         Assert.That(builder.IsAtEnd, Is.False);

@@ -5,11 +5,11 @@ using TapResult.Readers;
 namespace TapResult.Encodings;
 
 /// <summary>
-/// TODO
+/// Split encoding takes variable length columns and splits the length and the data into separate columns.
 /// </summary>
 public sealed class SplitEncoding : IEncoding
 {
-    public EncodingId Id { get; } = EncodingId.Split;
+    public EncodingType Type { get; } = EncodingType.Split;
     public IColumn Encode(in DataColumn dataColumn)
     {
         GenericReader columnReader = dataColumn.OpenGenericReader();

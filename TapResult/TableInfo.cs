@@ -4,17 +4,18 @@ using TapResult.Readers;
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Contains information about a table that can be read from the metadata.
 /// </summary>
 public sealed class TableInfo
 {
     private readonly Dictionary<string, ColumnInfo> _columns;
     /// <summary>
-    /// TODO
+    /// The name of this table.
     /// </summary>
     public string Name { get; }
     /// <summary>
-    /// TODO
+    /// The encoding of this table.
+    /// Mostly used internally to calculate sub encodings etc.
     /// </summary>
     public EncodingInfo Encoding { get; }
 
@@ -33,7 +34,7 @@ public sealed class TableInfo
     }
 
     /// <summary>
-    /// TODO
+    /// Gets all columns that are part of this table.
     /// </summary>
     public IEnumerable<ColumnInfo> GetColumns()
     {
@@ -41,7 +42,8 @@ public sealed class TableInfo
     }
 
     /// <summary>
-    /// TODO
+    /// Tries to get a column by name from this table.
+    /// Returns true and found column if there is a column. Otherwise, returns false and null.
     /// </summary>
     public bool TryGetColumn(string name, [NotNullWhen(true)] out ColumnInfo? columnInfo)
     {

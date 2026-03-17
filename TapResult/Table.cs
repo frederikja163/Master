@@ -14,7 +14,7 @@ public sealed class Table : IColumnParent
     private string Name { get; }
 
 
-    public EncodingId EncodingId => EncodingId.Table;
+    public EncodingType EncodingType => EncodingType.Table;
     public LogicalType LogicalType => LogicalType.UInt8;
     IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
     {

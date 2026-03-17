@@ -6,11 +6,12 @@ using TapResult.Readers;
 namespace TapResult.Encodings;
 
 /// <summary>
-/// TODO
+/// Bitpack encoding, packs together integer types by removing common prefixes and storing said prefix as metadata.
+/// For example turning 1a 1b 1c 1d into ab cd with 1 as the prefix.
 /// </summary>
 public sealed class BitPacking : IEncoding
 {
-    public EncodingId Id { get; } = EncodingId.BitPacking;
+    public EncodingType Type { get; } = EncodingType.BitPacking;
     
     public IColumn Encode(in DataColumn dataColumn)
     {
