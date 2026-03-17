@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+    <PropertyGroup>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <TargetFramework>net9.0</TargetFramework>
+        <OpenTapPackageDefinitionPath>package.xml</OpenTapPackageDefinitionPath>
+        <CreateOpenTapPackage>false</CreateOpenTapPackage>
+        <RootNamespace>Master.OpenTAP</RootNamespace>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="OpenTAP" Version="9.31.1"/>
+    </ItemGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <CreateOpenTapPackage>true</CreateOpenTapPackage>
+    </PropertyGroup>
+
+</Project>

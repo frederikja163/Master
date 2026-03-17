@@ -30,16 +30,16 @@ jobs:
          cache: 'false'
       # Download libraries from NuGet
       - name: Restore Dependencies
-        run: dotnet restore Master.sln
+        run: dotnet restore TapResult.sln
       # renames broken Spark library files lib\netstandard2.0 -> lib/netstandard2.0, so 
       # it is directories instead of bad file names on linux
       - name: Fix Spark nuget package
         run: ./LinuxFixSparkNuget.sh
-      # required to force Master.sln to reload the packages. Otherwise, the fix won't be applied.
+      # required to force TapResult.sln to reload the packages. Otherwise, the fix won't be applied.
       - name: Restore again with no-cache
-        run: dotnet restore Master.sln --no-cache --force
+        run: dotnet restore TapResult.sln --no-cache --force
       - name: Build
-        run: dotnet build -c Release Master.sln --no-restore
+        run: dotnet build -c Release TapResult.sln --no-restore
       # Upload the package so it can be downloaded from GitHub, 
       # and consumed by other steps in this workflow
       - name: Upload binaries
@@ -48,7 +48,7 @@ jobs:
           name: tap-package
           retention-days: 7
           path: |
-            Master.OpenTAP/bin/Release/netstandard2.0/*.TapPackage
+            TapResult.OpenTAP/bin/Release/netstandard2.0/*.TapPackage
 
   ##############
   ### TEST    ##
@@ -65,11 +65,11 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - name: Restore Dependencies
-        run: dotnet restore Master.sln
+        run: dotnet restore TapResult.sln
       #- name: Fix Spark nuget package
       #  run: ./LinuxFixSparkNuget.sh
       - name: Test
-        run: dotnet test -c Release Master.sln
+        run: dotnet test -c Release TapResult.sln
 
   ##############
   ### PUBLISH ##
@@ -98,4 +98,4 @@ jobs:
       # Publish the package. This requires the package management key to be configured in the 'PUBLIC_REPO_PASS' environment variable.
       - name: Publish Packages
         working-directory: ./
-        run: tap repo upload --repository http://packages.opentap.io --token ${{ secrets.PUBLIC_REPO_PASS }} Master*.TapPackage
+        run: tap repo upload --repository http://packages.opentap.io --token ${{ secrets.PUBLIC_REPO_PASS }} TapResult*.TapPackage

@@ -3,4 +3,4 @@
 .idea/
 *.DotSettings.user
 BenchmarkDotNet.Artifacts/
-Master.Benchmarks/TPC-H*/
+TapResult.Benchmarks/TPC-H*/
