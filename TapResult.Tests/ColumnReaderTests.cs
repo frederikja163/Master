@@ -1,5 +1,5 @@
-﻿using Master.Columns;
-using Master.Readers;
+﻿using TapResult.Columns;
+using TapResult.Readers;
 
 namespace TapResult.Tests;
 

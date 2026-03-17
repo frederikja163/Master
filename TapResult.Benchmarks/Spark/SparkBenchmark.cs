@@ -1,4 +1,4 @@
-using Master.Extensions;
+using TapResult.Extensions;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 using TapResult.Benchmarks.Data;

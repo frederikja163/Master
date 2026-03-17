@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Master.Readers;
+namespace TapResult.Readers;
 
 internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 {

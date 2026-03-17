@@ -1,5 +1,8 @@
-﻿namespace Master.Columns;
+﻿namespace TapResult.Columns;
 
+/// <summary>
+/// TODO
+/// </summary>
 public interface IColumnParent : IColumn
 {
     /// <summary>
@@ -7,6 +10,6 @@ public interface IColumnParent : IColumn
     /// </summary>
     /// <param name="recursive">If true, returns depth first all children and children's children</param>
     /// <returns></returns>
-    internal IEnumerable<IColumn> GetChildColumns(bool recursive = false);
-    internal void Swap(in IColumn existingColumn, in IColumn newColumn);
+    public IEnumerable<IColumn> GetChildColumns(bool recursive = false);
+    public void Swap(in IColumn existingColumn, in IColumn newColumn);
 }

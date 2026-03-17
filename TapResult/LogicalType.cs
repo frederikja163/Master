@@ -1,7 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace Master;
+namespace TapResult;
 
+/// <summary>
+/// TODO
+/// </summary>
 public enum LogicalType : byte
 {
     SInt8,
@@ -19,8 +22,14 @@ public enum LogicalType : byte
     String,
 }
 
+/// <summary>
+/// TODO
+/// </summary>
 public static class TypeHelper
 {
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static Type ToCsType(this LogicalType logicalType)
         => logicalType switch
         {
@@ -40,6 +49,9 @@ public static class TypeHelper
             _ => throw new ArgumentOutOfRangeException(nameof(logicalType), logicalType, null)
         };
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static unsafe bool TryGetSize(this LogicalType logicalType, out int size)
     {
         (size, bool ret) = logicalType switch
@@ -80,8 +92,14 @@ public static class TypeHelper
             {typeof(byte[]), LogicalType.Blob},
         });
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static LogicalType ToLogicalType(this Type type) => PhysicalTypes[type];
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static IEnumerable<LogicalType> IntegerTypes()
     {
         yield return LogicalType.SInt8;
@@ -93,24 +111,33 @@ public static class TypeHelper
         yield return LogicalType.UInt32;
         yield return LogicalType.UInt64;
     }
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static IEnumerable<LogicalType> FloatTypes()
     {
         yield return LogicalType.Float16;
         yield return LogicalType.Float32;
         yield return LogicalType.Float64;
     }
-
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static IEnumerable<LogicalType> NumericTypes()
     {
         return IntegerTypes().Concat(FloatTypes());
     }
-
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static IEnumerable<LogicalType> BlobTypes()
     {
         yield return LogicalType.Blob;
         yield return LogicalType.String;
     }
-
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static IEnumerable<LogicalType> AllTypes()
     {
         return NumericTypes().Concat(BlobTypes());

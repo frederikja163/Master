@@ -1,10 +1,10 @@
-﻿using Master.Columns;
-using Master.Encodings;
-using Master.Readers;
+﻿using TapResult.Columns;
+using TapResult.Encodings;
+using TapResult.Readers;
 
-namespace Master;
+namespace TapResult;
 
-public sealed class Serializer
+internal sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
@@ -35,7 +35,7 @@ public sealed class Serializer
         IColumn metadataSample = PickEncoding(sample, CascadingEncodings);
         return Encode(column, metadataSample);
     }
-    public void Encode(ref Table table)
+    public void Encode(ref Table table) // TODO: Move this function to the table.
     {
         foreach (DataColumn dataColumn in table.GetDataColumns())
         {

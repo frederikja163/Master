@@ -1,11 +1,14 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
-using Master.Columns;
-using Master.Readers;
+using TapResult.Columns;
+using TapResult.Readers;
 
-namespace Master.Encodings;
+namespace TapResult.Encodings;
 
-internal sealed class BitPacking : IEncoding
+/// <summary>
+/// TODO
+/// </summary>
+public sealed class BitPacking : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.BitPacking;
     

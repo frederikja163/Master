@@ -1,7 +1,7 @@
-﻿using Master;
-using Master.Columns;
+﻿using TapResult;
+using TapResult.Columns;
 using TapResult.Benchmarks.Data;
-using IColumn = Master.Columns.IColumn;
+using IColumn = TapResult.Columns.IColumn;
 
 namespace TapResult.Benchmarks.Raw;
 

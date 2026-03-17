@@ -1,7 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 
-namespace Master.Readers;
+namespace TapResult.Readers;
 
 internal struct PrimitiveReader<T> : IColumnReader<T>
     where T : unmanaged

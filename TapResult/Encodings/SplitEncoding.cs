@@ -1,10 +1,13 @@
 ﻿using System.Runtime.CompilerServices;
-using Master.Columns;
-using Master.Readers;
+using TapResult.Columns;
+using TapResult.Readers;
 
-namespace Master.Encodings;
+namespace TapResult.Encodings;
 
-internal sealed class SplitEncoding : IEncoding
+/// <summary>
+/// TODO
+/// </summary>
+public sealed class SplitEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.Split;
     public IColumn Encode(in DataColumn dataColumn)

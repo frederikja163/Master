@@ -1,87 +1,14 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Master.Columns;
-using Master.Encodings;
-using Master.Readers;
+using TapResult.Columns;
+using TapResult.Encodings;
+using TapResult.Readers;
 
-namespace Master;
+namespace TapResult;
 
-public sealed class TableInfo
-{
-    private readonly Dictionary<string, ColumnInfo> _columns;
-    public string Name { get; }
-    public EncodingInfo Encoding { get; }
-
-    internal TableInfo(EncodingInfo encoding)
-    {
-        Encoding = encoding;
-        GenericReader reader = new GenericReader(encoding.Blob.Span);
-        Name = reader.ReadString();
-        _columns = new Dictionary<string, ColumnInfo>();
-        foreach (EncodingInfo subEncoding in encoding.GetSubEncodings())
-        {
-            string name = reader.ReadString();
-            ColumnInfo columnInfo = new ColumnInfo(name, subEncoding, this);
-            _columns.Add(name, columnInfo);
-        }
-    }
-
-    public IEnumerable<ColumnInfo> GetColumns()
-    {
-        return _columns.Values;
-    }
-
-    public bool TryGetColumn(string name, [NotNullWhen(true)] out ColumnInfo? columnInfo)
-    {
-        return _columns.TryGetValue(name, out columnInfo);
-    }
-}
-
-public sealed class ColumnInfo
-{
-    public string Name { get; }
-    public EncodingInfo Encoding { get; }
-    public TableInfo TableInfo { get; }
-    
-    internal ColumnInfo(string name, EncodingInfo encoding, TableInfo tableInfo)
-    {
-        Name = name;
-        Encoding = encoding;
-        TableInfo = tableInfo;
-    }
-}
-
-public sealed class EncodingInfo
-{
-    private readonly List<EncodingInfo> _subEncodings = new();
-    public int Id { get; }
-    public int ParentId { get; }
-    public EncodingId Encoding { get; }
-    public LogicalType Type { get; }
-    public ReadOnlyMemory<byte> Blob { get; }
-    public EncodingInfo? ParentEncoding { get; private set; } = null;
-
-    public EncodingInfo(int id, int parentId, EncodingId encoding, LogicalType type, ReadOnlyMemory<byte> blob)
-    {
-        Id = id;
-        ParentId = parentId;
-        Encoding = encoding;
-        Type = type;
-        Blob = blob;
-    }
-
-    public IEnumerable<EncodingInfo> GetSubEncodings()
-    {
-        return _subEncodings;
-    }
-
-    internal void AddSubEncoding(EncodingInfo subEncoding)
-    {
-        _subEncodings.Add(subEncoding);
-        subEncoding.ParentEncoding = this;
-    }
-}
-
+/// <summary>
+/// TODO
+/// </summary>
 public sealed class Reader
 {
     private readonly Stream _stream;
@@ -95,19 +22,31 @@ public sealed class Reader
         _encodingsById = encodings.ToLookup(e => e.Id);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IEnumerable<TableInfo> GetTables()
     {
         return _tables.Values;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public bool TryGetTable(string name, [NotNullWhen(true)] out TableInfo? table)
     {
         return _tables.TryGetValue(name, out table);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static async Task<Reader> CreateReaderAsync(Stream stream) =>
         await CreateReaderAsync(stream, new BitPacking(), new SplitEncoding());
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public static async Task<Reader> CreateReaderAsync(Stream stream, params IEnumerable<IEncoding> encodings)
     {
         int postfixSize = Unsafe.SizeOf<long>() * 4;
@@ -158,12 +97,18 @@ public sealed class Reader
         return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encodings);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IColumnReader<T> OpenColumnReader<T>(ColumnInfo column)
     {
         return (OpenColumnReader(column) as IColumnReader<T>) ??
                throw new Exception($"Column {column.Name} cannot be read as {typeof(T).ToLogicalType()}, must be read as {column.Encoding.Type}");
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IColumnReader OpenColumnReader(ColumnInfo column)
     {
         return CreateReader(column.Encoding);

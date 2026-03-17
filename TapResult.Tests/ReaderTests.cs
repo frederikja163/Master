@@ -1,7 +1,7 @@
-﻿using Master;
-using Master.Columns;
-using Master.Encodings;
-using Master.Readers;
+﻿using TapResult;
+using TapResult.Columns;
+using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Tests;
 

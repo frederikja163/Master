@@ -2,11 +2,14 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Master.Columns;
+using TapResult.Columns;
 
-namespace Master;
+namespace TapResult;
 
-internal struct DataColumnBuilder
+/// <summary>
+/// TODO
+/// </summary>
+public struct DataColumnBuilder
 {
     private readonly LogicalType _type;
     private Memory<byte> _data = Memory<byte>.Empty;
@@ -14,10 +17,16 @@ internal struct DataColumnBuilder
     private int _logicalLength = 0;
     private readonly bool _isConstSize = false;
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public DataColumnBuilder(int size, bool isConstSize = true) : this(LogicalType.UInt8, size, isConstSize)
     {
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public DataColumnBuilder(LogicalType type, int size, bool isConstSize = true)
     {
         _type = type;
@@ -25,8 +34,14 @@ internal struct DataColumnBuilder
         _isConstSize = isConstSize;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public int PhysicalSize => _index;
-    public bool IsAtEnd => _index >= _data.Length;
+    /// <summary>
+    /// TODO
+    /// </summary>
+    public bool IsAtEnd => _index >= _data.Length; // TODO: Consider if we should include '&& !_isConstSize' here
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
@@ -48,6 +63,9 @@ internal struct DataColumnBuilder
         return slice;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void Write<T>(T value)
         where T : unmanaged
     {
@@ -58,18 +76,27 @@ internal struct DataColumnBuilder
         _logicalLength += Unsafe.SizeOf<T>() / size;
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void Write<T>(ReadOnlySpan<T> values)
         where T : unmanaged
     {
         WriteRaw(values, values.Length);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteBlob(ReadOnlySpan<byte> blob)
     {
         Write(blob.Length);
         WriteRaw(blob, 0);
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteBlobs(IEnumerable<ReadOnlyMemory<byte>> blobs)
     {
         foreach (ReadOnlyMemory<byte> blob in blobs)
@@ -78,6 +105,9 @@ internal struct DataColumnBuilder
         }
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteBlobs(IEnumerable<byte[]> blobs)
     {
         foreach (ReadOnlyMemory<byte> blob in blobs)
@@ -86,11 +116,17 @@ internal struct DataColumnBuilder
         }
     }
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteString(string str)
     {
         WriteBlob(Encoding.UTF8.GetBytes(str));
     }
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteStrings(IEnumerable<string> strs)
     {
         foreach (string str in strs)
@@ -99,6 +135,9 @@ internal struct DataColumnBuilder
         }
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength)
         where T : unmanaged
     {
@@ -118,6 +157,9 @@ internal struct DataColumnBuilder
         }
     }
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void WriteRaw<T>(T value)
         where T : unmanaged
     {
@@ -139,6 +181,9 @@ internal struct DataColumnBuilder
         }
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public DataColumn Build()
     {
         return new DataColumn(_type,  _data.Slice(0, _index), _logicalLength);

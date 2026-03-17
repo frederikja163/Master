@@ -1,4 +1,4 @@
-using Master.Extensions;
+using TapResult.Extensions;
 using TapResult.Benchmarks.Data;
 using Vortex.Net;
 

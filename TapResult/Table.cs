@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
-using Master.Columns;
-using Master.Encodings;
+using TapResult.Columns;
+using TapResult.Encodings;
 
-namespace Master;
+namespace TapResult;
 
 public sealed class Table : IColumnParent
 {
@@ -44,7 +44,7 @@ public sealed class Table : IColumnParent
     }
     public int CalculateTotalLength()
     {
-        return GetDataColumns().Sum(column => column.CalculateTotalLength());
+        return GetDataColumns().Sum(column => column.LogicalLength);
     }
 
     public IEnumerable<DataColumn> GetDataColumns()

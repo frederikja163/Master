@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using HDF.PInvoke;
-using Master.Extensions;
+using TapResult.Extensions;
 using TapResult.Benchmarks.Data;
 
 namespace TapResult.Benchmarks.Raw;

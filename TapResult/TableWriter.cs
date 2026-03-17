@@ -1,8 +1,10 @@
-﻿using Master.Columns;
+﻿using TapResult.Columns;
 
-namespace Master;
+namespace TapResult;
 
-// Based on System.IO.BinaryWriter
+/// <summary>
+/// TODO
+/// </summary>
 public sealed class TableWriter : IDisposable, IAsyncDisposable
 {
     private readonly Stream _outStream;
@@ -30,6 +32,9 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         PatchVersion
     ]; // OTAP R100
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public TableWriter(Stream output, bool leaveOpen = false)
     {
         ArgumentNullException.ThrowIfNull(output);
@@ -83,13 +88,18 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         _outStream.Close();
     }
 
-    // Clears all buffers for this writer and causes any buffered data to be
-    // written to the underlying device.
+    /// <summary>
+    /// Clears all buffers for this writer and causes any buffered data to be
+    /// written to the underlying device.
+    /// </summary>
     public void Flush()
     {
         _outStream.Flush();
     }
     
+    /// <summary>
+    /// TODO
+    /// </summary>
     public void Write(Table table)
     {
         foreach (DataColumn dataColumn in table.GetDataColumns())
@@ -117,7 +127,9 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     
     internal Table GetMetadata()
     {
-        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()], ["Id", "ParentId", "Encoding", "LogicalType", "Blob"], "schema");
+        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()],
+            ["Id", "ParentId", "Encoding", "LogicalType", "Blob"],
+            "schema");
     }
 }
 

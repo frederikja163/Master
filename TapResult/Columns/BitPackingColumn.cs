@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Master.Encodings;
+using TapResult.Encodings;
 
-namespace Master.Columns;
+namespace TapResult.Columns;
 
 internal sealed class BitPackingColumn : IColumnParent
 {
@@ -49,7 +49,7 @@ internal sealed class BitPackingColumn : IColumnParent
 
     public int CalculateTotalLength()
     {
-        return GetDataColumns().Sum(column => column.CalculateTotalLength());
+        return GetDataColumns().Sum(column => column.LogicalLength);
     }
 
     public IEnumerable<DataColumn> GetDataColumns()

@@ -1,8 +1,8 @@
 ﻿using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Master;
-using Master.Columns;
+using TapResult;
+using TapResult.Columns;
 
 namespace TapResult.Tests;
 
