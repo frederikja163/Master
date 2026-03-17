@@ -1,9 +1,9 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
-using Master.Columns;
-using Master.Readers;
+using TapResult.Columns;
+using TapResult.Readers;
 
-namespace Master.Encodings;
+namespace TapResult.Encodings;
 
 /// <summary>
 /// TODO

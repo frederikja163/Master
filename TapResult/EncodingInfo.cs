@@ -1,6 +1,6 @@
-﻿using Master.Encodings;
+﻿using TapResult.Encodings;
 
-namespace Master;
+namespace TapResult;
 
 /// <summary>
 /// TODO

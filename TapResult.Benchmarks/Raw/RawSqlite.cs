@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using System.Data.SQLite;
-using Master.Extensions;
+using TapResult.Extensions;
 using TapResult.Benchmarks.Data;
 
 namespace TapResult.Benchmarks.Raw;

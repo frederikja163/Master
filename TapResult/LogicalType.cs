@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace Master;
+namespace TapResult;
 
 /// <summary>
 /// TODO

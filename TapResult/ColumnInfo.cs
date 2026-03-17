@@ -1,4 +1,4 @@
-﻿namespace Master;
+﻿namespace TapResult;
 
 /// <summary>
 /// TODO

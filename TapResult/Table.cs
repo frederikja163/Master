@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
-using Master.Columns;
-using Master.Encodings;
+using TapResult.Columns;
+using TapResult.Encodings;
 
-namespace Master;
+namespace TapResult;
 
 public sealed class Table : IColumnParent
 {

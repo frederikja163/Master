@@ -1,4 +1,4 @@
-﻿namespace Master.Columns;
+﻿namespace TapResult.Columns;
 
 /// <summary>
 /// TODO

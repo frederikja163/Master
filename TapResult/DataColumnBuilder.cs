@@ -2,9 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Master.Columns;
+using TapResult.Columns;
 
-namespace Master;
+namespace TapResult;
 
 /// <summary>
 /// TODO

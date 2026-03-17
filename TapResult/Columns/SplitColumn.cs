@@ -1,6 +1,6 @@
-﻿using Master.Encodings;
+﻿using TapResult.Encodings;
 
-namespace Master.Columns;
+namespace TapResult.Columns;
 
 internal sealed class SplitColumn : IColumnParent
 {

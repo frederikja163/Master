@@ -2,10 +2,10 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Master.Encodings;
-using Master.Readers;
+using TapResult.Encodings;
+using TapResult.Readers;
 
-namespace Master.Columns;
+namespace TapResult.Columns;
 
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.

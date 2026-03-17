@@ -1,6 +1,6 @@
-﻿using Master.Columns;
+﻿using TapResult.Columns;
 
-namespace Master;
+namespace TapResult;
 
 /// <summary>
 /// TODO

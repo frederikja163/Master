@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Master.Columns;
-using Master.Encodings;
-using Master.Readers;
+using TapResult.Columns;
+using TapResult.Encodings;
+using TapResult.Readers;
 
-namespace Master;
+namespace TapResult;
 
 /// <summary>
 /// TODO

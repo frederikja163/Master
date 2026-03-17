@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Master.Encodings;
+using TapResult.Encodings;
 
-namespace Master.Columns;
+namespace TapResult.Columns;
 
 internal sealed class BitPackingColumn : IColumnParent
 {

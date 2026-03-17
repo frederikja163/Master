@@ -1,4 +1,4 @@
-namespace Master.Extensions;
+namespace TapResult.Extensions;
 
 internal static class TypeExtensions
 {

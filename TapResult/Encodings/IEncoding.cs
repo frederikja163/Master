@@ -1,7 +1,7 @@
-﻿using Master.Columns;
-using Master.Readers;
+﻿using TapResult.Columns;
+using TapResult.Readers;
 
-namespace Master.Encodings;
+namespace TapResult.Encodings;
 
 /// <summary>
 /// Describes what <b>IEncoding</b> to use. The encoding does not determine the type of IColumn as IColumns can be reused in different encodings.

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Master.Readers;
+using TapResult.Readers;
 
-namespace Master;
+namespace TapResult;
 
 /// <summary>
 /// TODO

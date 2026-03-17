@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Master.Readers;
+namespace TapResult.Readers;
 
 internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<byte[]>
 {

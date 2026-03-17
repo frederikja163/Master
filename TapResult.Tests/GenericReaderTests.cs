@@ -1,6 +1,6 @@
-﻿using Master;
-using Master.Columns;
-using Master.Readers;
+﻿using TapResult;
+using TapResult.Columns;
+using TapResult.Readers;
 
 namespace TapResult.Tests;
 

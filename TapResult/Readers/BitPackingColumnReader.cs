@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace Master.Readers;
+namespace TapResult.Readers;
 
 internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
     where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
