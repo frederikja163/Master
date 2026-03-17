@@ -18,7 +18,6 @@ public sealed class TableInfo
         GenericReader reader = new GenericReader(encoding.Blob.Span);
         Name = reader.ReadString();
         _columns = new Dictionary<string, ColumnInfo>();
-        int i = 0;
         foreach (EncodingInfo subEncoding in encoding.GetSubEncodings())
         {
             string name = reader.ReadString();
