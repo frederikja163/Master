@@ -12,6 +12,7 @@ public enum EncodingId : byte
     Binary = 1,
     Split = 2,
     BitPacking = 3,
+    RunLength = 4,
 }
 
 /// <summary>
