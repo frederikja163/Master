@@ -81,11 +81,11 @@ public class RunLengthEncoding : IEncoding
             LogicalType.UInt16 => new RunLengthReader<ushort>(bytes, repeats, byteLength, length),
             LogicalType.UInt32 => new RunLengthReader<uint>(bytes, repeats, byteLength, length),
             LogicalType.UInt64 => new RunLengthReader<ulong>(bytes, repeats, byteLength, length),
+            LogicalType.Float16 => new RunLengthReader<Half>(bytes, repeats, byteLength, length),
+            LogicalType.Float32 => new RunLengthReader<float>(bytes, repeats, byteLength, length),
+            LogicalType.Float64 => new RunLengthReader<double>(bytes, repeats, byteLength, length),
             
             // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
-            LogicalType.Float16 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Float32 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Float64 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
             LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
             LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)

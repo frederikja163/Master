@@ -3,7 +3,7 @@
 namespace TapResult.Readers;
 
 public class RunLengthReader<T> : IColumnReader<T>
-    where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
+    where T : unmanaged
 {
     private readonly IColumnReader<T> _byteColumn;
     private readonly IColumnReader<int> _repeatColumn;
