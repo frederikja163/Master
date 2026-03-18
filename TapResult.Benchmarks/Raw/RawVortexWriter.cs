@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using TapResult.Extensions;
 using TapResult.Benchmarks.Data;
 using Vortex.Net;
@@ -40,7 +41,7 @@ public sealed class RawVortexWriter : IRawBenchmark
         return type == typeof(int) ? Vx.NewPrimitive(VxPType.I32, true) :
             type == typeof(float) ? Vx.NewPrimitive(VxPType.F32, true) :
             type == typeof(double) ? Vx.NewPrimitive(VxPType.F64, true) :
-            type == typeof(string) ? Vx.NewUtf8(true) : throw new NotImplementedException();
+            type == typeof(string) ? Vx.NewUtf8(true) : throw new UnreachableException();
     }
 
     private VxArray ArrayToVxArray(Array array)
@@ -74,7 +75,7 @@ public sealed class RawVortexWriter : IRawBenchmark
             return builder.Finish();
         }
         
-        throw new NotImplementedException();
+        throw new UnreachableException();
     }
 
     public override string ToString()

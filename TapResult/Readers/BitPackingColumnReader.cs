@@ -52,6 +52,16 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
         return value;
     }
 
+    IEnumerable<object> IColumnReader.Peek(int offset, int count)
+    {
+        return Peek(offset, count).OfType<object>();
+    }
+
+    object IColumnReader.Peek(int offset)
+    {
+        return Peek(offset);
+    }
+
     public IEnumerable<T> Peek(int offset, int count)
     {
         // TODO: Implement faster SIMD version of peekn here.

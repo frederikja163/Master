@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -7,13 +8,15 @@ namespace TapResult.Readers;
 internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 {
     private readonly ReadOnlyMemory<byte> _data;
+    private readonly LogicalType _type;
     private int _byteIndex;
     public int Length { get; }
     public int Index { get; private set; }
 
-    internal VarLengthReader(ReadOnlyMemory<byte> data, int length)
+    internal VarLengthReader(ReadOnlyMemory<byte> data, int length, LogicalType type)
     {
         _data = data;
+        _type = type;
         Length = length;
     }
 
@@ -45,6 +48,34 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
             _byteIndex += Unsafe.SizeOf<int>();
             Index += 1;
         }
+    }
+
+    IEnumerable<object> IColumnReader.Peek(int offset, int count)
+    {
+        if (_type == LogicalType.Blob)
+        {
+            return ((IColumnReader<byte[]>)this).Peek(offset, count);
+        }
+        if (_type == LogicalType.String)
+        {
+            return ((IColumnReader<string>)this).Peek(offset, count);
+        }
+
+        throw new UnreachableException();
+    }
+
+    object IColumnReader.Peek(int offset)
+    {
+        if (_type == LogicalType.Blob)
+        {
+            return ((IColumnReader<byte[]>)this).Peek(offset);
+        }
+        if (_type == LogicalType.String)
+        {
+            return ((IColumnReader<string>)this).Peek(offset);
+        }
+
+        throw new UnreachableException();
     }
 
     string IColumnReader<string>.Peek(int offset)

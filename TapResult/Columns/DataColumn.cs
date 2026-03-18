@@ -13,6 +13,7 @@ namespace TapResult.Columns;
 /// </summary>
 public sealed class DataColumn : IColumn, IEquatable<DataColumn>
 {
+    private long _offset;
     public EncodingType EncodingType => EncodingType.Binary;
     /// <summary>
     /// The underlying data of the DataColumn.
@@ -23,7 +24,6 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     /// </summary>
     public LogicalType LogicalType { get; }
 
-    private long Offset { get; set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
 
     /// <summary>
     /// The physical length, or the length of the <see cref="Data"/> memory.
@@ -50,11 +50,16 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         LogicalLength = logicalLength;
     }
     
-    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : struct
+    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
     {   
         if (!BitConverter.IsLittleEndian)
         {
-            throw new NotImplementedException();
+            DataColumnBuilder builder = new DataColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
+            foreach (T var in data)
+            {
+                builder.Write(var);
+            }
+            return builder.Build();
         }
         
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
@@ -64,7 +69,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     /// <summary>
     /// Create a new DataColumn from a span of data.
     /// </summary>
-    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
+    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         return Create(data, typeof(T).ToLogicalType());
     }
@@ -227,8 +232,8 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
             LogicalType.Float16 => new PrimitiveReader<Half>(Data),
             LogicalType.Float32 => new PrimitiveReader<float>(Data),
             LogicalType.Float64 => new PrimitiveReader<double>(Data),
-            LogicalType.Blob => new VarLengthReader(Data, LogicalLength),
-            LogicalType.String => new VarLengthReader(Data, LogicalLength),
+            LogicalType.Blob => new VarLengthReader(Data, LogicalLength, LogicalType),
+            LogicalType.String => new VarLengthReader(Data, LogicalLength, LogicalType),
             _ => throw new ArgumentOutOfRangeException(nameof(LogicalType), typeof(LogicalType), null)
         };
     }
@@ -256,12 +261,12 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         blobBuilder.Write(BlobSize);
         blobBuilder.WriteRaw(PhysicalSize);
         blobBuilder.WriteRaw(LogicalLength);
-        blobBuilder.WriteRaw(Offset);
+        blobBuilder.WriteRaw(_offset);
     }
 
     internal void Write(Stream stream)
     {
-        Offset = stream.Position;
+        _offset = stream.Position;
         stream.Write(Data.Span);
     }
 

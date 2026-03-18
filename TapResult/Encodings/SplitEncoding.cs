@@ -34,7 +34,7 @@ public sealed class SplitEncoding : IEncoding
             !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<byte> bytes ||
             childColumnEnumerator.MoveNext())
             throw new Exception("Child columns not configured correctly for split column.");
-        return new SplitColumnReader(lengths, bytes);
+        return new SplitColumnReader(lengths, bytes, type);
     }
 
     public IEnumerable<LogicalType> GetSupportedTypes()

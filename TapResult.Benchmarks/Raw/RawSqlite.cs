@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.SQLite;
+using System.Diagnostics;
 using TapResult.Extensions;
 using TapResult.Benchmarks.Data;
 
@@ -52,7 +53,7 @@ internal sealed class RawSqlite : IRawBenchmark
                 type == typeof(string) ? "TEXT" :
                 type == typeof(double) ? "REAL" :
                 type == typeof(float) ? "REAL" :
-                throw new NotImplementedException();
+                throw new UnreachableException();
         }
 
         static DbType GetParamType(Array array)
@@ -62,7 +63,7 @@ internal sealed class RawSqlite : IRawBenchmark
                 type == typeof(string) ? DbType.String :
                 type == typeof(float) ? DbType.Single :
                 type == typeof(double) ? DbType.Double :
-                throw new NotImplementedException();
+                throw new UnreachableException();
         }
 
         static string CreateField((string name, string type) tuple)
