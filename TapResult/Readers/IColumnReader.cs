@@ -31,11 +31,11 @@ public interface IColumnReader
 public interface IColumnReader<out T> : IColumnReader
 {
     /// <summary>
-    /// Peek the next value, or a value with some offset. Does not advance the reader.
+    /// Peek the next value, or a value with some offset. Does not consume.
     /// </summary>
     public T Peek(int offset = 0);
     /// <summary>
-    /// Peeks multiple values with some offset. Does not advance the reader.
+    /// Peeks multiple values with some offset. Does not consume.
     /// </summary>
     public IEnumerable<T> Peek(int offset, int count);
 }
@@ -45,7 +45,7 @@ public interface IColumnReader<out T> : IColumnReader
 /// </summary>
 public static class ColumnReaderExtensions {
     /// <summary>
-    /// Reads a value from and then advances a reader.
+    /// Reads the next value from the data and advances the reader by one.
     /// </summary>
     public static T Read<T>(this IColumnReader<T> reader)
     {
@@ -55,7 +55,7 @@ public static class ColumnReaderExtensions {
     }
 
     /// <summary>
-    /// Reads multiple values from and then advances a reader.
+    /// Reads multiple values from the data and advances the reader.
     /// </summary>
     public static IEnumerable<T> Read<T>(this IColumnReader<T> reader, int count)
     {

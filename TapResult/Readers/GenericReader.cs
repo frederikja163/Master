@@ -61,7 +61,8 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// Peek a value of type T. T has to be a primitive type, for blobs and strings see their respective functions.
+    /// Returns the next value from the data but does not consume it.
+    /// T has to be a primitive type, for blobs and strings see their respective functions.
     /// Use <see cref="Read{T}()"/> if advancing is also needed.
     /// </summary>
     public T Peek<T>(int byteOffset = 0)
@@ -84,7 +85,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// Read a single value out of the GenericReader and advances to the next value.
+    /// Reads the next value from the data and advances the position by the size of the value.
     /// </summary>
     public T Read<T>() where T : unmanaged
     {

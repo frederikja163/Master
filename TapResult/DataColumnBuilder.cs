@@ -7,7 +7,7 @@ using TapResult.Columns;
 namespace TapResult;
 
 /// <summary>
-/// A type that helps create new DataColumns.
+/// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
 public struct DataColumnBuilder
 {
