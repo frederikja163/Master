@@ -1,75 +1,75 @@
-﻿using System.Buffers.Binary;
-using System.Numerics;
-using System.Runtime.CompilerServices;
+﻿using System.Numerics;
 
 namespace TapResult.Readers;
 
-public class RunLengthReader<T>(IColumnReader<byte> byteColumn, IColumnReader<int> repeatColumn, int byteLength, int length) : IColumnReader<T>
+public class RunLengthReader<T> : IColumnReader<T>
     where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    public int ByteLength { get; } = byteLength;
-    public int Length { get; } = length;
-    public int Index => byteColumn.Index;
+    private readonly IColumnReader<T> _byteColumn;
+    private readonly IColumnReader<int> _repeatColumn;
+
+    public RunLengthReader(IColumnReader byteColumn, IColumnReader<int> repeatColumn, int byteLength, int length)
+    {
+        if (byteColumn is not IColumnReader<T> columnReader)
+            throw new ArgumentException($"{nameof(columnReader)} not a {nameof(IColumnReader<T>)}");
+        _byteColumn = columnReader;
+        _repeatColumn = repeatColumn;
+        ByteLength = byteLength;
+        Length = length;
+    }
+
+    public int ByteLength { get; }
+    public int Length { get; }
+    public int Index { get; private set; }
+    private int _repeatIndex = 0;
 
     public void Advance(int units)
     {
-        byteColumn.Advance(units);
-        repeatColumn.Advance(units);
+        _repeatIndex += units;
+        while (_repeatIndex > 0 && _repeatIndex >= _repeatColumn.Peek()) // 0 check for when all values have been consumed
+        {
+            _repeatIndex -= _repeatColumn.Peek();
+            _byteColumn.Advance(1);
+            _repeatColumn.Advance(1);
+        }
+        Index += units;
     }
 
     public T Peek(int offset = 0)
     {
-        offset = Index + offset;
-        int index = 0;
-        int currentOffset = 0;
-        int currentVal;
-        while (currentOffset < offset)
+        int indexOffset = 0;
+        int repeatIndex = _repeatIndex + offset;
+        while (repeatIndex >= _repeatColumn.Peek(indexOffset))
         {
-            currentVal = repeatColumn.Peek(index);
-            index++;
-            currentOffset += currentVal;
+            repeatIndex -= _repeatColumn.Peek(indexOffset);
+            indexOffset++;
         }
-        ReadOnlySpan<byte> slice = byteColumn.Peek(index, Length).ToArray();
-        return 
-            typeof(T) == typeof(sbyte) ? Unsafe.BitCast<sbyte, T>((sbyte)slice[0]) :
-            typeof(T) == typeof(short) ? Unsafe.BitCast<short, T>(BinaryPrimitives.ReadInt16LittleEndian(slice)) :
-            typeof(T) == typeof(int) ? Unsafe.BitCast<int, T>(BinaryPrimitives.ReadInt32LittleEndian(slice)) :
-            typeof(T) == typeof(long) ? Unsafe.BitCast<long, T>(BinaryPrimitives.ReadInt64LittleEndian(slice)) :
-            typeof(T) == typeof(byte) ? Unsafe.BitCast<byte, T>(slice[0]) :
-            typeof(T) == typeof(ushort) ? Unsafe.BitCast<ushort, T>(BinaryPrimitives.ReadUInt16LittleEndian(slice)) :
-            typeof(T) == typeof(uint) ? Unsafe.BitCast<uint, T>(BinaryPrimitives.ReadUInt32LittleEndian(slice)) :
-            typeof(T) == typeof(ulong) ? Unsafe.BitCast<ulong, T>(BinaryPrimitives.ReadUInt64LittleEndian(slice)) :
-            typeof(T) == typeof(Half) ? Unsafe.BitCast<Half, T>(BinaryPrimitives.ReadHalfLittleEndian(slice)) :
-            typeof(T) == typeof(float) ? Unsafe.BitCast<float, T>(BinaryPrimitives.ReadSingleLittleEndian(slice)) :
-            typeof(T) == typeof(double) ? Unsafe.BitCast<double, T>(BinaryPrimitives.ReadDoubleLittleEndian(slice)) :
-            throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
+        return _byteColumn.Peek(indexOffset);
     }
 
     public IEnumerable<T> Peek(int offset, int count)
     {
-        offset = Index + offset;
-        int index = 0;
-        int currentOffset = 0;
-        int currentVal;
-        while (currentOffset < offset)
+        int indexOffset = 0;
+        int repeatIndex = _repeatIndex + offset;
+        while (repeatIndex >= _repeatColumn.Peek(indexOffset))
         {
-            currentVal = repeatColumn.Peek(index);
-            index++;
-            currentOffset += currentVal;
+            repeatIndex -= _repeatColumn.Peek(indexOffset);
+            indexOffset++;
         }
 
-        int currentRepeat = currentOffset - offset;
         while (count > 0)
         {
-            for (int i = 0; i < currentRepeat; i++)
+            if (_repeatColumn.Peek(indexOffset) > count)
             {
-                if (count-- > 0)
-                {
-                    yield return (T) byteColumn.Peek(index, Length);
-                }
+                foreach (T val in _byteColumn.Peek(indexOffset, count)) 
+                    yield return val;
+                break;
             }
-            index++;
-            currentRepeat = repeatColumn.Peek(index);
+
+            foreach (T val in _byteColumn.Peek(indexOffset, _repeatColumn.Peek(indexOffset))) 
+                yield return val;
+            count -= _repeatColumn.Peek(indexOffset);
+            indexOffset++;
         }
     }
 }

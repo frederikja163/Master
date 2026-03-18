@@ -38,7 +38,7 @@ public class RunLengthEncoding : IEncoding
         IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
         int byteLength = Unsafe.SizeOf<T>();
         DataColumnBuilder byteBuilder = new DataColumnBuilder(dataColumn.LogicalType, dataColumn.PhysicalSize);
-        DataColumnBuilder repeatBuilder = new DataColumnBuilder(LogicalType.UInt8, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
+        DataColumnBuilder repeatBuilder = new DataColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
         T previous = reader.Read();
         int repeats = 1;
         for (int i = 1; i < dataColumn.LogicalLength; i++)
@@ -63,8 +63,8 @@ public class RunLengthEncoding : IEncoding
         ref GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
-        if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> repeats ||
-            !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<byte> bytes ||
+        if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not { } bytes ||
+            !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> repeats ||
             childColumnEnumerator.MoveNext())
             throw new Exception("Child columns not configured correctly for RunLength column.");
         if (metadataReader.Read<int>() != RunLengthColumn.Size)
