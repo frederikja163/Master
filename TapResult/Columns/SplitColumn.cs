@@ -15,44 +15,20 @@ internal sealed class SplitColumn : IColumnParent
         ByteColumn = byteColumn;
         LogicalType = logicalType;
     }
-    
-    public int CalculateTotalLength()
-    {
-        return GetDataColumns().Sum(d => d.LogicalLength);
-    }
 
-    public IEnumerable<DataColumn> GetDataColumns() => LengthColumn.GetDataColumns().Concat(ByteColumn.GetDataColumns());
 
-    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
         blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
     }
 
-    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+    public IEnumerable<IColumn> GetChildColumns()
     {
-        if (recursive)
-        {
-            if (LengthColumn is IColumnParent columnParent)
-            {
-                foreach (IColumn childColumn in columnParent.GetChildColumns(true))
-                {
-                    yield return childColumn;
-                }
-            }
-        
-            if (ByteColumn is IColumnParent columnParent2)
-            {
-                foreach (IColumn childColumn in columnParent2.GetChildColumns(true))
-                {
-                    yield return childColumn;
-                }
-            }
-        }
         yield return LengthColumn;
         yield return ByteColumn;
     }
 
-    void IColumnParent.Swap(in IColumn existingColumn, in IColumn newColumn)
+    public void Swap(in IColumn existingColumn, in IColumn newColumn)
     {
         if (existingColumn.Equals(LengthColumn))
         {

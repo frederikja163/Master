@@ -36,7 +36,7 @@ internal sealed class Serializer
     }
     public void Encode(ref Table table) // TODO: Move this function to the table.
     {
-        foreach (DataColumn dataColumn in table.GetDataColumns())
+        foreach (DataColumn dataColumn in table.GetChildColumnsRecursive().OfType<DataColumn>())
         {
             table.Swap(dataColumn, Encode(dataColumn));
         }
@@ -54,9 +54,12 @@ internal sealed class Serializer
         var columns = encoding.Encode(inData);
         if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
         {
-            foreach (var child in columns.GetDataColumns().Zip(parentMeta.GetChildColumns()))
+            foreach (var child in parent.GetChildColumns().Zip(parentMeta.GetChildColumns()))
             {
-                parent.Swap(child.First, Encode(child.First, child.Second));
+                if (child.First is DataColumn dataColumn)
+                {
+                    parent.Swap(dataColumn, Encode(dataColumn, child.Second));
+                }
             }
         }
         return columns;
@@ -80,12 +83,12 @@ internal sealed class Serializer
             IColumn encodedColumn = encoding.Encode(sample);
             if (encodedColumn is IColumnParent parent)
             {
-                foreach (var child in parent.GetDataColumns())
+                foreach (var child in parent.GetChildColumns().OfType<DataColumn>())
                 {
                     parent.Swap(child, PickEncoding(child, cascades - 1));
                 }
             }
-            int length = encodedColumn.CalculateTotalLength();
+            int length = CalculateTotalLength(encodedColumn);
             if (length < minSize)
             {
                 bestEncoding = encodedColumn;
@@ -94,6 +97,21 @@ internal sealed class Serializer
         }
         
         return bestEncoding;
+    }
+
+    private int CalculateTotalLength(IColumn column)
+    {
+        if (column is DataColumn dataColumn)
+        {
+            return dataColumn.PhysicalSize;
+        }
+
+        if (column is IColumnParent parent)
+        {
+            return parent.GetChildColumns().Select(CalculateTotalLength).Sum();
+        }
+
+        return 0;
     }
 
     internal DataColumn CreateSample(in DataColumn data)

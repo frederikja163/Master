@@ -26,7 +26,7 @@ internal sealed class MyColumn : IColumnParent
         blobBuilder.WriteBlob(Blob);
     }
 
-    public IEnumerable<IColumn> GetChildColumns(bool recursive = false)
+    public IEnumerable<IColumn> GetChildColumns()
     {
         return Columns;
     }

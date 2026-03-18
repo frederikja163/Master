@@ -17,7 +17,9 @@ internal sealed class CascadingBenchmark : IRawBenchmark
             {
                 DataColumn dataColumn = DataColumn.Create(array, out var nulls);
                 IColumn column = serializer.Encode(dataColumn);
-                foreach (DataColumn col in column.GetDataColumns())
+                if (column is not IColumnParent parent)
+                    return;
+                foreach (DataColumn col in parent.GetChildColumnsRecursive().OfType<DataColumn>())
                 {
                     stream.Write(col.Data.Span);
                     if (nulls is not null)
@@ -52,9 +54,11 @@ internal sealed class CascadingAsyncBenchmark : IRawBenchmark
                 {
                     DataColumn dataColumn = DataColumn.Create(array, out var nulls);
                     IColumn column = serializer.Encode(dataColumn);
+                    if (column is not IColumnParent parent)
+                        return;
                     lock (stream)
                     {
-                        foreach (DataColumn col in column.GetDataColumns())
+                        foreach (DataColumn col in parent.GetChildColumnsRecursive().OfType<DataColumn>())
                         {
                             stream.Write(col.Data.Span);
                             if (nulls is not null)

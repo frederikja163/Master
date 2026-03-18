@@ -1,15 +1,39 @@
 ﻿namespace TapResult.Columns;
 
 /// <summary>
-/// A parent of other 
+/// A parent of other columns.
 /// </summary>
 public interface IColumnParent : IColumn
 {
     /// <summary>
-    /// Gets all child columns
+    /// Gets all immediate child columns of this parent.
     /// </summary>
-    /// <param name="recursive">If true, returns depth first all children and children's children</param>
-    /// <returns></returns>
-    public IEnumerable<IColumn> GetChildColumns(bool recursive = false);
+    public IEnumerable<IColumn> GetChildColumns();
     public void Swap(in IColumn existingColumn, in IColumn newColumn);
+}
+
+/// <summary>
+/// Helper methods for <see cref="IColumnParent"/>.
+/// </summary>
+public static class ColumnParentExtensions
+{
+    /// <summary>
+    /// Gets all child columns recursively.
+    /// That means you get the children, grandchildren etc.
+    /// </summary>
+    public static IEnumerable<IColumn> GetChildColumnsRecursive(this IColumnParent columnParent)
+    {
+        foreach (IColumn column in columnParent.GetChildColumns())
+        {
+            if (column is IColumnParent parent)
+            {
+                foreach (IColumn child in GetChildColumnsRecursive(parent))
+                {
+                    yield return child;
+                }
+            }
+
+            yield return column;
+        }
+    }
 }

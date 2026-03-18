@@ -241,16 +241,6 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         return new GenericReader(Data.Span);
     }
 
-    int IColumn.CalculateTotalLength()
-    {
-        return LogicalLength;
-    }
-
-    IEnumerable<DataColumn> IColumn.GetDataColumns()
-    {
-        yield return this;
-    }
-
     void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
         blobBuilder.Write(BlobSize);

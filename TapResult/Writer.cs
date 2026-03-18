@@ -103,7 +103,7 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     /// </summary>
     public void Write(Table table)
     {
-        foreach (DataColumn dataColumn in table.GetDataColumns())
+        foreach (DataColumn dataColumn in table.GetChildColumnsRecursive().OfType<DataColumn>())
         {
             dataColumn.Write(_outStream);
         }
