@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using TapResult.Extensions;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
@@ -43,7 +44,7 @@ public class SparkBenchmark
         return dataType == typeof(int) ? new IntegerType() :
             dataType == typeof(string) ? new StringType() :
             dataType == typeof(double) ? new DoubleType() :
-            dataType == typeof(float) ? new DoubleType() : throw new NotImplementedException("Couldn't read data type");
+            dataType == typeof(float) ? new DoubleType() : throw new UnreachableException("Couldn't read data type");
     }
     private static object ConvertValue(object v)
     {
