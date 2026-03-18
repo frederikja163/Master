@@ -6,7 +6,7 @@ namespace TapResult;
 /// Writer for a TapResult file,
 /// encodes columns and writes them out.
 /// </summary>
-public sealed class TableWriter : IDisposable, IAsyncDisposable
+public sealed class Writer : IDisposable, IAsyncDisposable
 {
     private readonly Stream _outStream;
     private readonly bool _leaveOpen;
@@ -36,7 +36,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     /// <summary>
     /// Create a new TableWriter. optionally leaving the stream open.
     /// </summary>
-    public TableWriter(Stream output, bool leaveOpen = false)
+    public Writer(Stream output, bool leaveOpen = false)
     {
         ArgumentNullException.ThrowIfNull(output);
 

@@ -74,7 +74,7 @@ public sealed class ReaderTests
             Columns = [],
         };
         using MemoryStream stream = new MemoryStream();
-        TableWriter writer = new TableWriter(stream, true);
+        Writer writer = new Writer(stream, true);
         Table tab1 = new Table([column1, column2], ["col1", "col2"], "table1");
         writer.Write(tab1);
         Table tab2 = new Table([column2], ["col3"], "table2");
@@ -125,7 +125,7 @@ public sealed class ReaderTests
         int[] data = Enumerable.Range(0, 1000).Select(t => Random.Shared.Next(0, 255)).ToArray();
         Table table = new Table([DataColumn.Create(data)], ["integers"], "table");
         using Stream stream = new MemoryStream();
-        using (TableWriter writer = new TableWriter(stream, leaveOpen: true))
+        using (Writer writer = new Writer(stream, leaveOpen: true))
         {
             writer.Write(table);
         }

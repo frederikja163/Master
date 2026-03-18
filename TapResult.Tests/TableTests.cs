@@ -66,10 +66,10 @@ public class TableTests
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
         // Encoding is skipped
-        TableWriter tableWriter = new TableWriter(Stream.Null);
-        tableWriter.Write(table);
+        Writer writer = new Writer(Stream.Null);
+        writer.Write(table);
 
-        Table metadata = tableWriter.GetMetadata();
+        Table metadata = writer.GetMetadata();
         DataColumn[] metadataColumns = metadata.Columns.OfType<DataColumn>().ToArray();
         DataColumn idColumn = metadataColumns[0];
         DataColumn parentIdColumn = metadataColumns[1];
@@ -119,10 +119,10 @@ public class TableTests
             LogicalType.Blob
         );
         
-        TableWriter tableWriter = new TableWriter(Stream.Null);
-        tableWriter.SaveMetaDataForColumn(column, -1);
+        Writer writer = new Writer(Stream.Null);
+        writer.SaveMetaDataForColumn(column, -1);
 
-        Table metadata = tableWriter.GetMetadata();
+        Table metadata = writer.GetMetadata();
         DataColumn[] metadataColumns = metadata.Columns.OfType<DataColumn>().ToArray();
         DataColumn idColumn = metadataColumns[0];
         DataColumn parentIdColumn = metadataColumns[1];
@@ -157,7 +157,7 @@ public class TableTests
         Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
 
         Stream stream = new MemoryStream();
-        TableWriter writer = new(stream, leaveOpen: true);
+        Writer writer = new(stream, leaveOpen: true);
         writer.Write(table);
         writer.Dispose();
 
@@ -166,7 +166,7 @@ public class TableTests
         int expectedPosition = 0;
         
         // Magic Number
-        Assert.That(reader.ReadBytes(8), Is.EqualTo(TableWriter.MagicNumber.ToArray()));
+        Assert.That(reader.ReadBytes(8), Is.EqualTo(Writer.MagicNumber.ToArray()));
         expectedPosition += 8;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
@@ -245,7 +245,7 @@ public class TableTests
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
         // Magic Number
-        Assert.That(reader.ReadChars(8), Is.EqualTo(TableWriter.MagicNumber.ToArray()));
+        Assert.That(reader.ReadChars(8), Is.EqualTo(Writer.MagicNumber.ToArray()));
         expectedPosition += 8;
         
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
