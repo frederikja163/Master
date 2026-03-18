@@ -16,17 +16,11 @@ public sealed class Table : IColumnParent
 
     public EncodingType EncodingType => EncodingType.Table;
     public LogicalType LogicalType => LogicalType.UInt8;
-    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+
+    public IEnumerable<IColumn> GetChildColumns()
     {
         foreach (IColumn column in _columns)
         {
-            if (recursive && column is IColumnParent columnParent)
-            {
-                foreach (IColumn childColumn in columnParent.GetChildColumns(recursive))
-                {
-                    yield return childColumn;
-                }
-            }
             yield return column;
         }
     }
@@ -42,21 +36,8 @@ public sealed class Table : IColumnParent
             break;
         }
     }
-    public int CalculateTotalLength()
-    {
-        return GetDataColumns().Sum(column => column.LogicalLength);
-    }
 
-    public IEnumerable<DataColumn> GetDataColumns()
-    {
-        foreach (IColumn column in _columns)
-        {
-            foreach (DataColumn dataColumn in column.GetDataColumns()) 
-                yield return dataColumn;
-        }
-    }
-
-    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
         DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100, false);
         builder.WriteString(Name);

@@ -28,16 +28,9 @@ internal sealed class BitPackingColumn : IColumnParent
     
     public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix) : this(column, prefixLength, prefix, column.LogicalLength)
     { }
-    
-    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+
+    public IEnumerable<IColumn> GetChildColumns()
     {
-        if (recursive && Column is IColumnParent columnParent)
-        {
-            foreach (IColumn childColumn in columnParent.GetChildColumns(true))
-            {
-                yield return childColumn;
-            }
-        }
         yield return Column;
     }
 
@@ -47,17 +40,7 @@ internal sealed class BitPackingColumn : IColumnParent
         Column = newColumn;
     }
 
-    public int CalculateTotalLength()
-    {
-        return GetDataColumns().Sum(column => column.LogicalLength);
-    }
-
-    public IEnumerable<DataColumn> GetDataColumns()
-    {
-        return Column.GetDataColumns();
-    }
-    
-    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
     {
         blobBuilder.Write(Size);
         blobBuilder.WriteRaw(PrefixLength);

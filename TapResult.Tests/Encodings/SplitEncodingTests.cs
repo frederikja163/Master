@@ -17,7 +17,7 @@ internal sealed class SplitEncodingTests
         SplitEncoding encoder = new SplitEncoding();
         DataColumn dataColumn = DataColumn.Create(strs);
         SplitColumn columns = (SplitColumn) encoder.Encode(dataColumn);
-        Assert.That(columns.GetDataColumns().Count(), Is.EqualTo(2));
+        Assert.That(columns.GetChildColumns().Count(), Is.EqualTo(2));
         DataColumn lengthColumn = (DataColumn) columns.LengthColumn;
         IColumnReader<int> lengthReader = lengthColumn.OpenReader<int>();
         DataColumn strColumn = (DataColumn) columns.ByteColumn;
@@ -38,13 +38,13 @@ internal sealed class SplitEncodingTests
         string[] strs = [str1, str2];
         SplitEncoding encoding = new SplitEncoding();
         DataColumn dataColumn = DataColumn.Create(strs);
-        IColumn columns = encoding.Encode(dataColumn);
+        SplitColumn columns = (SplitColumn) encoding.Encode(dataColumn);
         DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100);
         columns.WriteMetadata(ref builder);
         DataColumn metadataColumn = builder.Build();
         GenericReader genericReader = metadataColumn.OpenGenericReader();
         IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, ref genericReader,
-            columns.GetDataColumns().Select(c => c.OpenReader()));
+            columns.GetChildColumns().OfType<DataColumn>().Select(c => c.OpenReader()));
         Assert.That(reader.Read(2), Is.EqualTo(strs));
         Assert.That(reader.IsAtEnd, Is.True);
     }

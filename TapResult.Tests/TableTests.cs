@@ -24,7 +24,7 @@ public class TableTests
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns, names, "table");
         Assert.That(table.Columns, Is.EqualTo(dataColumns));
-        Assert.That(table.GetDataColumns(), Is.EqualTo(dataColumns));
+        Assert.That(table.GetChildColumns(), Is.EqualTo(dataColumns));
         Assert.That(table.Names, Is.EqualTo(names));
     }
     
