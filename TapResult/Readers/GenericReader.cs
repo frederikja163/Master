@@ -6,18 +6,22 @@ using System.Text;
 namespace TapResult.Readers;
 
 /// <summary>
-/// TODO
+/// A generic reader for DataColumns. Can be opened with DataColumn.OpenGenericReader.
+/// Reads values out from a ReadonlySpan&lt;T&gt; as arbitrarily typed values.
+/// For example, it can read bit-casted ints out as longs etc.
+/// The casting will be with the raw byte values in little endian.
 /// </summary>
 public ref struct GenericReader
 {
     private readonly ReadOnlySpan<byte> _data;
     /// <summary>
-    /// TODO
+    /// The current index in bytes of the GenericReader.
     /// </summary>
     public int ByteIndex { get; private set; } = 0;
 
     /// <summary>
-    /// TODO
+    /// Opens a new GenericReader.
+    /// If one is being created from a DataColumn, it is recommended to use DataColumn.OpenGenericReader instead.
     /// </summary>
     public GenericReader(ReadOnlySpan<byte> data)
     {
@@ -25,16 +29,17 @@ public ref struct GenericReader
     }
     
     /// <summary>
-    /// TODO
+    /// The physical size of this GenericReader.
     /// </summary>
     public int PhysicalSize => _data.Length;
     /// <summary>
-    /// TODO
+    /// True if this GenericReader is at the end of reading.
     /// </summary>
-    public bool AtEnd => ByteIndex == _data.Length;
+    public bool IsAtEnd => ByteIndex == _data.Length;
     
     /// <summary>
-    /// TODO
+    /// Advance the reader a number of bytes forward.
+    /// Not needed to be called when reading as it advances for you.
     /// </summary>
     public void Advance(int byteCount)
     {
@@ -56,7 +61,9 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Returns the next value from the data but does not consume it.
+    /// T has to be a primitive type, for blobs and strings see their respective functions.
+    /// Use <see cref="Read{T}()"/> if advancing is also needed.
     /// </summary>
     public T Peek<T>(int byteOffset = 0)
         where T : unmanaged
@@ -78,7 +85,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Reads the next value from the data and advances the position by the size of the value.
     /// </summary>
     public T Read<T>() where T : unmanaged
     {
@@ -88,7 +95,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Read a number of values out of the GenericReader and advances to the value after the last one.
     /// </summary>
     public ReadOnlySpan<T> Read<T>(int count)
         where T : unmanaged
@@ -110,7 +117,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Read a single length prefixed blob and advances the reader.
     /// </summary>
     public ReadOnlySpan<byte> ReadBlob()
     {
@@ -119,7 +126,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Reads multiple length prefixed blobs and advances the reader.
     /// </summary>
     public byte[][] ReadBlob(int length)
     {
@@ -133,7 +140,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Read a single length prefixed UTF8 string and advances the reader.
     /// </summary>
     public string ReadString()
     {
@@ -142,7 +149,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Reads multiple length prefixed UTF8 strings and advances the reader.
     /// </summary>
     public string[] ReadString(int length)
     {
@@ -156,7 +163,7 @@ public ref struct GenericReader
     }
 
     /// <summary>
-    /// TODO
+    /// Advances an amount of bytes forward equivalent to 'count' number of 'type' elements.
     /// </summary>
     public void AdvanceUnits(LogicalType type, int count = 1)
     {
@@ -173,8 +180,10 @@ public ref struct GenericReader
         }
     }
 
+
     /// <summary>
-    /// TODO
+    /// Reads an amount of bytes equivalent to 'count' number of 'type' elements.
+    /// However, the values are kept as a ReadonlySpan&lt;byte&gt; rather than being cast into their types like <see cref="Read{T}(int)"/>
     /// </summary>
     public ReadOnlySpan<byte> ReadUnits(LogicalType type, int count = 1)
     {

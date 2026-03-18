@@ -10,7 +10,7 @@ internal sealed class BitPackingColumn : IColumnParent
     public ulong Prefix { get; }
     public int LogicalLength { get; }
     public LogicalType LogicalType { get; }
-    public EncodingId EncodingId => EncodingId.BitPacking;
+    public EncodingType EncodingType => EncodingType.BitPacking;
     public IColumn Column { get; set; }
     internal static readonly int Size = Unsafe.SizeOf<byte>() +
                                        Unsafe.SizeOf<ulong>() +

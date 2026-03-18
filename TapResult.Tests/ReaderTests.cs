@@ -10,7 +10,7 @@ internal sealed class MyColumn : IColumnParent
     public required byte[] Blob { get; set; }
     public required List<IColumn> Columns { get; set; }
 
-    public required EncodingId EncodingId { get; set; } = EncodingId.Binary;
+    public required EncodingType EncodingType { get; set; } = EncodingType.Binary;
     public required LogicalType LogicalType { get; set; } = LogicalType.UInt8;
     public IEnumerable<DataColumn> GetDataColumns()
     {
@@ -53,14 +53,14 @@ public sealed class ReaderTests
         MyColumn column1 = new MyColumn()
         {
             Blob = [0, 1, 2, 3],
-            EncodingId = EncodingId.BitPacking,
+            EncodingType = EncodingType.BitPacking,
             LogicalType = LogicalType.UInt8,
             Columns =
             [
                 new MyColumn()
                 {
                     Blob = [],
-                    EncodingId = EncodingId.Binary,
+                    EncodingType = EncodingType.Binary,
                     LogicalType = LogicalType.UInt8,
                     Columns = [],
                 }
@@ -69,12 +69,12 @@ public sealed class ReaderTests
         MyColumn column2 = new MyColumn()
         {
             Blob = [],
-            EncodingId = EncodingId.Binary,
+            EncodingType = EncodingType.Binary,
             LogicalType = LogicalType.Blob,
             Columns = [],
         };
         using MemoryStream stream = new MemoryStream();
-        TableWriter writer = new TableWriter(stream, true);
+        Writer writer = new Writer(stream, true);
         Table tab1 = new Table([column1, column2], ["col1", "col2"], "table1");
         writer.Write(tab1);
         Table tab2 = new Table([column2], ["col3"], "table2");
@@ -91,20 +91,20 @@ public sealed class ReaderTests
         Assert.That(table1.TryGetColumn("col1", out ColumnInfo? col1), Is.True);
         EncodingInfo enc1 = col1!.Encoding;
         Assert.That(enc1.Blob.ToArray(), Is.EqualTo(new byte[]{0, 1, 2, 3}));
-        Assert.That(enc1.Encoding, Is.EqualTo(EncodingId.BitPacking));
+        Assert.That(enc1.Encoding, Is.EqualTo(EncodingType.BitPacking));
         Assert.That(enc1.Type, Is.EqualTo(LogicalType.UInt8));
         Assert.That(enc1.GetSubEncodings().Count(), Is.EqualTo(1));
         
         EncodingInfo subCol = enc1.GetSubEncodings().First();
         Assert.That(subCol.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
-        Assert.That(subCol.Encoding, Is.EqualTo(EncodingId.Binary));
+        Assert.That(subCol.Encoding, Is.EqualTo(EncodingType.Binary));
         Assert.That(subCol.Type, Is.EqualTo(LogicalType.UInt8));
         Assert.That(subCol.GetSubEncodings().Count(), Is.EqualTo(0));
         
         Assert.That(table1.TryGetColumn("col2", out ColumnInfo? col2), Is.True);
         EncodingInfo enc2 = col2!.Encoding;
         Assert.That(enc2.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
-        Assert.That(enc2.Encoding, Is.EqualTo(EncodingId.Binary));
+        Assert.That(enc2.Encoding, Is.EqualTo(EncodingType.Binary));
         Assert.That(enc2.Type, Is.EqualTo(LogicalType.Blob));
         Assert.That(enc2.GetSubEncodings().Count(), Is.EqualTo(0));
         
@@ -114,7 +114,7 @@ public sealed class ReaderTests
         Assert.That(table2!.TryGetColumn("col3", out ColumnInfo? col3), Is.True);
         EncodingInfo enc3 = col3!.Encoding;
         Assert.That(enc3.Blob.ToArray(), Is.EqualTo(Array.Empty<byte>()));
-        Assert.That(enc3.Encoding, Is.EqualTo(EncodingId.Binary));
+        Assert.That(enc3.Encoding, Is.EqualTo(EncodingType.Binary));
         Assert.That(enc3.Type, Is.EqualTo(LogicalType.Blob));
         Assert.That(enc3.GetSubEncodings().Count(), Is.EqualTo(0));
     }
@@ -125,7 +125,7 @@ public sealed class ReaderTests
         int[] data = Enumerable.Range(0, 1000).Select(t => Random.Shared.Next(0, 255)).ToArray();
         Table table = new Table([DataColumn.Create(data)], ["integers"], "table");
         using Stream stream = new MemoryStream();
-        using (TableWriter writer = new TableWriter(stream, leaveOpen: true))
+        using (Writer writer = new Writer(stream, leaveOpen: true))
         {
             writer.Write(table);
         }

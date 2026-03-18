@@ -3,37 +3,37 @@
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Provides information about the encoding of a <see cref="ColumnInfo"/>
 /// </summary>
 public sealed class EncodingInfo
 {
     private readonly List<EncodingInfo> _subEncodings = new();
     /// <summary>
-    /// TODO
+    /// The ID of this encoding. Usually this doesn't contain anything useful.
     /// </summary>
     public int Id { get; }
     /// <summary>
-    /// TODO
+    /// The ID of the parent encoding. Usually this doesn't contain anything useful.
     /// </summary>
     public int ParentId { get; }
     /// <summary>
-    /// TODO
+    /// The type of encoding used.
     /// </summary>
-    public EncodingId Encoding { get; }
+    public EncodingType Encoding { get; }
     /// <summary>
-    /// TODO
+    /// The logical type of this column.
     /// </summary>
     public LogicalType Type { get; }
     /// <summary>
-    /// TODO
+    /// A blob containing metadata for this encoding.
     /// </summary>
     public ReadOnlyMemory<byte> Blob { get; }
     /// <summary>
-    /// TODO
+    /// The parent of this encoding if any.
     /// </summary>
     public EncodingInfo? ParentEncoding { get; private set; } = null;
 
-    internal EncodingInfo(int id, int parentId, EncodingId encoding, LogicalType type, ReadOnlyMemory<byte> blob)
+    internal EncodingInfo(int id, int parentId, EncodingType encoding, LogicalType type, ReadOnlyMemory<byte> blob)
     {
         Id = id;
         ParentId = parentId;
@@ -43,16 +43,13 @@ public sealed class EncodingInfo
     }
 
     /// <summary>
-    /// TODO
+    /// Get the sub encodings of this encoding.
     /// </summary>
     public IEnumerable<EncodingInfo> GetSubEncodings()
     {
         return _subEncodings;
     }
-
-    /// <summary>
-    /// TODO
-    /// </summary>
+    
     internal void AddSubEncoding(EncodingInfo subEncoding)
     {
         _subEncodings.Add(subEncoding);

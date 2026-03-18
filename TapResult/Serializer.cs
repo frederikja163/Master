@@ -7,8 +7,7 @@ namespace TapResult;
 internal sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
-    private readonly Dictionary<EncodingId, IEncoding> _encodingsById;
-    private int _currentId = 0;
+    private readonly Dictionary<EncodingType, IEncoding> _encodingsById;
 
     public Serializer():
         this(new SplitEncoding(), new BitPacking())
@@ -18,7 +17,7 @@ internal sealed class Serializer
     
     public Serializer(params IEnumerable<IEncoding> encodings)
     {
-        _encodingsById = encodings.ToDictionary(e => e.Id, e => e);
+        _encodingsById = encodings.ToDictionary(e => e.Type, e => e);
         _encodingsByType = _encodingsById.Values
             .SelectMany(e => e.GetSupportedTypes().Select(t => (t, e)))
             .ToLookup(t => t.t, t => t.e);
@@ -49,9 +48,9 @@ internal sealed class Serializer
         {
             return inData;
         }
-        EncodingId id = metadataSample.EncodingId;
+        EncodingType type = metadataSample.EncodingType;
         
-        IEncoding encoding = _encodingsById[id];
+        IEncoding encoding = _encodingsById[type];
         var columns = encoding.Encode(inData);
         if (columns is IColumnParent parent && metadataSample is IColumnParent parentMeta)
         {

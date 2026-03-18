@@ -1,20 +1,20 @@
 ﻿namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Info about a column, used for opening a reader for a specific column.
 /// </summary>
 public sealed class ColumnInfo
 {
     /// <summary>
-    /// TODO
+    /// The name of the column.
     /// </summary>
     public string Name { get; }
     /// <summary>
-    /// TODO
+    /// The underlying encoding of this column.
     /// </summary>
     public EncodingInfo Encoding { get; }
     /// <summary>
-    /// TODO
+    /// The table this column belongs to.
     /// </summary>
     public TableInfo TableInfo { get; }
     

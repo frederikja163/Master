@@ -1,24 +1,24 @@
 ﻿namespace TapResult.Readers;
 
 /// <summary>
-/// TODO
+/// The base of a column reader. Most likely you want to cast this to a <see cref="IColumnReader{T}"/> of the correct type.
 /// </summary>
 public interface IColumnReader
 {
     /// <summary>
-    /// TODO
+    /// Whether this IColumnReader is at the end of its source.
     /// </summary>
     public bool IsAtEnd => Index >= Length;
     /// <summary>
-    /// TODO
+    /// The number of elements in this column reader.
     /// </summary>
     public int Length { get; }
     /// <summary>
-    /// TODO
+    /// The current index of the column reader.
     /// </summary>
     public int Index { get; }
     /// <summary>
-    /// TODO
+    /// Advance the column reader an amount of units in its source.
     /// </summary>
     public void Advance(int units);
     
@@ -26,26 +26,26 @@ public interface IColumnReader
 }
 
 /// <summary>
-/// TODO
+/// A column reader for a known type.
 /// </summary>
-public interface IColumnReader<T> : IColumnReader
+public interface IColumnReader<out T> : IColumnReader
 {
     /// <summary>
-    /// TODO
+    /// Peek the next value, or a value with some offset. Does not consume.
     /// </summary>
     public T Peek(int offset = 0);
     /// <summary>
-    /// TODO
+    /// Peeks multiple values with some offset. Does not consume.
     /// </summary>
     public IEnumerable<T> Peek(int offset, int count);
 }
 
 /// <summary>
-/// TODO
+/// Extensions for <see cref="IColumnReader{T}"/>
 /// </summary>
 public static class ColumnReaderExtensions {
     /// <summary>
-    /// TODO
+    /// Reads the next value from the data and advances the reader by one.
     /// </summary>
     public static T Read<T>(this IColumnReader<T> reader)
     {
@@ -55,7 +55,7 @@ public static class ColumnReaderExtensions {
     }
 
     /// <summary>
-    /// TODO
+    /// Reads multiple values from the data and advances the reader.
     /// </summary>
     public static IEnumerable<T> Read<T>(this IColumnReader<T> reader, int count)
     {

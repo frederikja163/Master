@@ -66,10 +66,10 @@ public class TableTests
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
         // Encoding is skipped
-        TableWriter tableWriter = new TableWriter(Stream.Null);
-        tableWriter.Write(table);
+        Writer writer = new Writer(Stream.Null);
+        writer.Write(table);
 
-        Table metadata = tableWriter.GetMetadata();
+        Table metadata = writer.GetMetadata();
         DataColumn[] metadataColumns = metadata.Columns.OfType<DataColumn>().ToArray();
         DataColumn idColumn = metadataColumns[0];
         DataColumn parentIdColumn = metadataColumns[1];
@@ -86,7 +86,7 @@ public class TableTests
          */
         Assert.That(idColumn.OpenReader<int>().Read(4), Is.EqualTo(new [] { 1, 2, 3, 0 }));
         Assert.That(parentIdColumn.OpenReader<int>().Read(4), Is.EqualTo(new [] { 0, 0, 0, -1 }));
-        Assert.That(encodingIdColumn.OpenReader<byte>().Read(4), Is.EqualTo( new byte[] { (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Table }));
+        Assert.That(encodingIdColumn.OpenReader<byte>().Read(4), Is.EqualTo( new byte[] { (byte)EncodingType.Binary, (byte)EncodingType.Binary, (byte)EncodingType.Binary, (byte)EncodingType.Table }));
         Assert.That(logicalTypeColumn.OpenReader<byte>().Read(4), Is.EqualTo(new byte[] { (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.UInt8 }));
 
         var blobReader = blobColumn.OpenGenericReader();
@@ -119,10 +119,10 @@ public class TableTests
             LogicalType.Blob
         );
         
-        TableWriter tableWriter = new TableWriter(Stream.Null);
-        tableWriter.SaveMetaDataForColumn(column, -1);
+        Writer writer = new Writer(Stream.Null);
+        writer.SaveMetaDataForColumn(column, -1);
 
-        Table metadata = tableWriter.GetMetadata();
+        Table metadata = writer.GetMetadata();
         DataColumn[] metadataColumns = metadata.Columns.OfType<DataColumn>().ToArray();
         DataColumn idColumn = metadataColumns[0];
         DataColumn parentIdColumn = metadataColumns[1];
@@ -133,7 +133,7 @@ public class TableTests
         Assume.That(idColumn.OpenReader<int>().Read(7).ToArray(), Is.EqualTo(new [] { 4, 3, 2, 1, 6, 5, 0 }));
         Assume.That(encodingIdColumn.OpenReader<byte>().Read(7).ToArray(), Is.EqualTo( new []
         {
-            (byte)EncodingId.Binary, (byte)EncodingId.BitPacking, (byte)EncodingId.BitPacking, (byte)EncodingId.BitPacking, (byte)EncodingId.Binary, (byte)EncodingId.BitPacking, (byte)EncodingId.Split
+            (byte)EncodingType.Binary, (byte)EncodingType.BitPacking, (byte)EncodingType.BitPacking, (byte)EncodingType.BitPacking, (byte)EncodingType.Binary, (byte)EncodingType.BitPacking, (byte)EncodingType.Split
         }));
         
         // Only Tables write their own parentId, therefore this it is intended that the columns are not evenly long in this unittest
@@ -157,7 +157,7 @@ public class TableTests
         Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
 
         Stream stream = new MemoryStream();
-        TableWriter writer = new(stream, leaveOpen: true);
+        Writer writer = new(stream, leaveOpen: true);
         writer.Write(table);
         writer.Dispose();
 
@@ -166,7 +166,7 @@ public class TableTests
         int expectedPosition = 0;
         
         // Magic Number
-        Assert.That(reader.ReadBytes(8), Is.EqualTo(TableWriter.MagicNumber.ToArray()));
+        Assert.That(reader.ReadBytes(8), Is.EqualTo(Writer.MagicNumber.ToArray()));
         expectedPosition += 8;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
@@ -203,7 +203,7 @@ public class TableTests
         expectedPosition += 16;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
 
-        Assert.That(reader.ReadBytes(4), Is.EqualTo( new [] { (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Binary, (byte)EncodingId.Table }));
+        Assert.That(reader.ReadBytes(4), Is.EqualTo( new [] { (byte)EncodingType.Binary, (byte)EncodingType.Binary, (byte)EncodingType.Binary, (byte)EncodingType.Table }));
         Assert.That(reader.ReadBytes(4), Is.EqualTo( new [] { (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.UInt8 }));
         expectedPosition += 8;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
@@ -245,7 +245,7 @@ public class TableTests
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
         // Magic Number
-        Assert.That(reader.ReadChars(8), Is.EqualTo(TableWriter.MagicNumber.ToArray()));
+        Assert.That(reader.ReadChars(8), Is.EqualTo(Writer.MagicNumber.ToArray()));
         expectedPosition += 8;
         
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));

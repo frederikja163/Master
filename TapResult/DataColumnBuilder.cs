@@ -7,7 +7,7 @@ using TapResult.Columns;
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
 public struct DataColumnBuilder
 {
@@ -18,14 +18,16 @@ public struct DataColumnBuilder
     private readonly bool _isConstSize = false;
     
     /// <summary>
-    /// TODO
+    /// Create a new DataColumnBuilder with type <see cref="LogicalType.UInt8"/>.
+    /// Size is specified in bytes.
     /// </summary>
     public DataColumnBuilder(int size, bool isConstSize = true) : this(LogicalType.UInt8, size, isConstSize)
     {
     }
 
     /// <summary>
-    /// TODO
+    /// Create a new DataColumnBuilder.
+    /// Size is specified in bytes.
     /// </summary>
     public DataColumnBuilder(LogicalType type, int size, bool isConstSize = true)
     {
@@ -35,13 +37,14 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// The physical size so far of this DataColumnBuilder.
+    /// Returns the size currently written, not the total capacity.
     /// </summary>
     public int PhysicalSize => _index;
     /// <summary>
-    /// TODO
+    /// True if this DataColumnBuilder has written all the way to the end and is no longer able to write.
     /// </summary>
-    public bool IsAtEnd => _index >= _data.Length; // TODO: Consider if we should include '&& !_isConstSize' here
+    public bool IsAtEnd => _index >= _data.Length && _isConstSize;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
@@ -64,7 +67,7 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Write a value of type T to the DataColumn. This increases the length by 1 as opposed to <see cref="WriteRaw{T}(T)"/>
     /// </summary>
     public void Write<T>(T value)
         where T : unmanaged
@@ -77,7 +80,7 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Write a value of type T to the DataColumn. This increases the length by values.Length as opposed to <see cref="WriteRaw{T}(System.ReadOnlySpan{T},int)"/>
     /// </summary>
     public void Write<T>(ReadOnlySpan<T> values)
         where T : unmanaged
@@ -86,7 +89,7 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Writes a single blob to the DataColumn.
     /// </summary>
     public void WriteBlob(ReadOnlySpan<byte> blob)
     {
@@ -95,7 +98,7 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Writes blobs to the DataColumn.
     /// </summary>
     public void WriteBlobs(IEnumerable<ReadOnlyMemory<byte>> blobs)
     {
@@ -106,7 +109,7 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Writes multiple blobs to the DataColumn.
     /// </summary>
     public void WriteBlobs(IEnumerable<byte[]> blobs)
     {
@@ -117,7 +120,7 @@ public struct DataColumnBuilder
     }
     
     /// <summary>
-    /// TODO
+    /// Writes a string to the DataColumn.
     /// </summary>
     public void WriteString(string str)
     {
@@ -125,7 +128,7 @@ public struct DataColumnBuilder
     }
     
     /// <summary>
-    /// TODO
+    /// Writes multiple strings to the DataColumn.
     /// </summary>
     public void WriteStrings(IEnumerable<string> strs)
     {
@@ -136,7 +139,8 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Writes multiple values to the DataColumn, this only increases LogicalLength by the provided value.
+    /// Generally use <see cref="Write{T}(ReadOnlySpan{T})"/> unless you have a good reason to override the added length.
     /// </summary>
     public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength)
         where T : unmanaged
@@ -158,7 +162,8 @@ public struct DataColumnBuilder
     }
     
     /// <summary>
-    /// TODO
+    /// Writes a single value to the DataColumn, this does not increase the logical length.
+    /// Generally use <see cref="Write{T}(T)"/> unless you have a good reason to not increase the logical length.
     /// </summary>
     public void WriteRaw<T>(T value)
         where T : unmanaged
@@ -182,7 +187,7 @@ public struct DataColumnBuilder
     }
 
     /// <summary>
-    /// TODO
+    /// Builds this DataColumnBuilder into a DataColumn and returns it.
     /// </summary>
     public DataColumn Build()
     {

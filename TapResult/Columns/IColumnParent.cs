@@ -1,7 +1,7 @@
 ﻿namespace TapResult.Columns;
 
 /// <summary>
-/// TODO
+/// A parent of other 
 /// </summary>
 public interface IColumnParent : IColumn
 {

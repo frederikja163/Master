@@ -37,15 +37,15 @@ internal sealed class GenericReaderTests
 
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));
         Assert.That(reader.Peek<int>(1), Is.EqualTo((int)123));
-        Assert.That(reader.AtEnd, Is.False);
+        Assert.That(reader.IsAtEnd, Is.False);
         
         Assert.That(reader.Read<byte>(), Is.EqualTo((byte)123));
         Assert.That(reader.Peek<int>(), Is.EqualTo(123));
-        Assert.That(reader.AtEnd, Is.False);
+        Assert.That(reader.IsAtEnd, Is.False);
 
         Assert.That(reader.Read<int>(), Is.EqualTo(123));
         Assert.That(reader.Read<int>(100).ToArray(), Is.EqualTo(Enumerable.Range(0, 100)));
-        Assert.That(reader.AtEnd, Is.True);
+        Assert.That(reader.IsAtEnd, Is.True);
     }
 
     [Test]
@@ -78,7 +78,7 @@ internal sealed class GenericReaderTests
         Assert.That(reader.ReadString(), Is.EqualTo("test"));
         reader.AdvanceUnits(LogicalType.String, 2);
         Assert.That(reader.ReadString(4), Is.EqualTo(new string[] { "This", "Is", "Test", "Data" }));
-        Assert.That(reader.AtEnd);
+        Assert.That(reader.IsAtEnd);
     }
 
     [Test]
@@ -91,6 +91,6 @@ internal sealed class GenericReaderTests
         Assert.That(reader.ReadBlob().ToArray(), Is.EqualTo("test"u8.ToArray()));
         reader.AdvanceUnits(LogicalType.Blob, 2);
         Assert.That(reader.ReadBlob(4), Is.EqualTo(new byte[][] { "This"u8.ToArray(), "Is"u8.ToArray(), "Test"u8.ToArray(), "Data"u8.ToArray() }));
-        Assert.That(reader.AtEnd);
+        Assert.That(reader.IsAtEnd);
     }
 }

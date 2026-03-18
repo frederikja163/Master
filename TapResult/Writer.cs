@@ -3,9 +3,10 @@
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Writer for a TapResult file,
+/// encodes columns and writes them out.
 /// </summary>
-public sealed class TableWriter : IDisposable, IAsyncDisposable
+public sealed class Writer : IDisposable, IAsyncDisposable
 {
     private readonly Stream _outStream;
     private readonly bool _leaveOpen;
@@ -33,9 +34,9 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     ]; // OTAP R100
 
     /// <summary>
-    /// TODO
+    /// Create a new TableWriter. optionally leaving the stream open.
     /// </summary>
-    public TableWriter(Stream output, bool leaveOpen = false)
+    public Writer(Stream output, bool leaveOpen = false)
     {
         ArgumentNullException.ThrowIfNull(output);
 
@@ -98,7 +99,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     }
     
     /// <summary>
-    /// TODO
+    /// Write a table to this writer.
     /// </summary>
     public void Write(Table table)
     {
@@ -120,7 +121,7 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         }
         _idBuilder.Write(id);
         _parentIdBuilder.Write(parentId);
-        _encodingIdBuilder.Write((byte) column.EncodingId);
+        _encodingIdBuilder.Write((byte) column.EncodingType);
         _logicalTypeBuilder.Write((byte) column.LogicalType);
         column.WriteMetadata(ref _blobBuilder);
     }

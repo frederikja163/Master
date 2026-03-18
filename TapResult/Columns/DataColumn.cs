@@ -8,39 +8,40 @@ using TapResult.Readers;
 namespace TapResult.Columns;
 
 /// <summary>
-/// DataColumn is the atomic columns written in a table in the file. All other columns consist of DataColumns and their metadata.
+/// DataColumn is the atomic columns written in a table in the file.
+/// All other columns consist of DataColumns and their metadata.
 /// </summary>
 public sealed class DataColumn : IColumn, IEquatable<DataColumn>
 {
-    public EncodingId EncodingId => EncodingId.Binary;
+    public EncodingType EncodingType => EncodingType.Binary;
     /// <summary>
-    /// TODO
+    /// The underlying data of the DataColumn.
     /// </summary>
     public ReadOnlyMemory<byte> Data { get; }
     /// <summary>
-    /// TODO
+    /// The logical type of the data stored in <see cref="Data"/>
     /// </summary>
     public LogicalType LogicalType { get; }
 
     private long Offset { get; set; } // TODO: Maybe move this to the table at some point in the future so we can make DataColumn readonly again.
 
     /// <summary>
-    /// TODO
+    /// The physical length, or the length of the <see cref="Data"/> memory.
     /// </summary>
     public int PhysicalSize => Data.Length;
     /// <summary>
-    /// TODO
+    /// The logical length. This varies depending on <see cref="LogicalType"/>.
     /// </summary>
     public int LogicalLength { get; }
     private static readonly int BlobSize = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>();
 
     /// <summary>
-    /// TODO
+    /// Gets an empty DataColumn without any data, and with the logical type of uint.
     /// </summary>
     public static DataColumn Empty { get; } = new (LogicalType.UInt8, ReadOnlyMemory<byte>.Empty, 0);
 
     /// <summary>
-    /// TODO
+    /// Creates a new DataColumn, there are easier ways to create a datacolumn using the helper method DataColumn.Create.
     /// </summary>
     public DataColumn(LogicalType logicalType, ReadOnlyMemory<byte> data, int logicalLength)
     {
@@ -49,10 +50,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
         LogicalLength = logicalLength;
     }
     
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : struct
+    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : struct
     {   
         if (!BitConverter.IsLittleEndian)
         {
@@ -64,7 +62,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Create a new DataColumn from a span of data.
     /// </summary>
     public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : struct
     {
@@ -72,7 +70,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Create a new DataColumn from any collection of strings.
     /// </summary>
     public static DataColumn Create(ICollection<string> data)
     {
@@ -89,7 +87,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Create a new DataColumn from an IEnumerable of blobs.
     /// </summary>
     public static DataColumn Create(IEnumerable<byte[]> data)
     {
@@ -97,7 +95,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
     
     /// <summary>
-    /// TODO
+    /// Create a new DataColumn from a collection of blobs.
     /// </summary>
     public static DataColumn Create(ICollection<ReadOnlyMemory<byte>> data)
     {
@@ -121,7 +119,9 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Create a new DataColumn based on an array.
+    /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
+    /// A separate nulls DataColumn is created if the underlying type is nullable.
     /// </summary>
     public static DataColumn Create(Array array, out DataColumn? nulls)
     {
@@ -195,7 +195,8 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Open a typed reader that reads the values of this DataColumn.
+    /// Will give an error if the type of T is not the same as <see cref="LogicalType"/>.
     /// </summary>
     public IColumnReader<T> OpenReader<T>()
     {
@@ -208,7 +209,8 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Open a reader that reads the values of this DataColumn.
+    /// The Reader will have the type specified by <see cref="LogicalType"/>.
     /// </summary>
     public IColumnReader OpenReader()
     {
@@ -232,7 +234,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// TODO
+    /// Opens a new generic reader on this DataColumn.
     /// </summary>
     public GenericReader OpenGenericReader()
     {
@@ -273,7 +275,7 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     {
         return other is not null &&
                other.Data.Equals(Data) &&
-               other.EncodingId == EncodingId &&
+               other.EncodingType == EncodingType &&
                other.PhysicalSize == PhysicalSize &&
                other.LogicalLength == LogicalLength &&
                other.LogicalType == LogicalType;
@@ -281,6 +283,6 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Data, EncodingId, PhysicalSize, (int)LogicalType, LogicalLength, LogicalType);
+        return HashCode.Combine(Data, EncodingType, PhysicalSize, (int)LogicalType, LogicalLength, LogicalType);
     }
 }
