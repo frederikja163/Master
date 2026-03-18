@@ -8,7 +8,6 @@ internal sealed class Serializer
 {
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingType, IEncoding> _encodingsById;
-    private int _currentId = 0;
 
     public Serializer():
         this(new SplitEncoding(), new BitPacking())
