@@ -8,7 +8,7 @@ namespace TapResult.Encodings;
 /// <summary>
 /// RLE https://en.wikipedia.org/wiki/Run-length_encoding
 /// </summary>
-public class RunLengthEncoding : IEncoding
+public sealed class RunLengthEncoding : IEncoding
 {
     public EncodingId Id { get; } = EncodingId.RunLength;
     
