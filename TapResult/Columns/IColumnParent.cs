@@ -39,4 +39,18 @@ public static class ColumnParentExtensions
             yield return column;
         }
     }
+
+    public static bool SwapRecursive(this IColumnParent columnParent, IColumn existingColumn, IColumn newColumn)
+    {
+        if (columnParent.Swap(existingColumn, newColumn))
+            return true;
+        
+        foreach (IColumnParent column in columnParent.GetChildColumns().OfType<IColumnParent>())
+        {
+            if (column.SwapRecursive(existingColumn, newColumn))
+                return true;
+        }
+
+        return false;
+    }
 }

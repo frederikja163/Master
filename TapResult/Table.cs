@@ -53,7 +53,7 @@ public sealed class Table : IColumnParent
         foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
         {
             IColumn encodedColumn = encoder.Encode(column);
-            Swap(encodedColumn, column);
+            this.SwapRecursive(encodedColumn, column);
         }
     }
 
