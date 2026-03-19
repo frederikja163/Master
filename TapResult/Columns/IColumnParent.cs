@@ -9,7 +9,10 @@ public interface IColumnParent : IColumn
     /// Gets all immediate child columns of this parent.
     /// </summary>
     public IEnumerable<IColumn> GetChildColumns();
-    public void Swap(in IColumn existingColumn, in IColumn newColumn);
+    /// <summary>
+    /// Swaps two columns, returns true if any columns where swapped, false otherwise.
+    /// </summary>
+    public bool Swap(IColumn existingColumn, IColumn newColumn);
 }
 
 /// <summary>

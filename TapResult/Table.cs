@@ -25,7 +25,7 @@ public sealed class Table : IColumnParent
         }
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         for (var i = 0; i < _columns.Length; i++)
         {
@@ -33,8 +33,10 @@ public sealed class Table : IColumnParent
             if (!existingColumn.Equals(column)) 
                 continue;
             _columns[i] = column;
-            break;
+            return true;
         }
+
+        return false;
     }
 
     public void WriteMetadata(ref DataColumnBuilder blobBuilder)
