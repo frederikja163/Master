@@ -46,6 +46,12 @@ public sealed class Encoder
             .SelectMany(e => e.GetSupportedTypes().Select(t => (t, e)))
             .ToLookup(t => t.t, t => t.e);
     }
+
+    internal IColumnReader Decode(EncodingType encodingType, LogicalType type, ref GenericReader blobReader, IEnumerable<IColumnReader> childColumns)
+    {
+        IEncoding encoding = _encodingsById[encodingType];
+        return encoding.CreateDecoder(type, ref blobReader, childColumns);
+    }
     
     /// <summary>
     /// Number of recursive cascades.
