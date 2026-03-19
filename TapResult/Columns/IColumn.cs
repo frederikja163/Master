@@ -15,5 +15,5 @@ public interface IColumn
     /// The logical type of this column.
     /// </summary>
     public LogicalType LogicalType { get; }
-    internal void WriteMetadata(ref DataColumnBuilder blobBuilder);
+    internal void WriteMetadata(ref ColumnBuilder blobBuilder);
 }

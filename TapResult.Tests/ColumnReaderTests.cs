@@ -9,7 +9,7 @@ internal sealed class ColumnReaderTests
     public void PrimitiveReaderTest(int start, int count)
     {
         int[] arr = Enumerable.Range(start, count).ToArray();
-        DataColumn column = DataColumn.Create(arr);
+        DataColumn column = ColumnBuilder.Create(arr);
         IColumnReader<int> reader = column.OpenReader<int>();
         
         Assert.That(reader.Peek(), Is.EqualTo(start));
@@ -26,7 +26,7 @@ internal sealed class ColumnReaderTests
     public void VarLengthReaderTest()
     {
         string[] arr = ["This", "is", "a", "test"];
-        DataColumn column = DataColumn.Create(arr);
+        DataColumn column = ColumnBuilder.Create(arr);
         IColumnReader<string> reader = column.OpenReader<string>();
         
         Assert.That(reader.Peek(), Is.EqualTo("This"));
@@ -42,7 +42,7 @@ internal sealed class ColumnReaderTests
     [Test]
     public void ThrowsExceptionOnWrongType()
     {
-        DataColumn column = DataColumn.Create([0, 1, 2, 3]);
+        DataColumn column = ColumnBuilder.Create([0, 1, 2, 3]);
         Assert.Throws<ArgumentException>(() => column.OpenReader<string>());
         Assert.DoesNotThrow(() => column.OpenReader());
         Assert.DoesNotThrow(() => column.OpenGenericReader());

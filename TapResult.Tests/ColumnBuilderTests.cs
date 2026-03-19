@@ -6,12 +6,12 @@ using TapResult.Columns;
 
 namespace TapResult.Tests;
 
-internal sealed class DataColumnBuilderTests
+internal sealed class ColumnBuilderTests
 {
     [Test]
     public void WritePrimitiveTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 44);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 44);
         builder.Write<sbyte>(1);
         builder.Write<short>(2);
         builder.Write<int>(3);
@@ -62,7 +62,7 @@ internal sealed class DataColumnBuilderTests
         string[] strs = ["test", "hello world", "abcd1234"];
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, length);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length);
         builder.WriteStrings(strs);
         Assert.That(builder.IsAtEnd, Is.True);
         DataColumn column = builder.Build();
@@ -78,7 +78,7 @@ internal sealed class DataColumnBuilderTests
         string[] strs = ["test", "hello world", "abcd1234"];
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.Blob, length);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.Blob, length);
         builder.WriteBlobs(strs.Select(Encoding.UTF8.GetBytes));
         Assert.That(builder.IsAtEnd, Is.True);
         DataColumn column = builder.Build();
@@ -91,7 +91,7 @@ internal sealed class DataColumnBuilderTests
     [Test]
     public void CanResizeTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(1, false);
+        ColumnBuilder builder = new ColumnBuilder(1, false);
         builder.Write<byte>(123);
         Assert.That(builder.IsAtEnd, Is.False);
         Assert.That(builder.PhysicalSize, Is.EqualTo(1));
@@ -112,7 +112,7 @@ internal sealed class DataColumnBuilderTests
     public void IndexOutOfBoundsExceptionTest()
     {
         Assert.Throws<IndexOutOfRangeException>(() => { 
-            DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 1);
+            ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 1);
             builder.Write(new byte[] { 123, 23 });
         });
     }

@@ -15,7 +15,7 @@ internal sealed class SplitEncodingTests
         string str2 = "testing1234";
         string[] strs = [str1, str2];
         SplitEncoding encoder = new SplitEncoding();
-        DataColumn dataColumn = DataColumn.Create(strs);
+        DataColumn dataColumn = ColumnBuilder.Create(strs);
         SplitColumn columns = (SplitColumn) encoder.Encode(dataColumn);
         Assert.That(columns.GetChildColumns().Count(), Is.EqualTo(2));
         DataColumn lengthColumn = (DataColumn) columns.LengthColumn;
@@ -37,9 +37,9 @@ internal sealed class SplitEncodingTests
         string str2 = "testing1234";
         string[] strs = [str1, str2];
         SplitEncoding encoding = new SplitEncoding();
-        DataColumn dataColumn = DataColumn.Create(strs);
+        DataColumn dataColumn = ColumnBuilder.Create(strs);
         SplitColumn columns = (SplitColumn) encoding.Encode(dataColumn);
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
         columns.WriteMetadata(ref builder);
         DataColumn metadataColumn = builder.Build();
         GenericReader genericReader = metadataColumn.OpenGenericReader();

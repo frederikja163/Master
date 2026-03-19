@@ -17,7 +17,7 @@ internal sealed class SplitColumn : IColumnParent
     }
 
 
-    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ref ColumnBuilder blobBuilder)
     {
         blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
     }

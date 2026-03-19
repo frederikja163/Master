@@ -78,7 +78,7 @@ public sealed class BitPacking : IEncoding
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
         int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
-        DataColumnBuilder builder = new DataColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
+        ColumnBuilder builder = new ColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
         T flag = (T.AllBitsSet << metadata.PrefixLength) >>> metadata.PrefixLength;
         T currentValue = default;
         int shift = 0;

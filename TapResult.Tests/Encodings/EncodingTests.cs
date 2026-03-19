@@ -19,7 +19,7 @@ internal sealed class EncodingTests
             SamplePercentage = samplePercentage,
         };
         int[] data = Enumerable.Range(0, dataSize).ToArray();
-        DataColumn sample = serializer.CreateSample(DataColumn.Create<int>(data));
+        DataColumn sample = serializer.CreateSample(ColumnBuilder.Create<int>(data));
 
         int sampleLength = (int)(dataSize * samplePercentage) / sampleCount;
         int totalSampleLength = sampleLength * sampleCount;
@@ -53,7 +53,7 @@ internal sealed class EncodingTests
             CascadingEncodings = 2,
         };
 
-        DataColumn expected = DataColumn.Create(data);
+        DataColumn expected = ColumnBuilder.Create(data);
         IColumn column = serializer.Encode(expected);
         // TODO: Read
         // DataColumnBuilder builder = new DataColumnBuilder(100);
@@ -70,7 +70,7 @@ internal sealed class EncodingTests
         
         Serializer serializer = new Serializer();
 
-        DataColumn expected = DataColumn.Create<int>(data);
+        DataColumn expected = ColumnBuilder.Create<int>(data);
         IColumn column = serializer.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
@@ -84,7 +84,7 @@ internal sealed class EncodingTests
         
         Serializer serializer = new Serializer();
 
-        DataColumn expected = DataColumn.Create<uint>(data);
+        DataColumn expected = ColumnBuilder.Create<uint>(data);
         IColumn column = serializer.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
