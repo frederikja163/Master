@@ -9,14 +9,14 @@ internal sealed class CascadingBenchmark : IRawBenchmark
 {
     public void Write(string path, ICustomData data)
     {
-        Serializer serializer = new Serializer();
+        Encoder encoder = new Encoder();
         using Stream stream = File.OpenWrite(path);
         for (int i = 0; i < data.Repeats; i++)
         {
             foreach (Array array in data.Columns)
             {
                 DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                IColumn column = serializer.Encode(dataColumn);
+                IColumn column = encoder.Encode(dataColumn);
                 if (column is not IColumnParent parent)
                     return;
                 foreach (DataColumn col in parent.GetChildColumnsRecursive().OfType<DataColumn>())
@@ -43,7 +43,7 @@ internal sealed class CascadingAsyncBenchmark : IRawBenchmark
 {
     public void Write(string path, ICustomData data)
     {
-        Serializer serializer = new Serializer();
+        Encoder encoder = new Encoder();
         using Stream stream = File.OpenWrite(path);
         List<Task> tasks = new ();
         for (int i = 0; i < data.Repeats; i++)
@@ -53,7 +53,7 @@ internal sealed class CascadingAsyncBenchmark : IRawBenchmark
                 tasks.Add(Task.Run(() =>
                 {
                     DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                    IColumn column = serializer.Encode(dataColumn);
+                    IColumn column = encoder.Encode(dataColumn);
                     if (column is not IColumnParent parent)
                         return;
                     lock (stream)

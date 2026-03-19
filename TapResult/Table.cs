@@ -45,6 +45,16 @@ public sealed class Table : IColumnParent
         blobBuilder.WriteBlob(builder.Build().Data.ToArray());
     }
 
+    public void Compress(Encoder? encoder = null)
+    {
+        encoder ??= Encoder.Default;
+        foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
+        {
+            IColumn encodedColumn = encoder.Encode(column);
+            Swap(encodedColumn, column);
+        }
+    }
+
     internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
     {
         _columns = columns.ToArray();
