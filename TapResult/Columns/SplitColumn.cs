@@ -17,7 +17,7 @@ internal sealed class SplitColumn : IColumnParent
     }
 
 
-    public void WriteMetadata(ref ColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
     }
@@ -28,7 +28,7 @@ internal sealed class SplitColumn : IColumnParent
         yield return ByteColumn;
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public void Swap(IColumn existingColumn, IColumn newColumn)
     {
         if (existingColumn.Equals(LengthColumn))
         {

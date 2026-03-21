@@ -27,7 +27,7 @@ public sealed class SplitEncoding : IEncoding
     }
 
     public IColumnReader CreateDecoder(LogicalType type,
-        ref GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
+        GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> lengths ||

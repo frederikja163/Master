@@ -12,9 +12,9 @@ namespace TapResult.Readers;
 /// The casting will be with the raw byte values in little endian.
 /// Does not support nullable values.
 /// </summary>
-public ref struct GenericReader
+public sealed class GenericReader
 {
-    private readonly ReadOnlySpan<byte> _data;
+    private readonly ReadOnlyMemory<byte> _data;
     /// <summary>
     /// The current index in bytes of the GenericReader.
     /// </summary>
@@ -24,7 +24,7 @@ public ref struct GenericReader
     /// Opens a new GenericReader.
     /// If one is being created from a DataColumn, it is recommended to use DataColumn.OpenGenericReader instead.
     /// </summary>
-    public GenericReader(ReadOnlySpan<byte> data)
+    public GenericReader(ReadOnlyMemory<byte> data)
     {
         _data = data;
     }
@@ -57,7 +57,7 @@ public ref struct GenericReader
         if ((uint)start + size > (uint)_data.Length)
             throw new IndexOutOfRangeException();
 
-        ReadOnlySpan<byte> slice = _data.Slice(start, size);
+        ReadOnlySpan<byte> slice = _data.Span.Slice(start, size);
         return slice;
     }
 

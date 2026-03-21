@@ -52,7 +52,7 @@ public sealed class Reader
     {
         int postfixSize = Unsafe.SizeOf<long>() * 4;
         stream.Seek(-postfixSize, SeekOrigin.End);
-        Span<byte> postfix = stackalloc byte[postfixSize];
+        byte[] postfix = new byte[postfixSize];
         stream.ReadExactly(postfix);
         GenericReader postfixReader = new GenericReader(postfix);
         long start = postfixReader.Read<long>();
@@ -118,7 +118,7 @@ public sealed class Reader
 
     private IColumnReader CreateReader(EncodingInfo encodingInfo)
     {
-        GenericReader reader = new GenericReader(encodingInfo.Blob.Span);
+        GenericReader reader = new GenericReader(encodingInfo.Blob);
         if (encodingInfo.Encoding == EncodingType.Binary)
         {
             int physicalSize = reader.Read<int>();
@@ -135,6 +135,6 @@ public sealed class Reader
         IEncoding encoding = _encodingsById[encodingInfo.Encoding]
             .FirstOrDefault(e => e.GetSupportedTypes().Any(t => t == encodingInfo.Type)) ??
             throw new NullReferenceException($"Could not find encoding of type {encodingInfo.Id} with logical type {encodingInfo.Type}");
-        return encoding.CreateDecoder(encodingInfo.Type, ref reader, childReaders);
+        return encoding.CreateDecoder(encodingInfo.Type, reader, childReaders);
     }
 }

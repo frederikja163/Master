@@ -9,7 +9,7 @@ namespace TapResult;
 /// <summary>
 /// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
-public struct ColumnBuilder
+public sealed class ColumnBuilder
 {
     private readonly LogicalType _type;
     private Memory<byte> _data = Memory<byte>.Empty;

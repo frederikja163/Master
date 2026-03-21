@@ -21,7 +21,7 @@ internal sealed class MyColumn : IColumnParent
         return 0;
     }
 
-    public void WriteMetadata(ref ColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.WriteBlob(Blob);
     }
@@ -31,7 +31,7 @@ internal sealed class MyColumn : IColumnParent
         return Columns;
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public void Swap(IColumn existingColumn, IColumn newColumn)
     {
         int index = Columns.IndexOf(existingColumn);
         if (index != -1)

@@ -34,13 +34,13 @@ internal sealed class BitPackingColumn : IColumnParent
         yield return Column;
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public void Swap(IColumn existingColumn, IColumn newColumn)
     {
         Debug.Assert(existingColumn.Equals(Column));
         Column = newColumn;
     }
 
-    public void WriteMetadata(ref ColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.Write(Size);
         blobBuilder.WriteRaw(PrefixLength);

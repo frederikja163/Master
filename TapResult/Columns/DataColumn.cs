@@ -95,10 +95,10 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     /// </summary>
     public GenericReader OpenGenericReader()
     {
-        return new GenericReader(Data.Span);
+        return new GenericReader(Data);
     }
 
-    void IColumn.WriteMetadata(ref ColumnBuilder blobBuilder)
+    void IColumn.WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.Write(BlobSize);
         blobBuilder.WriteRaw(PhysicalSize);

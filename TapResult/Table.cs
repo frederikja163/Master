@@ -25,7 +25,7 @@ public sealed class Table : IColumnParent
         }
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public void Swap(IColumn existingColumn, IColumn newColumn)
     {
         for (var i = 0; i < _columns.Length; i++)
         {
@@ -37,7 +37,7 @@ public sealed class Table : IColumnParent
         }
     }
 
-    public void WriteMetadata(ref ColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100, false);
         builder.WriteString(Name);

@@ -40,10 +40,10 @@ internal sealed class SplitEncodingTests
         DataColumn dataColumn = ColumnBuilder.Create(strs);
         SplitColumn columns = (SplitColumn) encoding.Encode(dataColumn);
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
-        columns.WriteMetadata(ref builder);
+        columns.WriteMetadata(builder);
         DataColumn metadataColumn = builder.Build();
         GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, ref genericReader,
+        IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, genericReader,
             columns.GetChildColumns().OfType<DataColumn>().Select(c => c.OpenReader()));
         Assert.That(reader.Read(2), Is.EqualTo(strs));
         Assert.That(reader.IsAtEnd, Is.True);

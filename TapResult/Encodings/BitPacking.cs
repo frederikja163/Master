@@ -32,7 +32,7 @@ public sealed class BitPacking : IEncoding
         return column;
     }
 
-    public IColumnReader CreateDecoder(LogicalType type, ref GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
+    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
