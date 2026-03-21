@@ -10,6 +10,7 @@ namespace TapResult.Readers;
 /// Reads values out from a ReadonlySpan&lt;T&gt; as arbitrarily typed values.
 /// For example, it can read bit-casted ints out as longs etc.
 /// The casting will be with the raw byte values in little endian.
+/// Does not support nullable values.
 /// </summary>
 public ref struct GenericReader
 {

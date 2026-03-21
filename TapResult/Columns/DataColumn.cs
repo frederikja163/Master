@@ -10,6 +10,7 @@ namespace TapResult.Columns;
 /// <summary>
 /// DataColumn is the atomic columns written in a table in the file.
 /// All other columns consist of DataColumns and their metadata.
+/// A DataColumn cannot store null values.
 /// </summary>
 public sealed class DataColumn : IColumn, IEquatable<DataColumn>
 {

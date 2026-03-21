@@ -39,7 +39,6 @@ public sealed class SplitEncoding : IEncoding
 
     public IEnumerable<LogicalType> GetSupportedTypes()
     {
-        yield return LogicalType.Blob;
-        yield return LogicalType.String;
+        return TypeHelper.VariableLengthTypes();
     }
 }
