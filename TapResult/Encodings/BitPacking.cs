@@ -52,6 +52,13 @@ public sealed class BitPacking : IEncoding
             LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
             LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
             LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
+            
+            // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
+            LogicalType.Float16 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Float32 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Float64 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
