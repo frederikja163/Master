@@ -13,7 +13,7 @@ namespace TapResult;
 public sealed class ColumnBuilder
 {
     private readonly LogicalType _type;
-    private Memory<byte> _data;
+    private byte[] _data;
     private int _byteIndex = 0;
     private int _logicalLength = 0;
     
@@ -44,14 +44,12 @@ public sealed class ColumnBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
     {
-        while ((uint)_byteIndex + size > (uint)_data.Length)
+        if ((uint)_byteIndex + size > (uint)_data.Length)
         {
-            Memory<byte> oldData = _data;
-            _data = new byte[oldData.Length * 2];
-            oldData.CopyTo(_data);
+            Array.Resize(ref _data,  Math.Max(_data.Length * 2, _byteIndex + size));
         }
 
-        Span<byte> slice = _data.Span.Slice(_byteIndex, size);
+        Span<byte> slice = _data.AsSpan(_byteIndex, size);
         _byteIndex += size;
         return slice;
     }
@@ -181,7 +179,7 @@ public sealed class ColumnBuilder
     /// </summary>
     public DataColumn Build()
     {
-        return new DataColumn(_type,  _data.Slice(0, _byteIndex), _logicalLength);
+        return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
     
     
