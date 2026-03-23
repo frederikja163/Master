@@ -13,6 +13,7 @@ namespace TapResult;
 public sealed class ColumnBuilder
 {
     private readonly LogicalType _type;
+    private byte[]? _nulls = null;
     private byte[] _data;
     private int _byteIndex = 0;
     private int _logicalLength = 0;
@@ -52,6 +53,39 @@ public sealed class ColumnBuilder
         Span<byte> slice = _data.AsSpan(_byteIndex, size);
         _byteIndex += size;
         return slice;
+    }
+
+    /// <summary>
+    /// Writes a null value to the datacolumn.
+    /// </summary>
+    public void WriteNull()
+    {
+        if (_nulls is null)
+        {
+            // Guess how many nulls we based on length.
+            int capacity;
+            if (_type.TryGetSize(out int size))
+            {
+                capacity = _data.Length / size * 2;
+            }
+            else
+            {
+                capacity = _data.Length / 8;
+            }
+            capacity = Math.Max(capacity, _logicalLength * 2);
+            
+            _nulls = new byte[capacity];
+        }
+
+        int byteIndex = _logicalLength / 8;
+        if ((uint)byteIndex < (uint)_nulls.Length)
+        {
+            Array.Resize(ref _nulls, Math.Max(_nulls.Length * 2, byteIndex));
+        }
+        int bitIndex = _logicalLength % 8;
+        byte value = _nulls[_byteIndex];
+        value |= (byte)(1 << bitIndex);
+        _nulls[_byteIndex] = value;
     }
 
     /// <summary>
@@ -181,8 +215,6 @@ public sealed class ColumnBuilder
     {
         return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
-    
-    
     
     private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
     {   
