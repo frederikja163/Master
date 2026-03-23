@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Binary;
+using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -12,16 +13,15 @@ namespace TapResult;
 public sealed class ColumnBuilder
 {
     private readonly LogicalType _type;
-    private Memory<byte> _data = Memory<byte>.Empty;
-    private int _index = 0;
+    private Memory<byte> _data;
+    private int _byteIndex = 0;
     private int _logicalLength = 0;
-    private readonly bool _isConstSize = false;
     
     /// <summary>
     /// Create a new DataColumnBuilder with type <see cref="LogicalType.UInt8"/>.
     /// Size is specified in bytes.
     /// </summary>
-    public ColumnBuilder(int size, bool isConstSize = true) : this(LogicalType.UInt8, size, isConstSize)
+    public ColumnBuilder(int size) : this(LogicalType.UInt8, size)
     {
     }
 
@@ -29,40 +29,30 @@ public sealed class ColumnBuilder
     /// Create a new DataColumnBuilder.
     /// Size is specified in bytes.
     /// </summary>
-    public ColumnBuilder(LogicalType type, int size, bool isConstSize = true)
+    public ColumnBuilder(LogicalType type, int size)
     {
         _type = type;
         _data = new byte[size];
-        _isConstSize = isConstSize;
     }
 
     /// <summary>
     /// The physical size so far of this DataColumnBuilder.
     /// Returns the size currently written, not the total capacity.
     /// </summary>
-    public int PhysicalSize => _index;
-    /// <summary>
-    /// True if this DataColumnBuilder has written all the way to the end and is no longer able to write.
-    /// </summary>
-    public bool IsAtEnd => _index >= _data.Length && _isConstSize;
+    public int PhysicalSize => _byteIndex;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
     {
-        while ((uint)_index + size > (uint)_data.Length)
+        while ((uint)_byteIndex + size > (uint)_data.Length)
         {
-            if (_isConstSize)
-            {
-                throw new IndexOutOfRangeException();
-            }
-
             Memory<byte> oldData = _data;
             _data = new byte[oldData.Length * 2];
             oldData.CopyTo(_data);
         }
 
-        Span<byte> slice = _data.Span.Slice(_index, size);
-        _index += size;
+        Span<byte> slice = _data.Span.Slice(_byteIndex, size);
+        _byteIndex += size;
         return slice;
     }
 
@@ -191,7 +181,7 @@ public sealed class ColumnBuilder
     /// </summary>
     public DataColumn Build()
     {
-        return new DataColumn(_type,  _data.Slice(0, _index), _logicalLength);
+        return new DataColumn(_type,  _data.Slice(0, _byteIndex), _logicalLength);
     }
     
     

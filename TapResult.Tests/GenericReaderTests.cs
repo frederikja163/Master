@@ -29,7 +29,7 @@ internal sealed class GenericReaderTests
     [Test]
     public void ReadPrimitiveTest()
     {
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 405, false);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 405);
         builder.Write<byte>(123);
         builder.Write(123);
         builder.Write(Enumerable.Range(0, 100).ToArray());

@@ -39,7 +39,7 @@ public sealed class Table : IColumnParent
 
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100, false);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
         builder.WriteString(Name);
         builder.WriteStrings(_names);
         blobBuilder.WriteBlob(builder.Build().Data.ToArray());

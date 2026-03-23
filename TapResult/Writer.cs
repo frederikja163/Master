@@ -12,11 +12,11 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     private readonly bool _leaveOpen;
     
     private int _currentId = 0;
-    private ColumnBuilder _idBuilder = new (LogicalType.SInt32, 200, true);
-    private ColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200, true);
-    private ColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200, true);
-    private ColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200, true);
-    private ColumnBuilder _blobBuilder = new (LogicalType.Blob, 200, true);
+    private ColumnBuilder _idBuilder = new (LogicalType.SInt32, 200);
+    private ColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200);
+    private ColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200);
+    private ColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200);
+    private ColumnBuilder _blobBuilder = new (LogicalType.Blob, 200);
     
     private const byte MajorVersion = 1;
     private const byte MinorVersion = 0;

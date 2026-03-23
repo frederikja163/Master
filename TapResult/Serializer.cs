@@ -127,7 +127,7 @@ internal sealed class Serializer
         sampleLength = Math.Min(sampleLength, MaxSampleLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        ColumnBuilder builder = new ColumnBuilder(data.LogicalType, totalSampleLength * size, false);
+        ColumnBuilder builder = new ColumnBuilder(data.LogicalType, totalSampleLength * size);
         GenericReader reader = data.OpenGenericReader();
         
         int sectionLength = length / SampleCount;
