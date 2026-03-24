@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Columns;
 
@@ -23,6 +24,37 @@ internal sealed class NullColumn : IColumnParent
         blobBuilder.Write(Unsafe.SizeOf<int>());
         blobBuilder.Write(LogicalLength);
     }
+
+    public IColumnReader OpenReader() => LogicalType switch
+    {
+        LogicalType.SInt8 => new NullReaderValType<sbyte>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.SInt16 => new NullReaderValType<short>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.SInt32 => new NullReaderValType<int>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.SInt64 => new NullReaderValType<long>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.UInt8 => new NullReaderValType<byte>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.UInt16 => new NullReaderValType<ushort>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.UInt32 => new NullReaderValType<uint>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.UInt64 => new NullReaderValType<ulong>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.Float16 => new NullReaderValType<Half>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.Float32 => new NullReaderValType<float>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.Float64 => new NullReaderValType<double>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.Blob => new NullReaderRefType<byte[]>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        LogicalType.String => new NullReaderRefType<string>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
+            LogicalLength),
+        _ => throw new ArgumentOutOfRangeException()
+    };
 
     public IEnumerable<IColumn> GetChildColumns()
     {

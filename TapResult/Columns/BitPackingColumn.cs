@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Columns;
 
@@ -47,4 +48,7 @@ internal sealed class BitPackingColumn : IColumnParent
         blobBuilder.WriteRaw(Prefix);
         blobBuilder.WriteRaw(LogicalLength);
     }
+
+    public IColumnReader OpenReader()
+        => BitPacking.OpenReader(Column.OpenReader(), LogicalLength, LogicalType, PrefixLength, Prefix);
 }

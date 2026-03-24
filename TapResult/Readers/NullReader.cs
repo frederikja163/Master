@@ -1,12 +1,11 @@
 ﻿namespace TapResult.Readers;
 
-internal sealed class NullReader<T> : IColumnReader<T?>
-    where T : class
+internal abstract class NullReaderBase : IColumnReader
 {
     private readonly IColumnReader<byte> _nullReader;
-    private readonly IColumnReader<T> _valueReader;
+    private readonly IColumnReader _valueReader;
 
-    public NullReader(IColumnReader<byte> nullReader, IColumnReader<T> valueReader, int length)
+    protected NullReaderBase(IColumnReader<byte> nullReader, IColumnReader valueReader, int length)
     {
         _nullReader = nullReader;
         _valueReader = valueReader;
@@ -47,7 +46,7 @@ internal sealed class NullReader<T> : IColumnReader<T?>
         }
     }
 
-    public T? Peek(int offset = 0)
+    public object? Peek(int offset = 0)
     {
         if (IsNull(offset) != 0)
         {
@@ -63,7 +62,7 @@ internal sealed class NullReader<T> : IColumnReader<T?>
         return _valueReader.Peek(valueOffset);
     }
 
-    public IEnumerable<T?> Peek(int offset, int count)
+    public IEnumerable<object?> Peek(int offset, int count)
     {
         int valueOffset = 0;
         for (int i = 0; i < offset; i++)
@@ -84,14 +83,41 @@ internal sealed class NullReader<T> : IColumnReader<T?>
             }
         }
     }
+}
 
-    object? IColumnReader.Peek(int offset)
+internal sealed class NullReaderValType<T> : NullReaderBase, IColumnReader<T?>
+    where T : struct
+{
+    public NullReaderValType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length) : base(nullReader, valueReader, length)
     {
-        return Peek(offset);
     }
 
-    IEnumerable<object?> IColumnReader.Peek(int offset, int count)
+    // TODO: This causes unnecessary boxing, that we would like to avoid.
+    public new T? Peek(int offset = 0)
     {
-        return Peek(offset, count);
+        return (T?)base.Peek(offset);
+    }
+
+    public new IEnumerable<T?> Peek(int offset, int count)
+    {
+        return base.Peek(offset, count).Cast<T?>();
+    }
+}
+
+internal sealed class NullReaderRefType<T> : NullReaderBase, IColumnReader<T?>
+    where T : class
+{
+    public NullReaderRefType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length) : base(nullReader, valueReader, length)
+    {
+    }
+
+    public new T? Peek(int offset = 0)
+    {
+        return (T?)base.Peek(offset);
+    }
+
+    public new IEnumerable<T?> Peek(int offset, int count)
+    {
+        return base.Peek(offset, count).Cast<T?>();
     }
 }

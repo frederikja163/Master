@@ -1,4 +1,5 @@
 ﻿using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Columns;
 
@@ -16,4 +17,29 @@ public interface IColumn
     /// </summary>
     public LogicalType LogicalType { get; }
     internal void WriteMetadata(ColumnBuilder blobBuilder);
+
+    /// <summary>
+    /// Opens a reader that reads the values of this Column.
+    /// </summary>
+    public IColumnReader OpenReader();
+}
+
+/// <summary>
+/// Extensions for IColumn.
+/// </summary>
+public static class ColumnExtensions
+{
+    /// <summary>
+    /// Open a typed reader that reads the values of this Column.
+    /// Will give an error if the type of T is not the same as <see cref="LogicalType"/>.
+    /// </summary>
+    public static IColumnReader<T> OpenReader<T>(this IColumn column)
+    {
+        if (typeof(T) != column.LogicalType.ToCsType() || column.OpenReader() is not IColumnReader<T> reader)
+        {
+            throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {column.LogicalType}, expected {column.LogicalType.ToCsType().FullName}", nameof(T));
+        }
+
+        return reader;
+    }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using TapResult.Columns;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult;
 
@@ -43,6 +44,11 @@ public sealed class Table : IColumnParent
         builder.WriteString(Name);
         builder.WriteStrings(_names);
         blobBuilder.WriteBlob(builder.Build().Data.ToArray());
+    }
+
+    IColumnReader IColumn.OpenReader()
+    {
+        throw new Exception("Cannot open a reader for tables.");
     }
 
     internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)

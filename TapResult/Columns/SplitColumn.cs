@@ -1,4 +1,5 @@
 ﻿using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Columns;
 
@@ -20,6 +21,11 @@ internal sealed class SplitColumn : IColumnParent
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
+    }
+
+    public IColumnReader OpenReader()
+    {
+        return new SplitColumnReader(LengthColumn.OpenReader<int>(), ByteColumn.OpenReader<byte>(), LogicalType);
     }
 
     public IEnumerable<IColumn> GetChildColumns()

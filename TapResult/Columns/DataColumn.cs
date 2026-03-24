@@ -51,20 +51,6 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     }
 
     /// <summary>
-    /// Open a typed reader that reads the values of this DataColumn.
-    /// Will give an error if the type of T is not the same as <see cref="LogicalType"/>.
-    /// </summary>
-    public IColumnReader<T> OpenReader<T>()
-    {
-        if (typeof(T) != LogicalType.ToCsType() || OpenReader() is not IColumnReader<T> reader)
-        {
-            throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {LogicalType}, expected {LogicalType.ToCsType().FullName}", nameof(T));
-        }
-
-        return reader;
-    }
-
-    /// <summary>
     /// Open a reader that reads the values of this DataColumn.
     /// The Reader will have the type specified by <see cref="LogicalType"/>.
     /// </summary>

@@ -42,25 +42,7 @@ public sealed class BitPacking : IEncoding
         byte prefixLength = metadataReader.Read<byte>();
         ulong prefix = metadataReader.Read<ulong>();
         int logicalLength = metadataReader.Read<int>();
-        return type switch
-        {
-            LogicalType.SInt8 => new BitPackingColumnReader<sbyte>(reader, logicalLength, type, prefixLength, (sbyte)prefix),
-            LogicalType.SInt16 => new BitPackingColumnReader<short>(reader, logicalLength, type, prefixLength, (short)prefix),
-            LogicalType.SInt32 => new BitPackingColumnReader<int>(reader, logicalLength, type, prefixLength, (int)prefix),
-            LogicalType.SInt64 => new BitPackingColumnReader<long>(reader, logicalLength, type, prefixLength, (long)prefix),
-            LogicalType.UInt8 => new BitPackingColumnReader<byte>(reader, logicalLength, type, prefixLength, (byte)prefix),
-            LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
-            LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
-            LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
-            
-            // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
-            LogicalType.Float16 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Float32 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Float64 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-        };
+        return OpenReader(reader, logicalLength, type, prefixLength, prefix);
     }
 
     private static IColumn Encode<T>(in DataColumn dataColumn)
@@ -160,4 +142,18 @@ public sealed class BitPacking : IEncoding
     {
         return TypeHelper.IntegerTypes();
     }
+
+    internal static IColumnReader OpenReader(IColumnReader reader, int logicalLength, LogicalType type, byte prefixLength,
+        ulong prefix) => type switch
+    {
+        LogicalType.SInt8 => new BitPackingColumnReader<sbyte>(reader, logicalLength, type, prefixLength, (sbyte)prefix),
+        LogicalType.SInt16 => new BitPackingColumnReader<short>(reader, logicalLength, type, prefixLength, (short)prefix),
+        LogicalType.SInt32 => new BitPackingColumnReader<int>(reader, logicalLength, type, prefixLength, (int)prefix),
+        LogicalType.SInt64 => new BitPackingColumnReader<long>(reader, logicalLength, type, prefixLength, (long)prefix),
+        LogicalType.UInt8 => new BitPackingColumnReader<byte>(reader, logicalLength, type, prefixLength, (byte)prefix),
+        LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
+        LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
+        LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+    };
 }
