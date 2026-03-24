@@ -11,7 +11,7 @@ namespace TapResult.Columns;
 /// DataColumn is the atomic columns written in a table in the file.
 /// All other columns consist of DataColumns and their metadata.
 /// </summary>
-public sealed class DataColumn : IColumn, IEquatable<DataColumn>
+public sealed class DataColumn : IColumn
 {
     private long _offset;
     public EncodingType EncodingType => EncodingType.Binary;
@@ -258,26 +258,5 @@ public sealed class DataColumn : IColumn, IEquatable<DataColumn>
     {
         _offset = stream.Position;
         stream.Write(Data.Span);
-    }
-
-    public override bool Equals([NotNullWhen(true)] object? obj)
-    {
-        return obj is DataColumn other &&
-               Equals(other);
-    }
-
-    public bool Equals(DataColumn? other)
-    {
-        return other is not null &&
-               other.Data.Equals(Data) &&
-               other.EncodingType == EncodingType &&
-               other.PhysicalSize == PhysicalSize &&
-               other.LogicalLength == LogicalLength &&
-               other.LogicalType == LogicalType;
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Data, EncodingType, PhysicalSize, (int)LogicalType, LogicalLength, LogicalType);
     }
 }
