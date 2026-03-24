@@ -42,8 +42,7 @@ public class TableTests
         ];
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns, names, "table");
-        Serializer serializer = new();
-        serializer.Encode(ref table);
+        table.Compress();
         // TODO: Read
         // serializer.Decode(ref table);
         // Assert.That(table.Columns, Is.EqualTo(dataColumns));

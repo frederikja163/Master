@@ -14,13 +14,13 @@ public sealed class Reader
 {
     private readonly Stream _stream;
     private readonly Dictionary<string, TableInfo> _tables;
-    private readonly ILookup<EncodingType, IEncoding> _encodingsById;
+    private readonly Encoder _encoder;
     
-    private Reader(Stream stream, IEnumerable<TableInfo> tables, IEnumerable<IEncoding> encodings)
+    private Reader(Stream stream, IEnumerable<TableInfo> tables, Encoder encoder)
     {
         _stream = stream;
         _tables = tables.ToDictionary(t => t.Name, t => t);
-        _encodingsById = encodings.ToLookup(e => e.Type);
+        _encoder = encoder;
     }
 
     /// <summary>
@@ -42,13 +42,7 @@ public sealed class Reader
     /// <summary>
     /// Creates a new reader asynchronously.
     /// </summary>
-    public static async Task<Reader> CreateReaderAsync(Stream stream) =>
-        await CreateReaderAsync(stream, new BitPacking(), new SplitEncoding());
-
-    /// <summary>
-    /// Creates a new reader asynchronously.
-    /// </summary>
-    public static async Task<Reader> CreateReaderAsync(Stream stream, params IEnumerable<IEncoding> encodings)
+    public static async Task<Reader> CreateReaderAsync(Stream stream, Encoder? encoder = null)
     {
         int postfixSize = Unsafe.SizeOf<long>() * 4;
         stream.Seek(-postfixSize, SeekOrigin.End);
@@ -95,7 +89,7 @@ public sealed class Reader
             parent.AddSubEncoding(value);
         }
         
-        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encodings);
+        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encoder ?? Encoder.Default);
     }
 
     /// <summary>
@@ -132,9 +126,6 @@ public sealed class Reader
         }
         
         IEnumerable<IColumnReader> childReaders = encodingInfo.GetSubEncodings().Select(CreateReader);
-        IEncoding encoding = _encodingsById[encodingInfo.Encoding]
-            .FirstOrDefault(e => e.GetSupportedTypes().Any(t => t == encodingInfo.Type)) ??
-            throw new NullReferenceException($"Could not find encoding of type {encodingInfo.Id} with logical type {encodingInfo.Type}");
-        return encoding.CreateDecoder(encodingInfo.Type, ref reader, childReaders);
+        return _encoder.Decode(encodingInfo.Encoding, encodingInfo.Type, ref reader, childReaders);
     }
 }
