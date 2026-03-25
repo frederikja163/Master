@@ -34,15 +34,19 @@ internal sealed class SplitColumn : IColumnParent
         yield return ByteColumn;
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         if (existingColumn.Equals(LengthColumn))
         {
             LengthColumn = newColumn;
+            return true;
         }
         if (existingColumn.Equals(ByteColumn))
         {
             ByteColumn = newColumn;
+            return true;
         }
+
+        return false;
     }
 }

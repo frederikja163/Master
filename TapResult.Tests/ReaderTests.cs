@@ -36,16 +36,18 @@ internal sealed class MyColumn : IColumnParent
         return Columns;
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         int index = Columns.IndexOf(existingColumn);
         if (index != -1)
         {
             Columns[index] = newColumn;
+            return true;
         }
         else
         {
             Columns.Add(newColumn);
+            return false;
         }
     }
 }

@@ -26,7 +26,7 @@ public sealed class Table : IColumnParent
         }
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         for (var i = 0; i < _columns.Length; i++)
         {
@@ -34,8 +34,10 @@ public sealed class Table : IColumnParent
             if (!existingColumn.Equals(column)) 
                 continue;
             _columns[i] = column;
-            break;
+            return true;
         }
+
+        return false;
     }
 
     public void WriteMetadata(ColumnBuilder blobBuilder)
@@ -49,6 +51,16 @@ public sealed class Table : IColumnParent
     IColumnReader IColumn.OpenReader()
     {
         throw new Exception("Cannot open a reader for tables.");
+    }
+
+    public void Compress(Encoder? encoder = null)
+    {
+        encoder ??= Encoder.Default;
+        foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
+        {
+            IColumn encodedColumn = encoder.Encode(column);
+            this.SwapRecursive(encodedColumn, column);
+        }
     }
 
     internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
