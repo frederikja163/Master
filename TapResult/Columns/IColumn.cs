@@ -35,9 +35,10 @@ public static class ColumnExtensions
     /// </summary>
     public static IColumnReader<T> OpenReader<T>(this IColumn column)
     {
-        if (typeof(T) != column.LogicalType.ToCsType() || column.OpenReader() is not IColumnReader<T> reader)
+        if ((typeof(T) != column.LogicalType.ToCsType() && Nullable.GetUnderlyingType(typeof(T)) != column.LogicalType.ToCsType())
+            || column.OpenReader() is not IColumnReader<T> reader)
         {
-            throw new ArgumentException($"Type {typeof(T).FullName} is not valid for logical type {column.LogicalType}, expected {column.LogicalType.ToCsType().FullName}", nameof(T));
+            throw new ArgumentException($"Type {typeof(T).Name} is not valid for logical type {column.LogicalType}, expected {column.LogicalType.ToCsType().Name}", nameof(T));
         }
 
         return reader;

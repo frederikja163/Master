@@ -24,7 +24,7 @@ internal abstract class NullReaderBase : IColumnReader
         byte currentNulls = _nullReader.Peek(_nullReader.Index - byteIndex);
 
         // We want to advance if the value is 0, so we use xor to flip the bit after shifting.
-        return (currentNulls >> bitIndex) ^ 1;
+        return (currentNulls >> bitIndex) & 1;
     }
     
     public void Advance(int units)
@@ -32,7 +32,7 @@ internal abstract class NullReaderBase : IColumnReader
         int advancedUnits = 0;
         for (int i = 0; i < units; i++)
         {
-            advancedUnits += IsNull(0);
+            advancedUnits += IsNull(0) ^ 1;
             Index += 1;
             if (Index % 8 == 0)
             {
@@ -56,7 +56,7 @@ internal abstract class NullReaderBase : IColumnReader
         int valueOffset = 0;
         for (int i = 0; i < offset; i++)
         {
-            valueOffset += IsNull(i);
+            valueOffset += IsNull(i) ^ 1;
         }
 
         return _valueReader.Peek(valueOffset);
@@ -67,18 +67,18 @@ internal abstract class NullReaderBase : IColumnReader
         int valueOffset = 0;
         for (int i = 0; i < offset; i++)
         {
-            valueOffset += IsNull(i);
+            valueOffset += IsNull(i) ^ 1;
         }
 
         for (int i = 0; i < count; i++)
         {
             if (IsNull(i) != 0)
             {
-                valueOffset += 1;
                 yield return null;
             }
             else
             {
+                valueOffset += 1;
                 yield return _valueReader.Peek(valueOffset);
             }
         }

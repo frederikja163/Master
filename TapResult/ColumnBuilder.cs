@@ -16,6 +16,7 @@ public sealed class ColumnBuilder
     private byte[]? _nulls = null;
     private byte[] _data;
     private int _byteIndex = 0;
+    private int _valuesLength = 0;
     private int _logicalLength = 0;
     
     /// <summary>
@@ -72,20 +73,21 @@ public sealed class ColumnBuilder
             {
                 capacity = _data.Length / 8;
             }
-            capacity = Math.Max(capacity, _logicalLength * 2);
+            capacity = Math.Max(capacity, _logicalLength / 4);
             
             _nulls = new byte[capacity];
         }
 
         int byteIndex = _logicalLength / 8;
-        if ((uint)byteIndex < (uint)_nulls.Length)
+        if ((uint)byteIndex > (uint)_nulls.Length)
         {
             Array.Resize(ref _nulls, Math.Max(_nulls.Length * 2, byteIndex));
         }
         int bitIndex = _logicalLength % 8;
-        byte value = _nulls[_byteIndex];
+        byte value = _nulls[byteIndex];
         value |= (byte)(1 << bitIndex);
-        _nulls[_byteIndex] = value;
+        _nulls[byteIndex] = value;
+        _logicalLength += 1;
     }
 
     /// <summary>
@@ -99,6 +101,7 @@ public sealed class ColumnBuilder
         if (!_type.TryGetSize(out int size))
             size = Unsafe.SizeOf<T>();
         _logicalLength += Unsafe.SizeOf<T>() / size;
+        _valuesLength += Unsafe.SizeOf<T>() / size;
     }
 
     /// <summary>
@@ -168,6 +171,7 @@ public sealed class ColumnBuilder
         where T : unmanaged
     {
         _logicalLength += logicalLength;
+        _valuesLength += logicalLength;
         
         if (BitConverter.IsLittleEndian)
         {
@@ -206,6 +210,17 @@ public sealed class ColumnBuilder
             case double float64: BinaryPrimitives.WriteDoubleLittleEndian(slice, float64); break;
             default: throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
         }
+    }
+
+    public IColumn Build2()
+    {
+        if (_valuesLength == _logicalLength)
+        {
+            return Build();
+        }
+        return new NullColumn(_type, new DataColumn(LogicalType.UInt8, _nulls, _logicalLength / 8 + 1),
+            new DataColumn(_type, new Memory<byte>(_data, 0, _byteIndex), _valuesLength),
+            _logicalLength);
     }
 
     /// <summary>
@@ -294,7 +309,7 @@ public sealed class ColumnBuilder
     /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
     /// A separate nulls DataColumn is created if the underlying type is nullable.
     /// </summary>
-    public static DataColumn Create(Array array, out DataColumn? nulls)
+    public static IColumn Create(Array array, out DataColumn? nulls)
     {
         nulls = null;
         return array switch
@@ -307,37 +322,27 @@ public sealed class ColumnBuilder
             float[] values => Create<float>(values),
             double[] values => Create<double>(values),
             string[] str => Create(str), // TODO: Split nulls for strings.
-            sbyte?[] values => SplitNulls<sbyte>(values, out nulls),
-            short?[] values => SplitNulls<short>(values, out nulls),
-            int?[] values => SplitNulls<int>(values, out nulls),
-            long?[] values => SplitNulls<long>(values, out nulls),
-            byte?[] values => SplitNulls<byte>(values, out nulls),
-            ushort?[] values => SplitNulls<ushort>(values, out nulls),
-            uint?[] values => SplitNulls<uint>(values, out nulls),
-            ulong?[] values => SplitNulls<ulong>(values, out nulls),
-            Half?[] values => SplitNulls<Half>(values, out nulls),
-            float?[] values => SplitNulls<float>(values, out nulls),
-            double?[] values => SplitNulls<double>(values, out nulls),
+            sbyte?[] values => SplitNulls<sbyte>(values),
+            short?[] values => SplitNulls<short>(values),
+            int?[] values => SplitNulls<int>(values),
+            long?[] values => SplitNulls<long>(values),
+            byte?[] values => SplitNulls<byte>(values),
+            ushort?[] values => SplitNulls<ushort>(values),
+            uint?[] values => SplitNulls<uint>(values),
+            ulong?[] values => SplitNulls<ulong>(values),
+            Half?[] values => SplitNulls<Half>(values),
+            float?[] values => SplitNulls<float>(values),
+            double?[] values => SplitNulls<double>(values),
             _ => throw new ArgumentOutOfRangeException(nameof(array))
         };
     }
 
-    private static DataColumn SplitNulls<T>(T?[] array, out DataColumn? nulls)
+    private static IColumn SplitNulls<T>(T?[] array)
         where T : unmanaged
     {
-        int valueSize = 0;
-        foreach (var value in array)
-        {
-            if (value is null)
-            {
-                continue;
-            }
-
-            valueSize += Unsafe.SizeOf<T>();
-        }
-        
-        ColumnBuilder valueBuilder = new ColumnBuilder(typeof(T).ToLogicalType(), valueSize);
-        ColumnBuilder nullBuilder = new ColumnBuilder(array.Length / 8 + 1);
+        LogicalType type = typeof(T).ToLogicalType();
+        type.TryGetSize(out int size);
+        ColumnBuilder valueBuilder = new ColumnBuilder(type, size * array.Length);
         byte nullByte = 0;
         // TODO: Benchmark using a bitarray and loop unrolling here versus the current implementation.
         for (int i = 0; i < array.Length; i++)
@@ -345,23 +350,14 @@ public sealed class ColumnBuilder
             T? value = array[i];
             if (value is { } val)
             {
-                nullByte = (byte)((nullByte << 1) | 0);
                 valueBuilder.Write(val);
             }
             else
             {
-                nullByte = (byte)((nullByte << 1) | 1);
-            }
-
-            if (i % 8 == 0)
-            {
-                nullBuilder.Write(nullByte);
-                nullByte = 0;
+                valueBuilder.WriteNull();
             }
         }
-        nullBuilder.Write(nullByte);
         
-        nulls = nullBuilder.Build();
-        return valueBuilder.Build();
+        return valueBuilder.Build2();
     }
 }
