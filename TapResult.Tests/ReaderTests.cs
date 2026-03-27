@@ -21,7 +21,7 @@ internal sealed class MyColumn : IColumnParent
         return 0;
     }
 
-    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.WriteBlob(Blob);
     }
@@ -125,7 +125,7 @@ public sealed class ReaderTests
     public async Task IntegerRoundtripTest()
     {
         int[] data = Enumerable.Range(0, 1000).Select(t => Random.Shared.Next(0, 255)).ToArray();
-        Table table = new Table([DataColumn.Create(data)], ["integers"], "table");
+        Table table = new Table([ColumnBuilder.Create(data)], ["integers"], "table");
         using Stream stream = new MemoryStream();
         using (Writer writer = new Writer(stream, leaveOpen: true))
         {

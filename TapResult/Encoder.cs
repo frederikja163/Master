@@ -50,7 +50,7 @@ public sealed class Encoder
     internal IColumnReader Decode(EncodingType encodingType, LogicalType type, ref GenericReader blobReader, IEnumerable<IColumnReader> childColumns)
     {
         IEncoding encoding = _encodingsById[encodingType];
-        return encoding.CreateDecoder(type, ref blobReader, childColumns);
+        return encoding.CreateDecoder(type, blobReader, childColumns);
     }
     
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class Encoder
         sampleLength = Math.Min(sampleLength, SampleMaxLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        DataColumnBuilder builder = new DataColumnBuilder(data.LogicalType, totalSampleLength * size, false);
+        ColumnBuilder builder = new ColumnBuilder(data.LogicalType, totalSampleLength * size);
         GenericReader reader = data.OpenGenericReader();
         
         int sectionLength = length / SampleCount;

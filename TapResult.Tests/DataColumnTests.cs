@@ -12,7 +12,7 @@ internal sealed class DataColumnTests
     public void CreateStringsTest()
     {
         string[] strings = ["Abcd", "1234", "Hello world!", "CSharp"];
-        DataColumn column = DataColumn.Create(strings);
+        DataColumn column = ColumnBuilder.Create(strings);
         int physicalLength = strings.Select(str => Unsafe.SizeOf<int>() + Encoding.UTF8.GetByteCount(str)).Sum();
         Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
@@ -26,7 +26,7 @@ internal sealed class DataColumnTests
     public void CreateBlobsTest()
     {
         byte[][] blobs = [[0, 1, 2], [1,2,3], [2,3,4]];
-        DataColumn column = DataColumn.Create(blobs);
+        DataColumn column = ColumnBuilder.Create(blobs);
         int physicalLength = blobs.Select(blob => Unsafe.SizeOf<int>() + blob.Length).Sum();
         Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
@@ -76,7 +76,7 @@ internal sealed class DataColumnTests
     public void CreatePrimitivesTest((Array array, byte[] bytes, LogicalType type) tuple)
     {
         (Array array, byte[] bytes, LogicalType type) = tuple;
-        DataColumn column = DataColumn.Create(array, out DataColumn? nulls);
+        DataColumn column = ColumnBuilder.Create(array, out DataColumn? nulls);
         Assert.That(column.LogicalType, Is.EqualTo(type));
         Assert.That(column.Data.ToArray(), Is.EqualTo(bytes));
         Assert.That(column.LogicalLength, Is.EqualTo(array.Length));
@@ -100,6 +100,6 @@ internal sealed class DataColumnTests
     [Test]
     public void DataColumnCreateFailsOnInvalidType()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => DataColumn.Create(Array.Empty<object>(), out _));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ColumnBuilder.Create(Array.Empty<object>(), out _));
     }
 }

@@ -17,9 +17,9 @@ public class TableTests
     {
         int[] data = Enumerable.Range(start, length).ToArray();
         IColumn[] dataColumns = [
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan())
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns, names, "table");
@@ -36,9 +36,9 @@ public class TableTests
     {
         int[] data = Enumerable.Range(start, length).ToArray();
         IColumn[] dataColumns = [
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan())
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns, names, "table");
@@ -58,9 +58,9 @@ public class TableTests
     {
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn[] dataColumns = [
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan())
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
@@ -148,9 +148,9 @@ public class TableTests
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn[] dataColumns =
         [
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan()),
-            DataColumn.Create<int>(data.AsSpan())
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan()),
+            ColumnBuilder.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
         Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");

@@ -22,7 +22,7 @@ public sealed class TableInfo
     internal TableInfo(EncodingInfo encoding)
     {
         Encoding = encoding;
-        GenericReader reader = new GenericReader(encoding.Blob.Span);
+        GenericReader reader = new GenericReader(encoding.Blob);
         Name = reader.ReadString();
         _columns = new Dictionary<string, ColumnInfo>();
         foreach (EncodingInfo subEncoding in encoding.GetSubEncodings())

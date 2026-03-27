@@ -9,7 +9,7 @@ internal sealed class GenericReaderTests
     [Test]
     public void AdvanceTest()
     {
-        DataColumn column = DataColumn.Create(Enumerable.Range(0, 100).ToArray());
+        DataColumn column = ColumnBuilder.Create(Enumerable.Range(0, 100).ToArray());
         IColumnReader<int> reader = column.OpenReader<int>();
         reader.Advance(12);
         Assert.That(reader.Read(), Is.EqualTo(12));
@@ -29,7 +29,7 @@ internal sealed class GenericReaderTests
     [Test]
     public void ReadPrimitiveTest()
     {
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.UInt8, 405, false);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 405);
         builder.Write<byte>(123);
         builder.Write(123);
         builder.Write(Enumerable.Range(0, 100).ToArray());
@@ -52,7 +52,7 @@ internal sealed class GenericReaderTests
     public void ReadVariableLengthUnitsTest()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = DataColumn.Create(strings);
+        DataColumn column = ColumnBuilder.Create(strings);
         GenericReader reader = column.OpenGenericReader();
         Assert.That(reader.ReadUnits(LogicalType.String, 3).ToArray(),
             Is.EqualTo(column.Data.Span.Slice(0, 36).ToArray()));
@@ -62,7 +62,7 @@ internal sealed class GenericReaderTests
     public void ReadMultiplePrimitivesTest()
     {
         float[] data = Enumerable.Range(0, 100).Select(i => MathF.Sin(i / 10f)).ToArray();
-        DataColumn column = DataColumn.Create(data);
+        DataColumn column = ColumnBuilder.Create(data);
         IColumnReader<float> reader = column.OpenReader<float>();
         
         Assert.That(reader.Read(40).ToArray(), Is.EqualTo(data.Take(40)));
@@ -72,7 +72,7 @@ internal sealed class GenericReaderTests
     public void ReadStringsTests()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = DataColumn.Create(strings);
+        DataColumn column = ColumnBuilder.Create(strings);
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadString(), Is.EqualTo("test"));
@@ -85,7 +85,7 @@ internal sealed class GenericReaderTests
     public void ReadBlobsTest()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = DataColumn.Create(strings);
+        DataColumn column = ColumnBuilder.Create(strings);
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadBlob().ToArray(), Is.EqualTo("test"u8.ToArray()));

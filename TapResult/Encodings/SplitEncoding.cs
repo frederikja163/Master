@@ -14,8 +14,8 @@ public sealed class SplitEncoding : IEncoding
     {
         GenericReader columnReader = dataColumn.OpenGenericReader();
         int length = dataColumn.LogicalLength;
-        DataColumnBuilder lengthBuilder = new DataColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
-        DataColumnBuilder byteBuilder = new DataColumnBuilder(LogicalType.UInt8, dataColumn.PhysicalSize - lengthBuilder.PhysicalSize);
+        ColumnBuilder lengthBuilder = new ColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
+        ColumnBuilder byteBuilder = new ColumnBuilder(LogicalType.UInt8, dataColumn.PhysicalSize - lengthBuilder.PhysicalSize);
         for (int i = 0; i < length; i++)
         {
             ReadOnlySpan<byte> blob = columnReader.ReadUnits(dataColumn.LogicalType);
@@ -27,7 +27,7 @@ public sealed class SplitEncoding : IEncoding
     }
 
     public IColumnReader CreateDecoder(LogicalType type,
-        ref GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
+        GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> lengths ||

@@ -42,7 +42,7 @@ internal sealed class BitPackingColumn : IColumnParent
         return true;
     }
 
-    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.Write(Size);
         blobBuilder.WriteRaw(PrefixLength);

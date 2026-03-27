@@ -16,7 +16,12 @@ public class ColumnParent : IColumnParent
     
     public EncodingType EncodingType { get; } = EncodingType.Table;
     public LogicalType LogicalType { get; } = LogicalType.UInt8;
-    public void WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void WriteMetadata(ref ColumnBuilder blobBuilder)
     {
         throw new UnreachableException();
     }

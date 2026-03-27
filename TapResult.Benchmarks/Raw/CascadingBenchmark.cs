@@ -15,7 +15,7 @@ internal sealed class CascadingBenchmark : IRawBenchmark
         {
             foreach (Array array in data.Columns)
             {
-                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                DataColumn dataColumn = ColumnBuilder.Create(array, out var nulls);
                 IColumn column = encoder.Encode(dataColumn);
                 if (column is not IColumnParent parent)
                     return;
@@ -52,7 +52,7 @@ internal sealed class CascadingAsyncBenchmark : IRawBenchmark
             {
                 tasks.Add(Task.Run(() =>
                 {
-                    DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                    DataColumn dataColumn = ColumnBuilder.Create(array, out var nulls);
                     IColumn column = encoder.Encode(dataColumn);
                     if (column is not IColumnParent parent)
                         return;
@@ -90,7 +90,7 @@ internal sealed class EncodingBenchmark : IRawBenchmark
         {
             foreach (Array array in data.Columns)
             {
-                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
+                DataColumn dataColumn = ColumnBuilder.Create(array, out var nulls);
                 stream.Write(dataColumn.Data.Span);
                 if (nulls is not null)
                 {
