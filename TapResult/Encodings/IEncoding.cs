@@ -12,6 +12,7 @@ public enum EncodingType : byte
     Binary = 1,
     Split = 2,
     BitPacking = 3,
+    Null = 4,
 }
 
 /// <summary>

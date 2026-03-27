@@ -23,7 +23,7 @@ internal sealed class ColumnBuilderTests
         builder.Write<Half>((Half)9);
         builder.Write<float>(10);
         builder.Write<double>(11);
-        DataColumn column = builder.Build();
+        DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(44));
         Assert.That(column.PhysicalSize, Is.EqualTo(44));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.UInt8));
@@ -63,7 +63,7 @@ internal sealed class ColumnBuilderTests
         
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length);
         builder.WriteStrings(strs);
-        DataColumn column = builder.Build();
+        DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
@@ -78,7 +78,7 @@ internal sealed class ColumnBuilderTests
         
         ColumnBuilder builder = new ColumnBuilder(LogicalType.Blob, length);
         builder.WriteBlobs(strs.Select(Encoding.UTF8.GetBytes));
-        DataColumn column = builder.Build();
+        DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
@@ -95,7 +95,7 @@ internal sealed class ColumnBuilderTests
         Assert.That(builder.PhysicalSize, Is.EqualTo(2));
         builder.Write<byte>(21);
         Assert.That(builder.PhysicalSize, Is.EqualTo(3));
-        DataColumn column = builder.Build();
+        DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(3));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.UInt8));
         Assert.That(column.PhysicalSize, Is.EqualTo(3));

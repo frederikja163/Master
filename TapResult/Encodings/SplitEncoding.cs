@@ -23,7 +23,7 @@ public sealed class SplitEncoding : IEncoding
             byteBuilder.Write(blob.Slice(Unsafe.SizeOf<int>()));
         }
 
-        return new SplitColumn(lengthBuilder.Build(), byteBuilder.Build(), dataColumn.LogicalType);
+        return new SplitColumn(lengthBuilder.BuildDataColumn(), byteBuilder.BuildDataColumn(), dataColumn.LogicalType);
     }
 
     public IColumnReader CreateDecoder(LogicalType type,

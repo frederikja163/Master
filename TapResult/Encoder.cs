@@ -74,7 +74,7 @@ public sealed class Encoder
     /// <remarks> Only relevant on encode. </remarks>
     public int SampleMaxLength { get; init; } = 1024;
     
-    internal IColumn Encode(in DataColumn column)
+    internal IColumn Encode(DataColumn column)
     {
         DataColumn sample = CreateSample(column);
         IColumn metadataSample = PickEncoding(sample, CascadingEncodings);
@@ -177,6 +177,6 @@ public sealed class Encoder
             reader.AdvanceUnits(data.LogicalType, sectionLength - index - sampleLength);
         }
 
-        return builder.Build();
+        return builder.BuildDataColumn();
     }
 }

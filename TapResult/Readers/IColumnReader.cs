@@ -25,12 +25,12 @@ public interface IColumnReader
     /// <summary>
     /// Peek the next value, or a value with some offset. Does not consume.
     /// </summary>
-    public object Peek(int offset = 0);
+    public object? Peek(int offset = 0);
     
     /// <summary>
     /// Peeks multiple values with some offset. Does not consume.
     /// </summary>
-    public IEnumerable<object> Peek(int offset, int count);
+    public IEnumerable<object?> Peek(int offset, int count);
 }
 
 /// <summary>
@@ -76,9 +76,9 @@ public static class ColumnReaderExtensions {
     /// <summary>
     /// Reads the next value from the data and advances the reader by one.
     /// </summary>
-    public static object Read(this IColumnReader reader)
+    public static object? Read(this IColumnReader reader)
     {
-        object value = reader.Peek();
+        object? value = reader.Peek();
         reader.Advance(1);
         return value;
     }
@@ -86,7 +86,7 @@ public static class ColumnReaderExtensions {
     /// <summary>
     /// Reads multiple values from the data and advances the reader.
     /// </summary>
-    public static IEnumerable<object> Read(this IColumnReader reader, int count)
+    public static IEnumerable<object?> Read(this IColumnReader reader, int count)
     {
         for (int i = 0; i < count; i++)
         {

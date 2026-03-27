@@ -21,7 +21,7 @@ internal sealed class BitPackingTests
         BitPackingColumn column = (BitPackingColumn)encoding.Encode(dataColumn);
         ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
         column.WriteMetadata(metadataBuilder);
-        DataColumn metadataColumn = metadataBuilder.Build();
+        DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
         GenericReader genericReader = metadataColumn.OpenGenericReader();
         IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
             LogicalType.SInt32,

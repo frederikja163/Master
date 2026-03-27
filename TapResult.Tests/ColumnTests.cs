@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using TapResult.Columns;
 using TapResult.Encodings;
+using TapResult.Readers;
 using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests;
@@ -16,14 +17,15 @@ public class ColumnParent : IColumnParent
     
     public EncodingType EncodingType { get; } = EncodingType.Table;
     public LogicalType LogicalType { get; } = LogicalType.UInt8;
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+
+    public IColumnReader OpenReader()
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public void WriteMetadata(ref ColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        throw new UnreachableException();
+        throw new NotSupportedException();
     }
 
     public IEnumerable<IColumn> GetChildColumns()

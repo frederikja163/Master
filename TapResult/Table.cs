@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using TapResult.Columns;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult;
 
@@ -44,7 +45,12 @@ public sealed class Table : IColumnParent
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
         builder.WriteString(Name);
         builder.WriteStrings(_names);
-        blobBuilder.WriteBlob(builder.Build().Data.ToArray());
+        blobBuilder.WriteBlob(builder.BuildDataColumn().Data.ToArray());
+    }
+
+    IColumnReader IColumn.OpenReader()
+    {
+        throw new Exception("Cannot open a reader for tables.");
     }
 
     public void Compress(Encoder? encoder = null)

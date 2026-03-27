@@ -41,7 +41,7 @@ internal sealed class SplitEncodingTests
         SplitColumn columns = (SplitColumn) encoding.Encode(dataColumn);
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
         columns.WriteMetadata(builder);
-        DataColumn metadataColumn = builder.Build();
+        DataColumn metadataColumn = builder.BuildDataColumn();
         GenericReader genericReader = metadataColumn.OpenGenericReader();
         IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, genericReader,
             columns.GetChildColumns().OfType<DataColumn>().Select(c => c.OpenReader()));

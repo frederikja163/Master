@@ -26,6 +26,11 @@ internal sealed class MyColumn : IColumnParent
         blobBuilder.WriteBlob(Blob);
     }
 
+    public IColumnReader OpenReader()
+    {
+        throw new NotSupportedException();
+    }
+
     public IEnumerable<IColumn> GetChildColumns()
     {
         return Columns;
