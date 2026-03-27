@@ -212,11 +212,15 @@ public sealed class ColumnBuilder
         }
     }
 
-    public IColumn Build2()
+    /// <summary>
+    /// Builds this ColumnBuilder into an IColumn, will automatically determine if the column should be nullable or not.
+    /// </summary>
+    /// <returns></returns>
+    public IColumn Build()
     {
         if (_valuesLength == _logicalLength)
         {
-            return Build();
+            return BuildDataColumn();
         }
         return new NullColumn(_type, new DataColumn(LogicalType.UInt8, _nulls, _logicalLength / 8 + 1),
             new DataColumn(_type, new Memory<byte>(_data, 0, _byteIndex), _valuesLength),
@@ -226,13 +230,14 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Builds this DataColumnBuilder into a DataColumn and returns it.
     /// </summary>
-    public DataColumn Build()
+    /// <remarks>If this ColumnBuilder has any nulls written into it, those values will disappear. Consider using <see cref="Build"/> instead.</remarks>
+    public DataColumn BuildDataColumn()
     {
         return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
     
     private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
-    {   
+    {
         if (!BitConverter.IsLittleEndian)
         {
             ColumnBuilder builder = new ColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
@@ -240,13 +245,14 @@ public sealed class ColumnBuilder
             {
                 builder.Write(var);
             }
-            return builder.Build();
+            return builder.BuildDataColumn();
         }
         
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
         return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
     }
 
+    // TODO: Switch all create methods to return an IColumn instead of DataColumn.
     /// <summary>
     /// Create a new DataColumn from a span of data.
     /// </summary>
@@ -269,7 +275,7 @@ public sealed class ColumnBuilder
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length + sizeof(int) * data.Count);
         builder.WriteStrings(data);
 
-        return builder.Build();
+        return builder.BuildDataColumn();
     }
 
     /// <summary>
@@ -356,6 +362,6 @@ public sealed class ColumnBuilder
             }
         }
         
-        return valueBuilder.Build2();
+        return valueBuilder.Build();
     }
 }

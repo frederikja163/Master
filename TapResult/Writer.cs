@@ -54,12 +54,12 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         // Metadata
         long metadataStart = _outStream.Position; // for Postscript
 
-        DataColumn idColumn = _idBuilder.Build();
+        DataColumn idColumn = _idBuilder.BuildDataColumn();
         idColumn.Write(_outStream);
-        _parentIdBuilder.Build().Write(_outStream);
-        _encodingIdBuilder.Build().Write(_outStream);
-        _logicalTypeBuilder.Build().Write(_outStream);
-        _blobBuilder.Build() .Write(_outStream);
+        _parentIdBuilder.BuildDataColumn().Write(_outStream);
+        _encodingIdBuilder.BuildDataColumn().Write(_outStream);
+        _logicalTypeBuilder.BuildDataColumn().Write(_outStream);
+        _blobBuilder.BuildDataColumn() .Write(_outStream);
         
         // Postscript
         long metadataLength = _outStream.Position - metadataStart;
@@ -70,7 +70,7 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         postScript.Write(metadataLength);
         postScript.Write(metadataLogicalLength);
         
-        _outStream.Write(postScript.Build().Data.Span);
+        _outStream.Write(postScript.BuildDataColumn().Data.Span);
         _outStream.Write(MagicNumber);
         
         if (_leaveOpen)
@@ -128,7 +128,7 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     
     internal Table GetMetadata()
     {
-        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()],
+        return new Table([_idBuilder.BuildDataColumn(), _parentIdBuilder.BuildDataColumn(), _encodingIdBuilder.BuildDataColumn(), _logicalTypeBuilder.BuildDataColumn(), _blobBuilder.BuildDataColumn()],
             ["Id", "ParentId", "Encoding", "LogicalType", "Blob"],
             "schema");
     }

@@ -177,6 +177,6 @@ public sealed class Encoder
             reader.AdvanceUnits(data.LogicalType, sectionLength - index - sampleLength);
         }
 
-        return builder.Build();
+        return builder.BuildDataColumn();
     }
 }

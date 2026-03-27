@@ -87,7 +87,7 @@ public sealed class BitPacking : IEncoding
         currentValue <<= size - shift;
         builder.Write(currentValue);
 
-        metadata.Column = builder.Build();
+        metadata.Column = builder.BuildDataColumn();
     }
 
     internal static BitPackingColumn GetMetadata<T>(in DataColumn data) where T : unmanaged, IBinaryInteger<T>
