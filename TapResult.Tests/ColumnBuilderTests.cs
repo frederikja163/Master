@@ -32,17 +32,6 @@ internal sealed class ColumnBuilderTests
         BinaryPrimitives.WriteHalfLittleEndian(bytes, (Half)9);
         BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(2), 10);
         BinaryPrimitives.WriteDoubleLittleEndian(bytes.AsSpan(6), 11);
-        new byte[]
-        {
-            1,
-            2, 0,
-            3, 0, 0, 0,
-            4, 0, 0, 0, 0, 0, 0, 0,
-            5,
-            6, 0,
-            7, 0, 0, 0,
-            8, 0, 0, 0, 0, 0, 0, 0,
-        }.Concat(bytes);
         Assert.That(column.Data.ToArray(), Is.EqualTo(new byte[]{
             1,
             2, 0,

@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using NUnit.Framework.Constraints;
 using TapResult;
 using TapResult.Columns;
 using TapResult.Encodings;
@@ -18,14 +19,14 @@ internal sealed class BitPackingTests
         int[] data = Enumerable.Range(start, length).ToArray();
         DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
         IEncoding encoding = new BitPacking();
-        BitPackingColumn column = (BitPackingColumn)encoding.Encode(dataColumn);
+        BitPackingColumn column = Assert.InstanceOf<BitPackingColumn>(encoding.Encode(dataColumn));
         ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
         column.WriteMetadata(metadataBuilder);
         DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
         GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
+        IColumnReader<int> reader = Assert.InstanceOf<IColumnReader<int>>(encoding.CreateDecoder(
             LogicalType.SInt32,
-            genericReader, ((DataColumn)column.Column).OpenReader<int>());
+            genericReader, column.Column.OpenReader<int>()));
         
         Assert.That(reader.Read(length).ToArray(), Is.EqualTo(data));
     }
