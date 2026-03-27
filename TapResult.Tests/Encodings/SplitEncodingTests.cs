@@ -16,11 +16,11 @@ internal sealed class SplitEncodingTests
         string[] strs = [str1, str2];
         SplitEncoding encoder = new SplitEncoding();
         DataColumn dataColumn = ColumnBuilder.Create(strs);
-        SplitColumn columns = (SplitColumn) encoder.Encode(dataColumn);
+        SplitColumn columns = Assert.InstanceOf<SplitColumn>(encoder.Encode(dataColumn));
         Assert.That(columns.GetChildColumns().Count(), Is.EqualTo(2));
-        DataColumn lengthColumn = (DataColumn) columns.LengthColumn;
+        DataColumn lengthColumn = Assert.InstanceOf<DataColumn>(columns.LengthColumn);
         IColumnReader<int> lengthReader = lengthColumn.OpenReader<int>();
-        DataColumn strColumn = (DataColumn) columns.ByteColumn;
+        DataColumn strColumn = Assert.InstanceOf<DataColumn>(columns.ByteColumn);
         IColumnReader<byte> strReader = strColumn.OpenReader<byte>();
         Assert.That(lengthColumn.LogicalType, Is.EqualTo(LogicalType.SInt32));
         Assert.That(lengthColumn.LogicalLength, Is.EqualTo(2));
@@ -38,13 +38,13 @@ internal sealed class SplitEncodingTests
         string[] strs = [str1, str2];
         SplitEncoding encoding = new SplitEncoding();
         DataColumn dataColumn = ColumnBuilder.Create(strs);
-        SplitColumn columns = (SplitColumn) encoding.Encode(dataColumn);
+        SplitColumn columns = Assert.InstanceOf<SplitColumn>(encoding.Encode(dataColumn));
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
         columns.WriteMetadata(builder);
         DataColumn metadataColumn = builder.BuildDataColumn();
         GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<string> reader = (IColumnReader<string>)encoding.CreateDecoder(LogicalType.String, genericReader,
-            columns.GetChildColumns().OfType<DataColumn>().Select(c => c.OpenReader()));
+        IColumnReader<string> reader = Assert.InstanceOf<IColumnReader<string>>(encoding.CreateDecoder(LogicalType.String, genericReader,
+            columns.GetChildColumns().OfType<DataColumn>().Select(c => c.OpenReader())));
         Assert.That(reader.Read(2), Is.EqualTo(strs));
         Assert.That(reader.IsAtEnd, Is.True);
     }
