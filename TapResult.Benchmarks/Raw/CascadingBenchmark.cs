@@ -5,6 +5,7 @@ using IColumn = TapResult.Columns.IColumn;
 
 namespace TapResult.Benchmarks.Raw;
 
+//TODO: Reimplement everything in this file using the new tablewriter.
 internal sealed class CascadingBenchmark : IRawBenchmark
 {
     public void Write(string path, ICustomData data)

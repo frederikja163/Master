@@ -343,8 +343,6 @@ public sealed class ColumnBuilder
         LogicalType type = typeof(T).ToLogicalType();
         type.TryGetSize(out int size);
         ColumnBuilder valueBuilder = new ColumnBuilder(type, size * array.Length);
-        byte nullByte = 0;
-        // TODO: Benchmark using a bitarray and loop unrolling here versus the current implementation.
         for (int i = 0; i < array.Length; i++)
         {
             T? value = array[i];

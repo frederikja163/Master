@@ -62,15 +62,19 @@ internal sealed class NullColumn : IColumnParent
         yield return _valueColumn;
     }
 
-    public void Swap(IColumn existingColumn, IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         if (existingColumn.Equals(_nullColumn))
         {
             _nullColumn = newColumn;
+            return true;
         }
         else if (existingColumn.Equals(_valueColumn))
         {
             _valueColumn = newColumn;
+            return true;
         }
+
+        return false;
     }
 }
