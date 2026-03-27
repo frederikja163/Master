@@ -20,12 +20,12 @@ public class ColumnParent : IColumnParent
 
     public IColumnReader OpenReader()
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        throw new UnreachableException();
+        throw new NotSupportedException();
     }
 
     public IEnumerable<IColumn> GetChildColumns()

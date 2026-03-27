@@ -28,7 +28,7 @@ internal sealed class MyColumn : IColumnParent
 
     public IColumnReader OpenReader()
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IEnumerable<IColumn> GetChildColumns()
