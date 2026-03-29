@@ -2,7 +2,7 @@
 
 namespace TapResult.Benchmarks.Raw;
 
-public interface IRawBenchmark
+public interface IRawBenchmark : IDisposable
 {
-    public void Write(string path, ICustomData data);
+    public void Write(ICustomData data);
 }
