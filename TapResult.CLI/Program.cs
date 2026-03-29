@@ -52,29 +52,24 @@ public static class Program
     
     public static bool verbose = false;
     
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
-        Parser.Default.ParseArguments<ConvertOptions, DescribeOptions>(args).MapResult(
+        await Parser.Default.ParseArguments<ConvertOptions, DescribeOptions>(args).MapResult(
                 (ConvertOptions opts) => RunConvertOptions(opts),
-                (DescribeOptions opts) => 0, //TODO
+                (DescribeOptions opts) => Task.FromResult(0), //TODO
                 HandleParseError
             );
     }
-    static int RunConvertOptions(ConvertOptions opts)
+
+    private static async Task<int> RunConvertOptions(ConvertOptions opts)
     {
         if (opts.Verbose)
         {
             Console.WriteLine("Verbose output enabled. Current Arguments:");
-            Console.WriteLine($"-v {opts.Verbose}");
-            Console.WriteLine($"Encodings: -s {opts.Split}, -");
-            Console.WriteLine("Commandline is in Verbose mode!");
-            verbose = true;
-        }
-        else
-        {
-            Console.WriteLine("Arguments: ");
             Console.WriteLine($"Input file: {opts.InputFile} filetype: {opts.InputFileType}");
             Console.WriteLine($"output file: {opts.OutputFile} filetype: {opts.OutputFileType}");
+            Console.WriteLine("--------");
+            verbose = true;
         }
         var encoder = ParseEncodings(opts);
         
@@ -100,7 +95,7 @@ public static class Program
                 throw new NotImplementedException();
                 break;
             case Constants.TapResult:
-                Converters.TapResult.Convert(outputFileType, inputStream, outputStream);
+                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
                 break;
             case Constants.Auto:
                 switch (GetFileTypeFromPath(inputPath.FullName))
@@ -112,7 +107,7 @@ public static class Program
                         throw new NotImplementedException();
                         break;
                     case Constants.FileType.TapResult:
-                        Converters.TapResult.Convert(outputFileType, inputStream, outputStream);
+                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
                         break;
                     case Constants.FileType.Unknown:
                         throw new NotImplementedException();
@@ -128,9 +123,9 @@ public static class Program
 
         return 0;
     }
-    static int HandleParseError(IEnumerable<Error> errs)
+    static Task<int> HandleParseError(IEnumerable<Error> errs)
     {
-        return 1;
+        return Task.FromResult(1);
         //handle errors
     }
     

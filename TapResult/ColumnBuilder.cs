@@ -264,7 +264,7 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Create a new DataColumn from any collection of strings.
     /// </summary>
-    public static DataColumn Create(ICollection<string> data)
+    private static DataColumn CreateFromString(ICollection<string> data)
     {
         int length = 0;
         foreach (string str in data)
@@ -283,13 +283,13 @@ public sealed class ColumnBuilder
     /// </summary>
     public static DataColumn Create(IEnumerable<byte[]> data)
     {
-        return Create(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
+        return CreateFromBlobs(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
     }
     
     /// <summary>
     /// Create a new DataColumn from a collection of blobs.
     /// </summary>
-    public static DataColumn Create(ICollection<ReadOnlyMemory<byte>> data)
+    private static DataColumn CreateFromBlobs(ICollection<ReadOnlyMemory<byte>> data)
     {
         int length = 0;
         foreach (ReadOnlyMemory<byte> blob in data)
@@ -315,9 +315,8 @@ public sealed class ColumnBuilder
     /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
     /// A separate nulls DataColumn is created if the underlying type is nullable.
     /// </summary>
-    public static IColumn Create(Array array, out DataColumn? nulls)
+    public static IColumn Create(Array array)
     {
-        nulls = null;
         return array switch
         {
             sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
@@ -327,7 +326,7 @@ public sealed class ColumnBuilder
             Half[] values => Create<Half>(values),
             float[] values => Create<float>(values),
             double[] values => Create<double>(values),
-            string[] str => Create(str), // TODO: Split nulls for strings.
+            string[] str => CreateFromString(str), // TODO: Split nulls for strings.
             sbyte?[] values => SplitNulls<sbyte>(values),
             short?[] values => SplitNulls<short>(values),
             int?[] values => SplitNulls<int>(values),

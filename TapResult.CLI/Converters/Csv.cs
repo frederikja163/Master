@@ -1,13 +1,20 @@
 ﻿using Csv;
 using Microsoft.VisualBasic;
+using TapResult.Encodings;
 
 namespace TapResult.CLI.Converters;
 
 internal static class Csv
 {
-    internal static void Convert(Constants.FileType filetype, Encoder encoder, FileStream input, FileStream output)
+    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileStream output)
     {
-        switch (filetype)
+        if (Program.verbose)
+        {
+            Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
+        }
+        
+        Console.WriteLine($"Converting from {Constants.FileType.Csv} to {fileType.ToDisplayString()}");
+        switch (fileType)
         {
             case Constants.FileType.TapResult:
                 ConvertToTapResult(encoder, input, output);
@@ -22,11 +29,11 @@ internal static class Csv
                 throw new NotImplementedException();
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(filetype), filetype, null);
+                throw new ArgumentOutOfRangeException(nameof(fileType), fileType, null);
         }
     }
     
-    internal static void ConvertToTapResult(Encoder encoder, FileStream input, FileStream output)
+    private static void ConvertToTapResult(Encoder encoder, FileStream input, FileStream output)
     {
         var csv = CsvReader.ReadFromStream(input); //TODO: consider ReadFromStreamAsSpan
 

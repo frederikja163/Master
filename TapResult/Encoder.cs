@@ -25,6 +25,7 @@ public sealed class Encoder
     
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingType, IEncoding> _encodingsById;
+    public IReadOnlyDictionary<EncodingType, IEncoding> EncodingsById => _encodingsById;
     
     /// <summary>
     /// Creates a new default encoder.

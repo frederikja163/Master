@@ -17,4 +17,15 @@ internal static class Constants
         TapResult,
         Unknown
     }
+    public static string ToDisplayString(this FileType filetype)
+    {
+        return filetype switch
+        {
+            FileType.Csv => "CSV",
+            FileType.Parquet => "Parquet",
+            FileType.TapResult => "TapResult",
+            FileType.Unknown => "Unknown",
+            _ => throw new ArgumentOutOfRangeException(nameof(filetype), filetype, null)
+        };
+    }
 }
