@@ -63,7 +63,7 @@ public sealed class Table : IColumnParent
         }
     }
 
-    internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
+    public Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
     {
         _columns = columns.ToArray();
         _names = names.ToArray();
