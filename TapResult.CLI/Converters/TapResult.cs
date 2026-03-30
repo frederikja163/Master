@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using CommandLine;
-using Parquet;
+﻿using Parquet;
 using Parquet.Schema;
-using TapResult.Columns;
 using TapResult.Readers;
+using DataColumn = Parquet.Data.DataColumn;
 
 namespace TapResult.CLI.Converters;
 
@@ -20,7 +18,7 @@ internal static class TapResult
             case Constants.FileType.Parquet:
                 throw new NotImplementedException();
             case Constants.FileType.TapResult:
-                if (Program.verbose)
+                if (Program.Verbose)
                 {
                     Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
                 }
@@ -51,7 +49,7 @@ internal static class TapResult
                 while (!readers[0].IsAtEnd)
                 {
                     var line = string.Join(",", readers.Select(columnReader => columnReader.Read())) + "\n";
-                    if (Program.verbose)
+                    if (Program.Verbose)
                     {
                         Console.WriteLine($"reader at {readers[0].Index} out of {readers[0].Length}");
                         Console.Write(line);
@@ -59,7 +57,7 @@ internal static class TapResult
                     await writer.WriteAsync(line);
                 }
 
-                if (Program.verbose)
+                if (Program.Verbose)
                 {
                     Console.WriteLine($"Finished writing columns from table {i}");
                 }
@@ -98,18 +96,21 @@ internal static class TapResult
     {
         try
         {
-            //TODO: currently 1 parquet file with n rowgroups => 1 tapresult file with n tables => n parquet files with 1 rowgroup
+            // TODO: currently 1 parquet file with n rowgroups => 1 tapresult file with n tables => n parquet files with 1 rowgroup
             Reader reader = await Reader.CreateReaderAsync(input);
             foreach (TableInfo tableInfo in reader.GetTables())
             {
                 var schema = new ParquetSchema(tableInfo.GetColumns().Select(column => new DataField(column.Name, column.GetType())));
-                
-                using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+                FileInfo fileInfo = new FileInfo(output.FullName + "_" + tableInfo.Name);
+
+                await using var outputStream = fileInfo.Open(FileMode.Create, FileAccess.Write, FileShare.None);
                 await using ParquetWriter writer = await ParquetWriter.CreateAsync(schema, outputStream);
                 using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
-                //await groupWriter.WriteColumnAsync(column1);
-                //await groupWriter.WriteColumnAsync(column2);
-                //await groupWriter.WriteColumnAsync(column3);
+                foreach ((ColumnInfo columnInfo, DataField field) in tableInfo.GetColumns().Zip(schema.DataFields))
+                {
+                    var columnReader = reader.OpenColumnReader(columnInfo);
+                    await groupWriter.WriteColumnAsync(new DataColumn(field, columnReader.Read(columnReader.Length).ToArray()));
+                }
             }
         }
         catch (Exception e)

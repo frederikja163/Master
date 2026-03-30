@@ -5,19 +5,19 @@ namespace TapResult.CLI;
 
 public static class Program
 {
-    private class GeneralOptions
+    internal class GeneralOptions
     {
         [Option('v', "verbose", Required = false, HelpText = "WIP Set output to verbose messages.")]
         public bool Verbose { get; set; }
+        
+        [Value(1, MetaName = "inputfile", Required = true, HelpText = "WIP Specify the input file. Currently supports ")] // TODO: add parquet, CSV, our fileformat
+        public string InputFile { get; set; } = null!;
     }
     
     // ReSharper disable once ClassNeverInstantiated.Local
     [Verb("convert", HelpText = "Converts the file from one format to another")]
-    private sealed class ConvertOptions : GeneralOptions
+    internal sealed class ConvertOptions : GeneralOptions
     {
-        [Value(1, MetaName = "inputfile", Required = true, HelpText = "WIP Specify the input file. Currently supports ")] // TODO: add parquet, CSV, our fileformat
-        public string InputFile { get; set; } = null!;
-        
         [Value(2, MetaName = "outputfile", Required = false, HelpText = "WIP Specify the output file. Currently supports ")] // TODO: add parquet, CSV, our fileformat
         public string OutputFile { get; set; } = "out.csv";
         
@@ -50,119 +50,20 @@ public static class Program
         
     }
     
-    public static bool verbose = false;
+    public static bool Verbose = false;
     
     static async Task Main(string[] args)
     {
         await Parser.Default.ParseArguments<ConvertOptions, DescribeOptions>(args).MapResult(
-                (ConvertOptions opts) => RunConvertOptions(opts),
+                (ConvertOptions opts) => Converter.RunConvertOptions(opts),
                 (DescribeOptions opts) => Task.FromResult(0), //TODO
                 HandleParseError
             );
     }
 
-    private static async Task<int> RunConvertOptions(ConvertOptions opts)
-    {
-        if (opts.Verbose)
-        {
-            Console.WriteLine("Verbose output enabled. Current Arguments:");
-            Console.WriteLine($"Input file: {opts.InputFile} filetype: {opts.InputFileType}");
-            Console.WriteLine($"output file: {opts.OutputFile} filetype: {opts.OutputFileType}");
-            Console.WriteLine("--------");
-            verbose = true;
-        }
-        var encoder = ParseEncodings(opts);
-        
-        var inputPath = new FileInfo(opts.InputFile);
-        var outputPath = new FileInfo(opts.OutputFile);
-        using var inputStream = inputPath.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
-        using var outputStream = outputPath.Open(FileMode.Create, FileAccess.Write, FileShare.None);
-        
-        var outputFileType = opts.OutputFileType.ToLower() switch
-        {
-            Constants.CsvFile => Constants.FileType.Csv,
-            Constants.ParquetFile => Constants.FileType.Parquet,
-            Constants.Auto => GetFileTypeFromPath(outputPath.FullName),
-            _ => throw new Exception() // TODO how do we handle unknown filetype?
-        };
-        
-        switch (opts.InputFileType.ToLower())
-        {
-            case Constants.Csv:
-                Converters.Csv.Convert(outputFileType, encoder, inputStream, outputStream);
-                break;
-            case Constants.Parquet:
-                throw new NotImplementedException();
-                break;
-            case Constants.TapResult:
-                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
-                break;
-            case Constants.Auto:
-                switch (GetFileTypeFromPath(inputPath.FullName))
-                {
-                    case Constants.FileType.Csv:
-                        Converters.Csv.Convert(outputFileType, encoder, inputStream, outputStream);
-                        break;
-                    case Constants.FileType.Parquet:
-                        throw new NotImplementedException();
-                        break;
-                    case Constants.FileType.TapResult:
-                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
-                        break;
-                    case Constants.FileType.Unknown:
-                        throw new NotImplementedException();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-                break;
-            default:
-                throw new Exception(); // TODO how do we handle unknown filetype?
-        }
-        
-
-        return 0;
-    }
     static Task<int> HandleParseError(IEnumerable<Error> errs)
     {
         return Task.FromResult(1);
         //handle errors
-    }
-    
-    private static Constants.FileType GetFileTypeFromPath(string inputFile)
-    {
-        var extension = Path.GetExtension(inputFile).TrimStart('.').ToLowerInvariant();
-
-        return extension switch
-        {
-            Constants.CsvFile => Constants.FileType.Csv,
-            Constants.ParquetFile => Constants.FileType.Parquet,
-            Constants.TapResultFile => Constants.FileType.TapResult,
-            _ => Constants.FileType.Unknown
-        };
-    }
-
-    private static Encoder ParseEncodings(ConvertOptions o)
-    {
-        if (o is { BitPacking: false, Split: false, RunLength: false })
-        {
-            return new Encoder();
-        }
-        List<IEncoding> encodings = [];
-        
-        if (o.BitPacking)
-        {
-            encodings.Add(new BitPacking());
-        }
-        if (o.Split)
-        {
-            encodings.Add(new SplitEncoding());
-        }
-        if (o.RunLength)
-        {
-            //encodings.Add(new RunLength());
-        }
-
-        return new Encoder(encodings);
     }
 }

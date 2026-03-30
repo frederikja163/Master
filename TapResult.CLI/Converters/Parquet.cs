@@ -10,7 +10,7 @@ public sealed class Parquets
 {
     internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileStream output)
     {
-        if (Program.verbose)
+        if (Program.Verbose)
         {
             Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
         }
