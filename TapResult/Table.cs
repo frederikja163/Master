@@ -33,7 +33,7 @@ public sealed class Table : IColumnParent
             IColumn column = _columns[i];
             if (!existingColumn.Equals(column)) 
                 continue;
-            _columns[i] = column;
+            _columns[i] = newColumn;
             return true;
         }
 
@@ -59,7 +59,7 @@ public sealed class Table : IColumnParent
         foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
         {
             IColumn encodedColumn = encoder.Encode(column);
-            this.SwapRecursive(encodedColumn, column);
+            this.SwapRecursive(column, encodedColumn);
         }
     }
 
