@@ -9,6 +9,14 @@ namespace TapResult.Tests;
 
 public class TableTests
 {
+    [Test]
+    public void SwapColumns()
+    {
+        Table table = new Table([DataColumn.Empty], ["test"], "table");
+        table.Swap(DataColumn.Empty, new DataColumn(LogicalType.UInt8, Array.Empty<byte>(), 0));
+        Assert.That(table.Columns, Does.Not.Contain(DataColumn.Empty));
+    }
+    
     [TestCase(1, 5)]
     [TestCase(1, 10)]
     [TestCase(1, 1000)]

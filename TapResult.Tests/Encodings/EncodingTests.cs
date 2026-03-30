@@ -7,6 +7,7 @@ namespace TapResult.Tests.Encodings;
 internal sealed class EncodingTests
 {
     [TestCase(1, 10, 0.2)]
+    [TestCase(20, 10, 0.1)]
     [TestCase(100, 10, 0.2)]
     [TestCase(100, 10, 0.1)]
     [TestCase(128, 5, 0.1)]
@@ -21,9 +22,16 @@ internal sealed class EncodingTests
         int[] data = Enumerable.Range(0, dataSize).ToArray();
         DataColumn sample = encoder.CreateSample(ColumnBuilder.Create<int>(data));
 
-        int sampleLength = (int)(dataSize * samplePercentage) / sampleCount;
+        int sampleLength = (int)(dataSize * samplePercentage / sampleCount);
         int totalSampleLength = sampleLength * sampleCount;
         totalSampleLength = Math.Max(totalSampleLength, 1);
+
+        if (dataSize * samplePercentage < sampleCount)
+        {
+            totalSampleLength = dataSize;
+            sampleLength = dataSize;
+            sampleCount = 1;
+        }
         
         Assert.That(sample.LogicalLength, Is.EqualTo(totalSampleLength));
         sampleCount = Math.Min(sampleCount, totalSampleLength);
