@@ -156,7 +156,7 @@ public sealed class Encoder
     internal DataColumn CreateSample(in DataColumn data)
     {
         int length = data.LogicalLength;
-        if (length < SampleCount)
+        if (length * SamplePercentage < SampleCount)
         {
             return data;
         }
