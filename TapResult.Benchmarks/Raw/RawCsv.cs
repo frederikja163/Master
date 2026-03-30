@@ -7,12 +7,12 @@ internal sealed class RawCsv : IRawBenchmark, IAsyncDisposable
     private Stream _stream;
     private StreamWriter _writer;
 
-    public RawCsv(string filePath)
+    public void Open(string filePath)
     {
         _stream = File.Create(filePath);
         _writer = new StreamWriter(_stream);
     }
-    
+
     public void Write(ICustomData data)
     {
         _writer.WriteLine(string.Join(",", data.ColumnNames));

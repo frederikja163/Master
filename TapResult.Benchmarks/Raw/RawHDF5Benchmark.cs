@@ -11,12 +11,12 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
 {
     private Disposable<long> fileId;
 
-    public RawHdf5Benchmark(string filePath)
+    public void Open(string filePath)
     {
-        using Disposable<long> fileId = new Disposable<long>(H5F.create(filePath, H5F.ACC_TRUNC), i => H5F.close(i)); 
+        fileId = new Disposable<long>(H5F.create(filePath, H5F.ACC_TRUNC), i => H5F.close(i)); 
         Debug.Assert(fileId > 0);
     }
-    
+
     public unsafe void Write(ICustomData data)
     {
         using Disposable<long> groupId = new Disposable<long>(H5G.create(fileId, data.ToString()), i => H5G.close(i));

@@ -6,4 +6,5 @@ public interface ICustomData
     public IEnumerable<Array> Columns { get; }
     public int Count { get; }
     public IEnumerable<Array> Rows { get; }
+    public string Name { get; }
 }

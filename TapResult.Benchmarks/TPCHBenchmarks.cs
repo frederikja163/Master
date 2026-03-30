@@ -11,7 +11,7 @@ namespace TapResult.Benchmarks;
 public class TPCHBenchmarks
 {
     protected TimeSpan Timeout = TimeSpan.FromMinutes(2);
-    
+
     [IterationSetup]
     public void Setup()
     {
@@ -25,9 +25,7 @@ public class TPCHBenchmarks
             Directory.Delete(Config.FilePath, true);
         }
     }
-    
-    // Types: System.Int32, System.String, System.Decimal, System.Char, System.DateTime
-    [ParamsSource(nameof(GetData))] public required TpchData Data { get; set; }
+
 
     public static IEnumerable<TpchData> GetData()
     {
@@ -67,10 +65,7 @@ public class TPCHBenchmarks
                 columns.Add(column);
             }
 
-            if (tableName == "LINEITEM")
-            {
-                yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
-            }
+            yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
         }
     }
 
@@ -99,29 +94,44 @@ public class TPCHBenchmarks
     
     [Benchmark]
     [ArgumentsSource(nameof(GetImplementations))]
-    public void WriteRaw(IRawBenchmark implementation)
+    public void WriteRaw(Implementation implementation)
     {
+        (IRawBenchmark impl, TpchData[] data) = implementation;
         RunWithTimeout(() =>
         {
-            implementation?.Write(Config.FilePath, Data);
+            impl.Open(Config.FilePath);
+            foreach (TpchData tpchData in data)
+            {
+                impl?.Write(tpchData);
+            }
+            impl?.Dispose();
         }, Timeout);
     }
 
-    public IEnumerable<IRawBenchmark> GetImplementations()
+    public record Implementation(IRawBenchmark Impl, TpchData[] Data)
     {
-        yield return new RawBinaryStream();
-        yield return new EncodingBenchmark();
-        yield return new CascadingBenchmark();
-        yield return new CascadingAsyncBenchmark();
-        yield return new RawParquet(CompressionMethod.Snappy);
-        // yield return new RawParquet(CompressionMethod.Zstd);
-        // yield return new RawParquet(CompressionMethod.Gzip);
-        yield return new RawParquet(CompressionMethod.None);
-        // yield return new RawParquet(CompressionMethod.LZ4);
-        // yield return new RawParquet(CompressionMethod.Lz4Raw);
-        // yield return new RawParquet(CompressionMethod.Brotli);
-        // yield return new RawCsv();
-        // yield return new RawSqlite();
-        // yield return new RawHdf5Benchmark();
+        public override string ToString()
+        {
+            return Impl?.ToString() ?? "";
+        }
+    }
+
+    public static IEnumerable<Implementation> GetImplementations()
+    {
+        TpchData[] data = GetData().ToArray();
+        yield return new Implementation(new RawBinaryStream(), data);
+        yield return new Implementation(new EncodingBenchmark(), data);
+        yield return new Implementation(new CascadingBenchmark(), data);
+        yield return new Implementation(new CascadingAsyncBenchmark(), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.Snappy), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.Zstd), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.Gzip), data);
+        yield return new Implementation(new RawParquet(CompressionMethod.None), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.LZ4), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.Lz4Raw), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.Brotli), data);
+        yield return new Implementation(new RawCsv(), data);
+        yield return new Implementation(new RawSqlite(), data);
+        yield return new Implementation(new RawHdf5Benchmark(), data);
     }
 }

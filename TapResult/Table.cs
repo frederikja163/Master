@@ -33,7 +33,7 @@ public sealed class Table : IColumnParent
             IColumn column = _columns[i];
             if (!existingColumn.Equals(column)) 
                 continue;
-            _columns[i] = column;
+            _columns[i] = newColumn;
             return true;
         }
 
@@ -59,8 +59,24 @@ public sealed class Table : IColumnParent
         foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
         {
             IColumn encodedColumn = encoder.Encode(column);
-            this.SwapRecursive(encodedColumn, column);
+            this.SwapRecursive(column, encodedColumn);
         }
+    }
+
+    public async Task CompressAsync(Encoder? encoder = null)
+    {
+        encoder ??= Encoder.Default;
+        List<Task> tasks = new();
+        foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                IColumn encodedColumn = encoder.Encode(column);
+                this.SwapRecursive(column, encodedColumn);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
     }
 
     internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)

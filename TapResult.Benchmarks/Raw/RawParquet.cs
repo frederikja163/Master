@@ -1,3 +1,4 @@
+using Dia2Lib;
 using TapResult.Extensions;
 using Parquet;
 using Parquet.Data;
@@ -8,24 +9,50 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawParquet : IRawBenchmark
 {
-    private readonly string _basePath;
+    private string _basePath;
     private readonly CompressionMethod _compressionMethod;
     private List<string> _paths = new List<string>();
+    private Dictionary<string, List<DataField>> _fields = new Dictionary<string, List<DataField>>();
 
-    public RawParquet(string path, CompressionMethod compressionMethod)
+    public RawParquet(CompressionMethod compressionMethod)
     {
-        _basePath = path;
         _compressionMethod = compressionMethod;
     }
-    
+
+    public void Open(string filePath)
+    {
+        _basePath = filePath;
+    }
+
     public void Write(ICustomData data)
     {
         Task.Run(async () =>
         {
-            ParquetSchema schema = new(
-                data.ColumnNames.Zip(data.Columns)
-                    .Select(tuple => new DataField(tuple.First, GetParquetType(tuple.Second), true))
-            );
+            List<DataField> fields = new List<DataField>();
+            foreach ((var name, Array values) in data.ColumnNames.Zip(data.Columns))
+            {
+                DataField? field = null;
+                Type parquetType = GetParquetType(values);
+                if (_fields.TryGetValue(name, out var existingFields))
+                {
+                    field = existingFields.FirstOrDefault(d => d.ClrType == parquetType);
+                }
+                else
+                {
+                    existingFields = new List<DataField>();
+                    _fields[name] = existingFields;
+                }
+
+                if (field is null)
+                {
+                    field = new DataField(name, parquetType, true);
+                }
+                
+                existingFields.Add(field);
+                fields.Add(field);
+            }
+
+            ParquetSchema schema = new(fields);
 
             await using Stream stream = File.OpenWrite(GetPath());
 
@@ -60,7 +87,7 @@ internal sealed class RawParquet : IRawBenchmark
     
     public static Array ToNullableArray(Array source)
     {
-        var elementType = source.GetType().GetElementType();
+        var elementType = source.GetType().GetElementType()!;
         if (!elementType.IsValueType || Nullable.GetUnderlyingType(elementType) != null)
         {
             return source;
@@ -96,27 +123,7 @@ internal sealed class RawParquet : IRawBenchmark
     {
         Task.Run(async () =>
         {
-            List<DataField> fields = new List<DataField>();
-            foreach (string path in _paths)
-            {
-                ParquetSchema schema = await ParquetReader.ReadSchemaAsync(path);
-                foreach (DataField field in schema.DataFields)
-                {
-                    if (fields.Any(f => f.ClrType == field.ClrType && f.Name == field.Name))
-                    {
-                        continue;
-                    }
-
-                    if (fields.Any(f => f.Name == field.Name))
-                    {
-                        fields.Add(new DataField(field.Name + field.ClrType.Name, field.ClrType, field.IsNullable));
-                    }
-                    else
-                    {
-                        fields.Add(field);
-                    }
-                }
-            }
+            List<DataField> fields = _fields.Values.SelectMany(f => f).ToList();
 
             ParquetSchema writeSchema = new ParquetSchema(fields);
             using Stream stream = File.Create(_basePath);

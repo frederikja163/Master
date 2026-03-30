@@ -63,7 +63,9 @@ public class TpchData : ICustomData
             }
         } 
     }
-    
+
+    public string Name => _tableName;
+
     private static object Parse(string input, Type type)
     {
         var converter = TypeDescriptor.GetConverter(type);
