@@ -16,7 +16,7 @@ internal abstract class TapResultBenchmark : IRawBenchmark
 
     public abstract void Write(ICustomData data);
 
-    public virtual void Dispose()
+    public virtual void Close()
     {
         Writer.Dispose();
     }
@@ -53,10 +53,10 @@ internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
         }));
     }
 
-    public override void Dispose()
+    public override void Close()
     {
         Task.WaitAll(_tasks);
-        base.Dispose();
+        base.Close();
     }
 
     public override string ToString()

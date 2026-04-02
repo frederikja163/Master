@@ -104,7 +104,7 @@ public class TPCHBenchmarks
             {
                 impl?.Write(tpchData);
             }
-            impl?.Dispose();
+            impl?.Close();
         }, Timeout);
     }
 

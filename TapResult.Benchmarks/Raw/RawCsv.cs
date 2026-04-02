@@ -28,7 +28,7 @@ internal sealed class RawCsv : IRawBenchmark, IAsyncDisposable
         return "CSV";
     }
 
-    public void Dispose()
+    public void Close()
     {
         _stream.Dispose();
         _writer.Dispose();

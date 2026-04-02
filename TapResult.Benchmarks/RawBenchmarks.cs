@@ -14,7 +14,7 @@ public class RawBenchmarks : AllBenchmarks
         {
             implementation.Open(Config.FilePath);
             implementation?.Write(Data);
-            implementation.Dispose();
+            implementation?.Close();
         }, Timeout);
     }
 

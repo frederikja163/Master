@@ -24,7 +24,7 @@ internal sealed class RawBinaryStream : IRawBenchmark
         return "Binary";
     }
 
-    public void Dispose()
+    public void Close()
     {
         _writer.Dispose();
     }

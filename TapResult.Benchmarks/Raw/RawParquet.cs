@@ -54,24 +54,26 @@ internal sealed class RawParquet : IRawBenchmark
 
             ParquetSchema schema = new(fields);
 
-            await using Stream stream = File.OpenWrite(GetPath());
+            await using Stream stream = File.Create(GetPath());
 
             await using ParquetWriter writer = await ParquetWriter.CreateAsync(schema, stream);
             writer.CompressionMethod = _compressionMethod;
 
-            using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
-            foreach ((DataField field, Array values) in schema.Fields.Cast<DataField>().Zip(data.Columns))
+            using (ParquetRowGroupWriter groupWriter = writer.CreateRowGroup())
             {
-                Array finalValues = values;
-
-                if (!IsNullable(values))
+                foreach ((DataField field, Array values) in schema.Fields.Cast<DataField>().Zip(data.Columns))
                 {
-                    finalValues = ToNullableArray(values);
+                    Array finalValues = values;
+
+                    if (!IsNullable(values))
+                    {
+                        finalValues = ToNullableArray(values);
+                    }
+
+                    await groupWriter.WriteColumnAsync(new DataColumn(field, finalValues));
                 }
-
-                await groupWriter.WriteColumnAsync(new DataColumn(field, finalValues));
             }
-
+            stream.Flush();
         }).GetAwaiter().GetResult();
     }
 
@@ -119,7 +121,7 @@ internal sealed class RawParquet : IRawBenchmark
         return path;
     }
 
-    public void Dispose()
+    public void Close()
     {
         Task.Run(async () =>
         {

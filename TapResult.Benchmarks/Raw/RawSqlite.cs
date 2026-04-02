@@ -81,7 +81,7 @@ internal sealed class RawSqlite : IRawBenchmark, IAsyncDisposable
         return "Sql";
     }
 
-    public void Dispose()
+    public void Close()
     {
         connection.Dispose();
     }

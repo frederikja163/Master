@@ -104,7 +104,7 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
         return "Hdf5";
     }
 
-    public void Dispose()
+    public void Close()
     {
         fileId.Dispose();
     }
