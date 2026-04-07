@@ -22,6 +22,8 @@ internal sealed class RawParquet : IRawBenchmark
     public void Open(string filePath)
     {
         _basePath = filePath;
+        _paths.Clear();
+        _fields.Clear();
     }
 
     public void Write(ICustomData data)
@@ -111,7 +113,7 @@ internal sealed class RawParquet : IRawBenchmark
 
     public override string ToString()
     {
-        return $"Parquet (Compression: {_compressionMethod})";
+        return $"Sin-Parquet ({_compressionMethod})";
     }
 
     public string GetPath()
@@ -154,5 +156,63 @@ internal sealed class RawParquet : IRawBenchmark
                 }
             }
         }).GetAwaiter().GetResult();
+    }
+}
+
+internal sealed class RawParquetMultiFile(CompressionMethod method) : IRawBenchmark
+{
+    private Stream? _stream;
+    private ParquetWriter? _writer;
+    private ParquetSchema? _schema;
+    
+    public void Open(string path)
+    {
+        _stream = File.Create(path);
+        _writer = null;
+        _schema = null;
+    }
+    
+    public void Write(ICustomData data)
+    {
+        Task.Run(async () =>
+        {
+            _schema ??= new(
+                data.ColumnNames.Zip(data.Columns)
+                    .Select(tuple => new DataField(tuple.First, GetType(tuple.Second), IsNullable(tuple.Second)))
+            );
+            
+            if (_writer is null)
+            {
+                _writer = await ParquetWriter.CreateAsync(_schema, _stream);
+                _writer.CompressionMethod = method;
+            }
+
+            using ParquetRowGroupWriter groupWriter = _writer.CreateRowGroup();
+            foreach ((DataField field, Array values) in _schema.Fields.Cast<DataField>().Zip(data.Columns))
+            {
+                await groupWriter.WriteColumnAsync(new DataColumn(field, values));
+            }
+        }).GetAwaiter().GetResult();
+    }
+
+    public void Close()
+    {
+        _writer.Dispose();
+        _stream.Dispose();
+    }
+
+    private static Type GetType(Array arr)
+    {
+        return arr.GetType().GetElementType()!.GetUnderlyingNullableType();
+    }
+
+    public static bool IsNullable(Array arr)
+    {
+        return arr.GetType().GetElementType()!.IsNullable();
+    }
+
+    public override string ToString()
+    {
+        return $"Mul-Parquet ({method})";
     }
 }

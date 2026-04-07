@@ -22,7 +22,7 @@ public sealed class RawData : ICustomData
     public int Count { get; }
     public int Repeats { get; }
     public float Sparsity { get; }
-    public string Name => throw new NotImplementedException();
+    public string Name => "My Table";
 
     public IEnumerable<Array> Columns => _columns;
     public IEnumerable<string> ColumnNames => _columnNames;

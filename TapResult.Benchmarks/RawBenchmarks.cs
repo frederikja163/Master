@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Parquet;
+using TapResult.Benchmarks.Data;
 using TapResult.Benchmarks.Raw;
 
 namespace TapResult.Benchmarks;
@@ -10,10 +11,14 @@ public class RawBenchmarks : AllBenchmarks
     [ArgumentsSource(nameof(GetImplementations))]
     public void WriteRaw(IRawBenchmark implementation)
     {
+        RawData data = Data as RawData;
         RunWithTimeout(() =>
         {
             implementation.Open(Config.FilePath);
-            implementation?.Write(Data);
+            for (int i = 0; i < data.Repeats; i++)
+            {
+                implementation?.Write(data);
+            }
             implementation?.Close();
         }, Timeout);
     }
