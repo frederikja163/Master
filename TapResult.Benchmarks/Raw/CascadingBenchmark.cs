@@ -48,8 +48,11 @@ internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
         _tasks.Add(Task.Run(async () =>
         {
             Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
-            await table.CompressAsync();
-            Writer.Write(table);
+            table.CompressAsync().GetAwaiter().GetResult();
+            lock (Writer)
+            {
+                Writer.Write(table);
+            }
         }));
     }
 
