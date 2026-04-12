@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using TapResult.Columns;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult;
 
@@ -14,57 +15,71 @@ public sealed class Table : IColumnParent
     private string Name { get; }
 
 
-    public EncodingId EncodingId => EncodingId.Table;
+    public EncodingType EncodingType => EncodingType.Table;
     public LogicalType LogicalType => LogicalType.UInt8;
-    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+
+    public IEnumerable<IColumn> GetChildColumns()
     {
         foreach (IColumn column in _columns)
         {
-            if (recursive && column is IColumnParent columnParent)
-            {
-                foreach (IColumn childColumn in columnParent.GetChildColumns(recursive))
-                {
-                    yield return childColumn;
-                }
-            }
             yield return column;
         }
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         for (var i = 0; i < _columns.Length; i++)
         {
             IColumn column = _columns[i];
             if (!existingColumn.Equals(column)) 
                 continue;
-            _columns[i] = column;
-            break;
+            _columns[i] = newColumn;
+            return true;
         }
-    }
-    public int CalculateTotalLength()
-    {
-        return GetDataColumns().Sum(column => column.LogicalLength);
+
+        return false;
     }
 
-    public IEnumerable<DataColumn> GetDataColumns()
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        foreach (IColumn column in _columns)
-        {
-            foreach (DataColumn dataColumn in column.GetDataColumns()) 
-                yield return dataColumn;
-        }
-    }
-
-    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
-    {
-        DataColumnBuilder builder = new DataColumnBuilder(LogicalType.String, 100, false);
+        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
         builder.WriteString(Name);
         builder.WriteStrings(_names);
-        blobBuilder.WriteBlob(builder.Build().Data.ToArray());
+        blobBuilder.WriteBlob(builder.BuildDataColumn().Data.ToArray());
     }
 
-    internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
+    IColumnReader IColumn.OpenReader()
+    {
+        throw new Exception("Cannot open a reader for tables.");
+    }
+
+    public void Compress(Encoder? encoder = null)
+    {
+        encoder ??= Encoder.Default;
+        foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
+        {
+            IColumn encodedColumn = encoder.Encode(column);
+            this.SwapRecursive(column, encodedColumn);
+        }
+    }
+
+    public async Task CompressAsync(Encoder? encoder = null)
+    {
+        encoder ??= Encoder.Default;
+        List<Task> tasks = new();
+        foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                IColumn encodedColumn = encoder.Encode(column);
+                this.SwapRecursive(column, encodedColumn);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    public Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
     {
         _columns = columns.ToArray();
         _names = names.ToArray();

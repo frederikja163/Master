@@ -1,11 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Columns;
 
-public struct RunLengthColumn(LogicalType logicalType, IColumn byteColumn, IColumn repeatColumn, int byteLength, int length) : IColumnParent
+internal sealed class RunLengthColumn(LogicalType logicalType, IColumn byteColumn, IColumn repeatColumn, int byteLength, int length) : IColumnParent
 {
-    public EncodingId EncodingId { get; } = EncodingId.RunLength;
+    public EncodingType EncodingType { get; } = EncodingType.RunLength;
     public LogicalType LogicalType { get; } = logicalType;
 
     public IColumn ByteColumn { get; set; } = byteColumn;
@@ -14,54 +15,37 @@ public struct RunLengthColumn(LogicalType logicalType, IColumn byteColumn, IColu
     public int ByteLength { get; set; } = byteLength;
     internal static readonly int Size = Unsafe.SizeOf<int>() + Unsafe.SizeOf<int>();
 
-    public int CalculateTotalLength()
-    {
-        return GetDataColumns().Sum(d => d.LogicalLength);
-    }
-    
-    public IEnumerable<DataColumn> GetDataColumns() => ByteColumn.GetDataColumns().Concat(RepeatColumn.GetDataColumns());
-
-
-    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.Write(Size);
         blobBuilder.WriteRaw(ByteLength);
         blobBuilder.WriteRaw(Length);
     }
 
-    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+    public IColumnReader OpenReader()
     {
-        if (recursive)
-        {
-            if (ByteColumn is IColumnParent columnParent)
-            {
-                foreach (IColumn childColumn in columnParent.GetChildColumns(true))
-                {
-                    yield return childColumn;
-                }
-            }
-        
-            if (RepeatColumn is IColumnParent columnParent2)
-            {
-                foreach (IColumn childColumn in columnParent2.GetChildColumns(true))
-                {
-                    yield return childColumn;
-                }
-            }
-        }
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<IColumn> GetChildColumns()
+    {
         yield return ByteColumn;
         yield return RepeatColumn;
     }
 
-    void IColumnParent.Swap(in IColumn existingColumn, in IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
         if (existingColumn.Equals(ByteColumn))
         {
             ByteColumn = newColumn;
+            return true;
         }
         if (existingColumn.Equals(RepeatColumn))
         {
             RepeatColumn = newColumn;
+            return true;
         }
+
+        return false;
     }
 }

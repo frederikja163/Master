@@ -10,9 +10,9 @@ namespace TapResult.Encodings;
 /// </summary>
 public sealed class RunLengthEncoding : IEncoding
 {
-    public EncodingId Id { get; } = EncodingId.RunLength;
+    public EncodingType Type { get; } = EncodingType.RunLength;
     
-    public IColumn Encode(in DataColumn dataColumn)
+    public IColumn Encode(DataColumn dataColumn)
     {
         if (!dataColumn.LogicalType.TryGetSize(out int size))
         {
@@ -31,14 +31,14 @@ public sealed class RunLengthEncoding : IEncoding
 
         return column;
     }
-    
-    public IColumn Encode<T>(in DataColumn dataColumn)
+
+    public IColumn Encode<T>(DataColumn dataColumn)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
         IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
         int byteLength = Unsafe.SizeOf<T>();
-        DataColumnBuilder byteBuilder = new DataColumnBuilder(dataColumn.LogicalType, dataColumn.PhysicalSize);
-        DataColumnBuilder repeatBuilder = new DataColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
+        ColumnBuilder byteBuilder = new ColumnBuilder(dataColumn.LogicalType, dataColumn.PhysicalSize);
+        ColumnBuilder repeatBuilder = new ColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
         T previous = reader.Read();
         int repeats = 1;
         for (int i = 1; i < dataColumn.LogicalLength; i++)
@@ -59,8 +59,8 @@ public sealed class RunLengthEncoding : IEncoding
         return new RunLengthColumn(dataColumn.LogicalType, byteBuilder.Build(), repeatBuilder.Build(), byteLength, dataColumn.LogicalLength);
     }
 
-    public IColumnReader CreateDecoder(LogicalType type,
-        ref GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
+
+    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not { } bytes ||

@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
+using TapResult.Columns;
 
 namespace TapResult.Readers;
 
@@ -50,6 +51,16 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
         }
         value = (value & _valueMask) | Prefix;
         return value;
+    }
+
+    IEnumerable<object> IColumnReader.Peek(int offset, int count)
+    {
+        return Peek(offset, count).OfType<object>();
+    }
+
+    object IColumnReader.Peek(int offset)
+    {
+        return Peek(offset);
     }
 
     public IEnumerable<T> Peek(int offset, int count)

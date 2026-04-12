@@ -35,6 +35,16 @@ public class RunLengthReader<T> : IColumnReader<T>
         Index += units;
     }
 
+    object? IColumnReader.Peek(int offset)
+    {
+        return Peek(offset);
+    }
+
+    IEnumerable<object?> IColumnReader.Peek(int offset, int count)
+    {
+        return Peek(offset, count).OfType<object?>();
+    }
+
     public T Peek(int offset = 0)
     {
         int indexOffset = 0;

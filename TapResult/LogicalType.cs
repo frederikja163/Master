@@ -3,7 +3,12 @@
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Logical types supported by the file format.
+/// These represent the logical type, as the physical type will always just be an array of bytes,
+/// that store data according to some conventions.
+/// Primitive types are stored as little endian,
+/// and variable length types (blob and string) are stored as length prefixed.
+/// The length is an integer, and strings are stored with UTF8.
 /// </summary>
 public enum LogicalType : byte
 {
@@ -23,12 +28,12 @@ public enum LogicalType : byte
 }
 
 /// <summary>
-/// TODO
+/// Helper methods for <see cref="LogicalType"/>, either conversions, groups, or size related methods.
 /// </summary>
 public static class TypeHelper
 {
     /// <summary>
-    /// TODO
+    /// Converts a <see cref="LogicalType"/> to a <see cref="System.Type"/>.
     /// </summary>
     public static Type ToCsType(this LogicalType logicalType)
         => logicalType switch
@@ -50,7 +55,9 @@ public static class TypeHelper
         };
 
     /// <summary>
-    /// TODO
+    /// Tries to get the size of this logical type.
+    /// If it is a variable length type it returns false otherwise it returns true,
+    /// with the size in the size parameter.
     /// </summary>
     public static unsafe bool TryGetSize(this LogicalType logicalType, out int size)
     {
@@ -93,12 +100,13 @@ public static class TypeHelper
         });
 
     /// <summary>
-    /// TODO
+    /// Converts a <see cref="System.Type"/> to a <see cref="LogicalType"/>.
     /// </summary>
     public static LogicalType ToLogicalType(this Type type) => PhysicalTypes[type];
 
     /// <summary>
-    /// TODO
+    /// Gets all integer types as logical types.
+    /// SInt8-SInt64 and UInt8-UInt64.
     /// </summary>
     public static IEnumerable<LogicalType> IntegerTypes()
     {
@@ -112,7 +120,8 @@ public static class TypeHelper
         yield return LogicalType.UInt64;
     }
     /// <summary>
-    /// TODO
+    /// Gets all float types as logical types.
+    /// Float16-Float64.
     /// </summary>
     public static IEnumerable<LogicalType> FloatTypes()
     {
@@ -121,25 +130,28 @@ public static class TypeHelper
         yield return LogicalType.Float64;
     }
     /// <summary>
-    /// TODO
+    /// Gets all numeric types.
+    /// Union of <see cref="IntegerTypes"/> and <see cref="FloatTypes"/>.
     /// </summary>
     public static IEnumerable<LogicalType> NumericTypes()
     {
         return IntegerTypes().Concat(FloatTypes());
     }
     /// <summary>
-    /// TODO
+    /// Gets all variable length types.
+    /// Blob and String.
     /// </summary>
-    public static IEnumerable<LogicalType> BlobTypes()
+    public static IEnumerable<LogicalType> VariableLengthTypes()
     {
         yield return LogicalType.Blob;
         yield return LogicalType.String;
     }
     /// <summary>
-    /// TODO
+    /// Gets all types.
+    /// Union of <see cref="NumericTypes"/> and <see cref="VariableLengthTypes"/>.
     /// </summary>
     public static IEnumerable<LogicalType> AllTypes()
     {
-        return NumericTypes().Concat(BlobTypes());
+        return NumericTypes().Concat(VariableLengthTypes());
     }
 }

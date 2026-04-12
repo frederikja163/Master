@@ -7,23 +7,31 @@ namespace TapResult.Tests.Encodings;
 internal sealed class EncodingTests
 {
     [TestCase(1, 10, 0.2)]
+    [TestCase(20, 10, 0.1)]
     [TestCase(100, 10, 0.2)]
     [TestCase(100, 10, 0.1)]
     [TestCase(128, 5, 0.1)]
     [TestCase(1024, 10, 0.1)]
     public void SampleIsCorrectTest(int dataSize, int sampleCount, double samplePercentage)
     {
-        Serializer serializer = new Serializer()
+        Encoder encoder = new Encoder()
         {
             SampleCount = sampleCount,
             SamplePercentage = samplePercentage,
         };
         int[] data = Enumerable.Range(0, dataSize).ToArray();
-        DataColumn sample = serializer.CreateSample(DataColumn.Create<int>(data));
+        DataColumn sample = encoder.CreateSample(ColumnBuilder.Create<int>(data));
 
-        int sampleLength = (int)(dataSize * samplePercentage) / sampleCount;
+        int sampleLength = (int)(dataSize * samplePercentage / sampleCount);
         int totalSampleLength = sampleLength * sampleCount;
         totalSampleLength = Math.Max(totalSampleLength, 1);
+
+        if (dataSize * samplePercentage < sampleCount)
+        {
+            totalSampleLength = dataSize;
+            sampleLength = dataSize;
+            sampleCount = 1;
+        }
         
         Assert.That(sample.LogicalLength, Is.EqualTo(totalSampleLength));
         sampleCount = Math.Min(sampleCount, totalSampleLength);
@@ -46,15 +54,15 @@ internal sealed class EncodingTests
     {
         string[] data = ["test", "testing", "hello", "world"];
         
-        Serializer serializer = new Serializer()
+        Encoder encoder = new Encoder()
         {
             SampleCount = 1,
             SamplePercentage = 0.5,
             CascadingEncodings = 2,
         };
 
-        DataColumn expected = DataColumn.Create(data);
-        IColumn column = serializer.Encode(expected);
+        DataColumn expected = ColumnBuilder.Create(data);
+        IColumn column = encoder.Encode(expected);
         // TODO: Read
         // DataColumnBuilder builder = new DataColumnBuilder(100);
         // column.WriteMetadata(builder);
@@ -68,10 +76,10 @@ internal sealed class EncodingTests
     {
         int[] data = [1,2,3,0];
         
-        Serializer serializer = new Serializer();
+        Encoder encoder = new Encoder();
 
-        DataColumn expected = DataColumn.Create<int>(data);
-        IColumn column = serializer.Encode(expected);
+        DataColumn expected = ColumnBuilder.Create<int>(data);
+        IColumn column = encoder.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
         //Assert.That(dataColumn.Data.ToArray(), Is.EqualTo(expected.Data.ToArray()));
@@ -82,10 +90,10 @@ internal sealed class EncodingTests
     {
         uint[] data = [1,2,3,0];
         
-        Serializer serializer = new Serializer();
+        Encoder encoder = new Encoder();
 
-        DataColumn expected = DataColumn.Create<uint>(data);
-        IColumn column = serializer.Encode(expected);
+        DataColumn expected = ColumnBuilder.Create<uint>(data);
+        IColumn column = encoder.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
         //Assert.That(dataColumn.Data.ToArray(), Is.EqualTo(expected.Data.ToArray()));

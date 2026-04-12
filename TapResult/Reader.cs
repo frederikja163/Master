@@ -7,23 +7,24 @@ using TapResult.Readers;
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Reader for a TapResult file,
+/// can open new columns to read and read the metadata to figure out what columns and types exist.
 /// </summary>
 public sealed class Reader
 {
     private readonly Stream _stream;
     private readonly Dictionary<string, TableInfo> _tables;
-    private readonly ILookup<EncodingId, IEncoding> _encodingsById;
+    private readonly Encoder _encoder;
     
-    private Reader(Stream stream, IEnumerable<TableInfo> tables, IEnumerable<IEncoding> encodings)
+    private Reader(Stream stream, IEnumerable<TableInfo> tables, Encoder encoder)
     {
         _stream = stream;
         _tables = tables.ToDictionary(t => t.Name, t => t);
-        _encodingsById = encodings.ToLookup(e => e.Id);
+        _encoder = encoder;
     }
 
     /// <summary>
-    /// TODO
+    /// Gets all tables that are part of this file.
     /// </summary>
     public IEnumerable<TableInfo> GetTables()
     {
@@ -31,7 +32,7 @@ public sealed class Reader
     }
 
     /// <summary>
-    /// TODO
+    /// Tries to get a table by name, returning true and the table if any is found. Otherwise returns false and null.
     /// </summary>
     public bool TryGetTable(string name, [NotNullWhen(true)] out TableInfo? table)
     {
@@ -39,19 +40,13 @@ public sealed class Reader
     }
 
     /// <summary>
-    /// TODO
+    /// Creates a new reader asynchronously.
     /// </summary>
-    public static async Task<Reader> CreateReaderAsync(Stream stream) =>
-        await CreateReaderAsync(stream, new BitPacking(), new SplitEncoding());
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public static async Task<Reader> CreateReaderAsync(Stream stream, params IEnumerable<IEncoding> encodings)
+    public static async Task<Reader> CreateReaderAsync(Stream stream, Encoder? encoder = null)
     {
         int postfixSize = Unsafe.SizeOf<long>() * 4;
         stream.Seek(-postfixSize, SeekOrigin.End);
-        Span<byte> postfix = stackalloc byte[postfixSize];
+        byte[] postfix = new byte[postfixSize];
         stream.ReadExactly(postfix);
         GenericReader postfixReader = new GenericReader(postfix);
         long start = postfixReader.Read<long>();
@@ -75,7 +70,7 @@ public sealed class Reader
             int blobLength = schemaReader.Read<int>();
             ReadOnlyMemory<byte> blob = new ReadOnlyMemory<byte>(schema, schemaReader.ByteIndex, blobLength);
             schemaReader.Advance(blobLength);
-            encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingId)encodingIds[i], (LogicalType)types[i], blob));
+            encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingType)encodingIds[i], (LogicalType)types[i], blob));
         }
         
         List<EncodingInfo> tableEncodings = new List<EncodingInfo>();
@@ -94,11 +89,12 @@ public sealed class Reader
             parent.AddSubEncoding(value);
         }
         
-        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encodings);
+        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encoder ?? Encoder.Default);
     }
 
     /// <summary>
-    /// TODO
+    /// Opens a new column reader for a specific column with a type.
+    /// Throws an exception if the column type is not the same as T.
     /// </summary>
     public IColumnReader<T> OpenColumnReader<T>(ColumnInfo column)
     {
@@ -107,7 +103,7 @@ public sealed class Reader
     }
 
     /// <summary>
-    /// TODO
+    /// Opens a new column reader for a specific column with a type.
     /// </summary>
     public IColumnReader OpenColumnReader(ColumnInfo column)
     {
@@ -116,8 +112,8 @@ public sealed class Reader
 
     private IColumnReader CreateReader(EncodingInfo encodingInfo)
     {
-        GenericReader reader = new GenericReader(encodingInfo.Blob.Span);
-        if (encodingInfo.Encoding == EncodingId.Binary)
+        GenericReader reader = new GenericReader(encodingInfo.Blob);
+        if (encodingInfo.Encoding == EncodingType.Binary)
         {
             int physicalSize = reader.Read<int>();
             int logicalLength = reader.Read<int>();
@@ -130,9 +126,6 @@ public sealed class Reader
         }
         
         IEnumerable<IColumnReader> childReaders = encodingInfo.GetSubEncodings().Select(CreateReader);
-        IEncoding encoding = _encodingsById[encodingInfo.Encoding]
-            .FirstOrDefault(e => e.GetSupportedTypes().Any(t => t == encodingInfo.Type)) ??
-            throw new NullReferenceException($"Could not find encoding of type {encodingInfo.Id} with logical type {encodingInfo.Type}");
-        return encoding.CreateDecoder(encodingInfo.Type, ref reader, childReaders);
+        return _encoder.Decode(encodingInfo.Encoding, encodingInfo.Type, ref reader, childReaders);
     }
 }

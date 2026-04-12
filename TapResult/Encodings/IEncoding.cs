@@ -6,36 +6,40 @@ namespace TapResult.Encodings;
 /// <summary>
 /// Describes what <b>IEncoding</b> to use. The encoding does not determine the type of IColumn as IColumns can be reused in different encodings.
 /// </summary>
-public enum EncodingId : byte
+public enum EncodingType : byte
 {
     Table = 0,
     Binary = 1,
     Split = 2,
     BitPacking = 3,
-    RunLength = 4,
+    Null = 4,
+    RunLength = 5,
 }
 
 /// <summary>
-/// TODO
+/// The base of all encodings.
 /// </summary>
 public interface IEncoding
 {
     /// <summary>
-    /// TODO
+    /// The type of this encoding. If making custom encodings, make sure it does not collide with any values used in <see cref="EncodingType"/>.
     /// </summary>
-    public EncodingId Id { get; }
+    public EncodingType Type { get; }
     /// <summary>
-    /// TODO
+    /// Encode a DataColumn using the encoding specified by <see cref="Type"/>.
     /// </summary>
-    IColumn Encode(in DataColumn dataColumn);
+    IColumn Encode(DataColumn dataColumn);
 
     /// <summary>
-    /// TODO
+    /// Create a decoder for this type of encoding.
+    /// The decoder must be an IColumnReader,
+    /// and the IColumnReader should ideally have a more specific type that depends on the type of LogicalType.
     /// </summary>
-    IColumnReader CreateDecoder(LogicalType type, ref GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns);
+    IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns);
 
     /// <summary>
-    /// TODO
+    /// Gets the supported LogicalTypes of this Encoding.
+    /// See <see cref="TypeHelper"/> for methods to get common groups of types.
     /// </summary>
     IEnumerable<LogicalType> GetSupportedTypes();
 }

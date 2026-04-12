@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using TapResult.Extensions;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
@@ -26,14 +27,11 @@ public class SparkBenchmark
             );
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), path);
         
-            for (int i = 0; i < data.Repeats; i++)
-            {
-                var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
-                dataFrame.Write()
-                    .Mode(i == 0 ? SaveMode.Overwrite : SaveMode.Append)
-                    .Format(_format)
-                    .Save(outputPath);
-            }
+            var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
+            dataFrame.Write()
+                .Mode(SaveMode.Overwrite)
+                .Format(_format)
+                .Save(outputPath);
             return Task.CompletedTask;
         }).Wait();
     }
@@ -43,7 +41,7 @@ public class SparkBenchmark
         return dataType == typeof(int) ? new IntegerType() :
             dataType == typeof(string) ? new StringType() :
             dataType == typeof(double) ? new DoubleType() :
-            dataType == typeof(float) ? new DoubleType() : throw new NotImplementedException("Couldn't read data type");
+            dataType == typeof(float) ? new DoubleType() : throw new UnreachableException("Couldn't read data type");
     }
     private static object ConvertValue(object v)
     {

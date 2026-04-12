@@ -5,99 +5,79 @@ using IColumn = TapResult.Columns.IColumn;
 
 namespace TapResult.Benchmarks.Raw;
 
-internal sealed class CascadingBenchmark : IRawBenchmark
+internal abstract class TapResultBenchmark : IRawBenchmark
 {
-    public void Write(string path, ICustomData data)
-    {
-        Serializer serializer = new Serializer();
-        using Stream stream = File.OpenWrite(path);
-        for (int i = 0; i < data.Repeats; i++)
-        {
-            foreach (Array array in data.Columns)
-            {
-                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                IColumn column = serializer.Encode(dataColumn);
-                foreach (DataColumn col in column.GetDataColumns())
-                {
-                    stream.Write(col.Data.Span);
-                    if (nulls is not null)
-                    {
-                        stream.Write(nulls.Data.Span);
-                    }
-                }
+    protected Writer? Writer;
 
-            }
-        }
+    public void Open(string filePath)
+    {
+        Writer = new Writer(File.Create(filePath));
+    }
+
+    public abstract void Write(ICustomData data);
+
+    public virtual void Close()
+    {
+        Writer?.Dispose();
+    }
+}
+
+internal sealed class CascadingBenchmark : TapResultBenchmark
+{
+    
+    public override void Write(ICustomData data)
+    {
+        Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
+        table.Compress();
+        Writer?.Write(table);
     }
 
     public override string ToString()
     {
-        return "Cascading";
+        return "TapResult Compressed";
     }
 }
 
 
-internal sealed class CascadingAsyncBenchmark : IRawBenchmark
+internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
 {
-    public void Write(string path, ICustomData data)
+    private readonly List<Task> _tasks = new List<Task>();
+    
+    public override void Write(ICustomData data)
     {
-        Serializer serializer = new Serializer();
-        using Stream stream = File.OpenWrite(path);
-        List<Task> tasks = new ();
-        for (int i = 0; i < data.Repeats; i++)
+        _tasks.Add(Task.Run(async () =>
         {
-            foreach (Array array in data.Columns)
+            Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
+            await table.CompressAsync();
+            lock (Writer!)
             {
-                tasks.Add(Task.Run(() =>
-                {
-                    DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                    IColumn column = serializer.Encode(dataColumn);
-                    lock (stream)
-                    {
-                        foreach (DataColumn col in column.GetDataColumns())
-                        {
-                            stream.Write(col.Data.Span);
-                            if (nulls is not null)
-                            {
-                                stream.Write(nulls.Data.Span);
-                            }
-                        }
-                    }
-                }));
+                Writer.Write(table);
             }
-        }
+        }));
+    }
 
-        Task.WaitAll(tasks);
+    public override void Close()
+    {
+        Task.WaitAll(_tasks);
+        base.Close();
     }
 
     public override string ToString()
     {
-        return "Async Cascading";
+        return "TapResult Async";
     }
 }
 
-internal sealed class EncodingBenchmark : IRawBenchmark
+internal sealed class EncodingBenchmark : TapResultBenchmark
 {
-    public void Write(string path, ICustomData data)
+    public override void Write(ICustomData data)
     {
-        Stream stream = File.OpenWrite(path);
-
-        for (int i = 0; i < data.Repeats; i++)
-        {
-            foreach (Array array in data.Columns)
-            {
-                DataColumn dataColumn = DataColumn.Create(array, out var nulls);
-                stream.Write(dataColumn.Data.Span);
-                if (nulls is not null)
-                {
-                    stream.Write(nulls.Data.Span);
-                }
-            }
-        }
+        Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
+        Writer!.Write(table);
     }
 
     public override string ToString()
     {
-        return "Encoding";
+        return "TapResult";
     }
 }

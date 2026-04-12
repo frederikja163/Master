@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TapResult.Encodings;
+using TapResult.Readers;
 
 namespace TapResult.Columns;
 
@@ -10,7 +11,7 @@ internal sealed class BitPackingColumn : IColumnParent
     public ulong Prefix { get; }
     public int LogicalLength { get; }
     public LogicalType LogicalType { get; }
-    public EncodingId EncodingId => EncodingId.BitPacking;
+    public EncodingType EncodingType => EncodingType.BitPacking;
     public IColumn Column { get; set; }
     internal static readonly int Size = Unsafe.SizeOf<byte>() +
                                        Unsafe.SizeOf<ulong>() +
@@ -28,40 +29,28 @@ internal sealed class BitPackingColumn : IColumnParent
     
     public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix) : this(column, prefixLength, prefix, column.LogicalLength)
     { }
-    
-    IEnumerable<IColumn> IColumnParent.GetChildColumns(bool recursive)
+
+    public IEnumerable<IColumn> GetChildColumns()
     {
-        if (recursive && Column is IColumnParent columnParent)
-        {
-            foreach (IColumn childColumn in columnParent.GetChildColumns(true))
-            {
-                yield return childColumn;
-            }
-        }
         yield return Column;
     }
 
-    public void Swap(in IColumn existingColumn, in IColumn newColumn)
+    public bool Swap(IColumn existingColumn, IColumn newColumn)
     {
-        Debug.Assert(existingColumn.Equals(Column));
+        if (!existingColumn.Equals(Column))
+            return false;
         Column = newColumn;
+        return true;
     }
 
-    public int CalculateTotalLength()
-    {
-        return GetDataColumns().Sum(column => column.LogicalLength);
-    }
-
-    public IEnumerable<DataColumn> GetDataColumns()
-    {
-        return Column.GetDataColumns();
-    }
-    
-    void IColumn.WriteMetadata(ref DataColumnBuilder blobBuilder)
+    public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         blobBuilder.Write(Size);
         blobBuilder.WriteRaw(PrefixLength);
         blobBuilder.WriteRaw(Prefix);
         blobBuilder.WriteRaw(LogicalLength);
     }
+
+    public IColumnReader OpenReader()
+        => BitPacking.OpenReader(Column.OpenReader(), LogicalLength, LogicalType, PrefixLength, Prefix);
 }

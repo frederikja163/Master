@@ -3,19 +3,20 @@
 namespace TapResult;
 
 /// <summary>
-/// TODO
+/// Writer for a TapResult file,
+/// encodes columns and writes them out.
 /// </summary>
-public sealed class TableWriter : IDisposable, IAsyncDisposable
+public sealed class Writer : IDisposable, IAsyncDisposable
 {
     private readonly Stream _outStream;
     private readonly bool _leaveOpen;
     
     private int _currentId = 0;
-    private DataColumnBuilder _idBuilder = new (LogicalType.SInt32, 200, true);
-    private DataColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200, true);
-    private DataColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200, true);
-    private DataColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200, true);
-    private DataColumnBuilder _blobBuilder = new (LogicalType.Blob, 200, true);
+    private ColumnBuilder _idBuilder = new (LogicalType.SInt32, 200);
+    private ColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200);
+    private ColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200);
+    private ColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200);
+    private ColumnBuilder _blobBuilder = new (LogicalType.Blob, 200);
     
     private const byte MajorVersion = 1;
     private const byte MinorVersion = 0;
@@ -33,9 +34,9 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     ]; // OTAP R100
 
     /// <summary>
-    /// TODO
+    /// Create a new TableWriter. optionally leaving the stream open.
     /// </summary>
-    public TableWriter(Stream output, bool leaveOpen = false)
+    public Writer(Stream output, bool leaveOpen = false)
     {
         ArgumentNullException.ThrowIfNull(output);
 
@@ -53,23 +54,23 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         // Metadata
         long metadataStart = _outStream.Position; // for Postscript
 
-        DataColumn idColumn = _idBuilder.Build();
+        DataColumn idColumn = _idBuilder.BuildDataColumn();
         idColumn.Write(_outStream);
-        _parentIdBuilder.Build().Write(_outStream);
-        _encodingIdBuilder.Build().Write(_outStream);
-        _logicalTypeBuilder.Build().Write(_outStream);
-        _blobBuilder.Build() .Write(_outStream);
+        _parentIdBuilder.BuildDataColumn().Write(_outStream);
+        _encodingIdBuilder.BuildDataColumn().Write(_outStream);
+        _logicalTypeBuilder.BuildDataColumn().Write(_outStream);
+        _blobBuilder.BuildDataColumn() .Write(_outStream);
         
         // Postscript
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = idColumn.LogicalLength;
         
-        DataColumnBuilder postScript = new(LogicalType.UInt64, 24);
+        ColumnBuilder postScript = new(LogicalType.UInt64, 24);
         postScript.Write(metadataStart);
         postScript.Write(metadataLength);
         postScript.Write(metadataLogicalLength);
         
-        _outStream.Write(postScript.Build().Data.Span);
+        _outStream.Write(postScript.BuildDataColumn().Data.Span);
         _outStream.Write(MagicNumber);
         
         if (_leaveOpen)
@@ -98,11 +99,11 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
     }
     
     /// <summary>
-    /// TODO
+    /// Write a table to this writer.
     /// </summary>
     public void Write(Table table)
     {
-        foreach (DataColumn dataColumn in table.GetDataColumns())
+        foreach (DataColumn dataColumn in table.GetChildColumnsRecursive().OfType<DataColumn>())
         {
             dataColumn.Write(_outStream);
         }
@@ -120,14 +121,14 @@ public sealed class TableWriter : IDisposable, IAsyncDisposable
         }
         _idBuilder.Write(id);
         _parentIdBuilder.Write(parentId);
-        _encodingIdBuilder.Write((byte) column.EncodingId);
+        _encodingIdBuilder.Write((byte) column.EncodingType);
         _logicalTypeBuilder.Write((byte) column.LogicalType);
-        column.WriteMetadata(ref _blobBuilder);
+        column.WriteMetadata(_blobBuilder);
     }
     
     internal Table GetMetadata()
     {
-        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _blobBuilder.Build()],
+        return new Table([_idBuilder.BuildDataColumn(), _parentIdBuilder.BuildDataColumn(), _encodingIdBuilder.BuildDataColumn(), _logicalTypeBuilder.BuildDataColumn(), _blobBuilder.BuildDataColumn()],
             ["Id", "ParentId", "Encoding", "LogicalType", "Blob"],
             "schema");
     }

@@ -6,13 +6,14 @@ using TapResult.Readers;
 namespace TapResult.Encodings;
 
 /// <summary>
-/// TODO
+/// Bitpack encoding, packs together integer types by removing common prefixes and storing said prefix as metadata.
+/// For example turning 1a 1b 1c 1d into ab cd with 1 as the prefix.
 /// </summary>
 public sealed class BitPacking : IEncoding
 {
-    public EncodingId Id { get; } = EncodingId.BitPacking;
+    public EncodingType Type { get; } = EncodingType.BitPacking;
     
-    public IColumn Encode(in DataColumn dataColumn)
+    public IColumn Encode(DataColumn dataColumn)
     {
         if (!dataColumn.LogicalType.TryGetSize(out int size))
         {
@@ -31,7 +32,7 @@ public sealed class BitPacking : IEncoding
         return column;
     }
 
-    public IColumnReader CreateDecoder(LogicalType type, ref GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
+    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
@@ -41,25 +42,7 @@ public sealed class BitPacking : IEncoding
         byte prefixLength = metadataReader.Read<byte>();
         ulong prefix = metadataReader.Read<ulong>();
         int logicalLength = metadataReader.Read<int>();
-        return type switch
-        {
-            LogicalType.SInt8 => new BitPackingColumnReader<sbyte>(reader, logicalLength, type, prefixLength, (sbyte)prefix),
-            LogicalType.SInt16 => new BitPackingColumnReader<short>(reader, logicalLength, type, prefixLength, (short)prefix),
-            LogicalType.SInt32 => new BitPackingColumnReader<int>(reader, logicalLength, type, prefixLength, (int)prefix),
-            LogicalType.SInt64 => new BitPackingColumnReader<long>(reader, logicalLength, type, prefixLength, (long)prefix),
-            LogicalType.UInt8 => new BitPackingColumnReader<byte>(reader, logicalLength, type, prefixLength, (byte)prefix),
-            LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
-            LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
-            LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
-            
-            // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
-            LogicalType.Float16 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Float32 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Float64 => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-        };
+        return OpenReader(reader, logicalLength, type, prefixLength, prefix);
     }
 
     private static IColumn Encode<T>(in DataColumn dataColumn)
@@ -77,7 +60,7 @@ public sealed class BitPacking : IEncoding
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - metadata.PrefixLength;
         int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
-        DataColumnBuilder builder = new DataColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
+        ColumnBuilder builder = new ColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
         T flag = (T.AllBitsSet << metadata.PrefixLength) >>> metadata.PrefixLength;
         T currentValue = default;
         int shift = 0;
@@ -104,7 +87,7 @@ public sealed class BitPacking : IEncoding
         currentValue <<= size - shift;
         builder.Write(currentValue);
 
-        metadata.Column = builder.Build();
+        metadata.Column = builder.BuildDataColumn();
     }
 
     internal static BitPackingColumn GetMetadata<T>(in DataColumn data) where T : unmanaged, IBinaryInteger<T>
@@ -159,4 +142,18 @@ public sealed class BitPacking : IEncoding
     {
         return TypeHelper.IntegerTypes();
     }
+
+    internal static IColumnReader OpenReader(IColumnReader reader, int logicalLength, LogicalType type, byte prefixLength,
+        ulong prefix) => type switch
+    {
+        LogicalType.SInt8 => new BitPackingColumnReader<sbyte>(reader, logicalLength, type, prefixLength, (sbyte)prefix),
+        LogicalType.SInt16 => new BitPackingColumnReader<short>(reader, logicalLength, type, prefixLength, (short)prefix),
+        LogicalType.SInt32 => new BitPackingColumnReader<int>(reader, logicalLength, type, prefixLength, (int)prefix),
+        LogicalType.SInt64 => new BitPackingColumnReader<long>(reader, logicalLength, type, prefixLength, (long)prefix),
+        LogicalType.UInt8 => new BitPackingColumnReader<byte>(reader, logicalLength, type, prefixLength, (byte)prefix),
+        LogicalType.UInt16 => new BitPackingColumnReader<ushort>(reader, logicalLength, type, prefixLength, (ushort)prefix),
+        LogicalType.UInt32 => new BitPackingColumnReader<uint>(reader, logicalLength, type, prefixLength, (uint)prefix),
+        LogicalType.UInt64 => new BitPackingColumnReader<ulong>(reader, logicalLength, type, prefixLength, (ulong)prefix),
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+    };
 }

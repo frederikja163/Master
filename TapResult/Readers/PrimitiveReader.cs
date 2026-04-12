@@ -33,6 +33,16 @@ internal struct PrimitiveReader<T> : IColumnReader<T>
         Index += units;
     }
 
+    IEnumerable<object> IColumnReader.Peek(int offset, int count)
+    {
+        return Peek(offset, count).OfType<object>();
+    }
+
+    object IColumnReader.Peek(int offset)
+    {
+        return Peek(offset);
+    }
+
 
     public T Peek(int offset = 0)
     {

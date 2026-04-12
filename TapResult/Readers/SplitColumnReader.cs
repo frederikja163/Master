@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace TapResult.Readers;
 
@@ -6,14 +7,16 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
 {
     private readonly IColumnReader<int> _lengthColumn;
     private readonly IColumnReader<byte> _byteColumn;
+    private readonly LogicalType _type;
 
     public int Length => _lengthColumn.Length;
     public int Index => _lengthColumn.Index;
 
-    public SplitColumnReader(IColumnReader<int> lengthColumn, IColumnReader<byte> byteColumn)
+    public SplitColumnReader(IColumnReader<int> lengthColumn, IColumnReader<byte> byteColumn, LogicalType type)
     {
         _lengthColumn = lengthColumn;
         _byteColumn = byteColumn;
+        _type = type;
     }
 
     public void Advance(int units)
@@ -23,6 +26,34 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
             int length = _lengthColumn.Read();
             _byteColumn.Advance(length);
         }
+    }
+
+    IEnumerable<object> IColumnReader.Peek(int offset, int count)
+    {
+        if (_type == LogicalType.Blob)
+        {
+            return ((IColumnReader<byte[]>)this).Peek(offset, count);
+        }
+        if (_type == LogicalType.String)
+        {
+            return ((IColumnReader<string>)this).Peek(offset, count);
+        }
+
+        throw new UnreachableException();
+    }
+
+    object IColumnReader.Peek(int offset)
+    {
+        if (_type == LogicalType.Blob)
+        {
+            return ((IColumnReader<byte[]>)this).Peek(offset);
+        }
+        if (_type == LogicalType.String)
+        {
+            return ((IColumnReader<string>)this).Peek(offset);
+        }
+
+        throw new UnreachableException();
     }
 
     string IColumnReader<string>.Peek(int byteOffset)
