@@ -27,8 +27,8 @@ public sealed class RunLengthEncoding : IEncoding
             LogicalType.Float16 => Encode<Half>(dataColumn),
             LogicalType.Float32 => Encode<float>(dataColumn),
             LogicalType.Float64 => Encode<double>(dataColumn),
-            LogicalType.Blob => Encode<string>(dataColumn),
-            LogicalType.String => Encode<byte[]>(dataColumn),
+            LogicalType.Blob => Encode<byte[]>(dataColumn),
+            LogicalType.String => Encode<string>(dataColumn),
             _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
         };
 
@@ -36,27 +36,30 @@ public sealed class RunLengthEncoding : IEncoding
     }
 
     public IColumn Encode<T>(DataColumn dataColumn)
+        where T : notnull
     {
         IColumnReader<T> reader = dataColumn.OpenReader<T>();
+        GenericReader genericReader = dataColumn.OpenGenericReader();
         ColumnBuilder byteBuilder = new ColumnBuilder(dataColumn.LogicalType, dataColumn.PhysicalSize);
         ColumnBuilder repeatBuilder = new ColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
         T previous = reader.Read();
+        byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
         int repeats = 1;
         for (int i = 1; i < dataColumn.LogicalLength; i++)
         {
             T current = reader.Read();
             if (current.Equals(previous))
             {
+                genericReader.AdvanceUnits(dataColumn.LogicalType, 1);
                 repeats++;
                 continue;
             }
 
-            byteBuilder.Write(previous);
+            byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
             repeatBuilder.Write(repeats);
             previous = current;
             repeats = 1;
         }
-        byteBuilder.Write(previous);
         repeatBuilder.Write(repeats);
 
         return new RunLengthColumn(dataColumn.LogicalType, byteBuilder.Build(), repeatBuilder.Build(), dataColumn.LogicalLength);
