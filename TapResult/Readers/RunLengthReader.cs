@@ -3,22 +3,19 @@
 namespace TapResult.Readers;
 
 public class RunLengthReader<T> : IColumnReader<T>
-    where T : unmanaged
 {
     private readonly IColumnReader<T> _byteColumn;
     private readonly IColumnReader<int> _repeatColumn;
 
-    public RunLengthReader(IColumnReader byteColumn, IColumnReader<int> repeatColumn, int byteLength, int length)
+    public RunLengthReader(IColumnReader byteColumn, IColumnReader<int> repeatColumn, int length)
     {
         if (byteColumn is not IColumnReader<T> columnReader)
             throw new ArgumentException($"{nameof(columnReader)} not a {nameof(IColumnReader<T>)}");
         _byteColumn = columnReader;
         _repeatColumn = repeatColumn;
-        ByteLength = byteLength;
         Length = length;
     }
 
-    public int ByteLength { get; }
     public int Length { get; }
     public int Index { get; private set; }
     private int _repeatIndex = 0;

@@ -14,18 +14,21 @@ public sealed class RunLengthEncoding : IEncoding
     
     public IColumn Encode(DataColumn dataColumn)
     {
-        if (!dataColumn.LogicalType.TryGetSize(out int size))
+        IColumn column = dataColumn.LogicalType switch
         {
-            throw new Exception("Type must be a primitive.");
-        }
-        
-        IColumn column = size switch
-        {
-            1 => Encode<byte>(dataColumn),
-            2 => Encode<ushort>(dataColumn),
-            4 => Encode<uint>(dataColumn),
-            8 => Encode<ulong>(dataColumn),
-            // TODO: string
+            LogicalType.SInt8 => Encode<sbyte>(dataColumn),
+            LogicalType.SInt16 => Encode<short>(dataColumn),
+            LogicalType.SInt32 => Encode<int>(dataColumn),
+            LogicalType.SInt64 => Encode<long>(dataColumn),
+            LogicalType.UInt8 => Encode<byte>(dataColumn),
+            LogicalType.UInt16 => Encode<ushort>(dataColumn),
+            LogicalType.UInt32 => Encode<uint>(dataColumn),
+            LogicalType.UInt64 => Encode<ulong>(dataColumn),
+            LogicalType.Float16 => Encode<Half>(dataColumn),
+            LogicalType.Float32 => Encode<float>(dataColumn),
+            LogicalType.Float64 => Encode<double>(dataColumn),
+            LogicalType.Blob => Encode<string>(dataColumn),
+            LogicalType.String => Encode<byte[]>(dataColumn),
             _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
         };
 
@@ -33,10 +36,8 @@ public sealed class RunLengthEncoding : IEncoding
     }
 
     public IColumn Encode<T>(DataColumn dataColumn)
-        where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
-        int byteLength = Unsafe.SizeOf<T>();
+        IColumnReader<T> reader = dataColumn.OpenReader<T>();
         ColumnBuilder byteBuilder = new ColumnBuilder(dataColumn.LogicalType, dataColumn.PhysicalSize);
         ColumnBuilder repeatBuilder = new ColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
         T previous = reader.Read();
@@ -44,19 +45,21 @@ public sealed class RunLengthEncoding : IEncoding
         for (int i = 1; i < dataColumn.LogicalLength; i++)
         {
             T current = reader.Read();
-            if (current == previous)
+            if (current.Equals(previous))
             {
                 repeats++;
                 continue;
             }
+
             byteBuilder.Write(previous);
             repeatBuilder.Write(repeats);
             previous = current;
+            repeats = 1;
         }
         byteBuilder.Write(previous);
         repeatBuilder.Write(repeats);
 
-        return new RunLengthColumn(dataColumn.LogicalType, byteBuilder.Build(), repeatBuilder.Build(), byteLength, dataColumn.LogicalLength);
+        return new RunLengthColumn(dataColumn.LogicalType, byteBuilder.Build(), repeatBuilder.Build(), dataColumn.LogicalLength);
     }
 
 
@@ -67,24 +70,26 @@ public sealed class RunLengthEncoding : IEncoding
             !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> repeats ||
             childColumnEnumerator.MoveNext())
             throw new Exception("Child columns not configured correctly for RunLength column.");
-        if (metadataReader.Read<int>() != RunLengthColumn.Size)
-            throw new Exception("RunLength metadata was malformed.");
-        int byteLength = metadataReader.Read<int>();
         int length = metadataReader.Read<int>();
+        return CreateReader(type, bytes, repeats, length);
+    }
+
+    internal static IColumnReader CreateReader(LogicalType type, IColumnReader byteReader, IColumnReader<int> repeatReader, int length)
+    {
         return type switch
         {
-            LogicalType.SInt8 => new RunLengthReader<sbyte>(bytes, repeats, byteLength, length),
-            LogicalType.SInt16 => new RunLengthReader<short>(bytes, repeats, byteLength, length),
-            LogicalType.SInt32 => new RunLengthReader<int>(bytes, repeats, byteLength, length),
-            LogicalType.SInt64 => new RunLengthReader<long>(bytes, repeats, byteLength, length),
-            LogicalType.UInt8 => new RunLengthReader<byte>(bytes, repeats, byteLength, length),
-            LogicalType.UInt16 => new RunLengthReader<ushort>(bytes, repeats, byteLength, length),
-            LogicalType.UInt32 => new RunLengthReader<uint>(bytes, repeats, byteLength, length),
-            LogicalType.UInt64 => new RunLengthReader<ulong>(bytes, repeats, byteLength, length),
-            LogicalType.Float16 => new RunLengthReader<Half>(bytes, repeats, byteLength, length),
-            LogicalType.Float32 => new RunLengthReader<float>(bytes, repeats, byteLength, length),
-            LogicalType.Float64 => new RunLengthReader<double>(bytes, repeats, byteLength, length),
-            
+            LogicalType.SInt8 => new RunLengthReader<sbyte>(byteReader, repeatReader, length),
+            LogicalType.SInt16 => new RunLengthReader<short>(byteReader, repeatReader, length),
+            LogicalType.SInt32 => new RunLengthReader<int>(byteReader, repeatReader, length),
+            LogicalType.SInt64 => new RunLengthReader<long>(byteReader, repeatReader, length),
+            LogicalType.UInt8 => new RunLengthReader<byte>(byteReader, repeatReader, length),
+            LogicalType.UInt16 => new RunLengthReader<ushort>(byteReader, repeatReader, length),
+            LogicalType.UInt32 => new RunLengthReader<uint>(byteReader, repeatReader, length),
+            LogicalType.UInt64 => new RunLengthReader<ulong>(byteReader, repeatReader, length),
+            LogicalType.Float16 => new RunLengthReader<Half>(byteReader, repeatReader, length),
+            LogicalType.Float32 => new RunLengthReader<float>(byteReader, repeatReader, length),
+            LogicalType.Float64 => new RunLengthReader<double>(byteReader, repeatReader, length),
+
             // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
             LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),
             LogicalType.String => throw new ArgumentOutOfRangeException(nameof(type), type, null),

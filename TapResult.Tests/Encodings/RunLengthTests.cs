@@ -18,18 +18,9 @@ public class RunLengthTests
         DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
-        ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
-        column.WriteMetadata(metadataBuilder);
-        DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
-        GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
-            LogicalType.SInt32,
-            genericReader, column.GetChildColumns().Select(c => c.OpenReader()));
+        RunLengthReader<int> reader = Assert.InstanceOf<RunLengthReader<int>>(column.OpenReader());
         
-        RunLengthColumn rleColumn = (RunLengthColumn) column;
-        RunLengthReader<int> runLengthReader = (RunLengthReader<int>) reader;
-        Assert.That(runLengthReader.Length, Is.EqualTo(rleColumn.Length));
-        Assert.That(runLengthReader.ByteLength, Is.EqualTo(rleColumn.ByteLength));
+        Assert.That(reader.Length, Is.EqualTo(column.Length));
         Assert.That(reader.Read(length).ToArray(), Is.EqualTo(data));
     }
     
@@ -44,66 +35,41 @@ public class RunLengthTests
         DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
-        ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
-        column.WriteMetadata(metadataBuilder);
-        DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
-        GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
-            LogicalType.SInt32,
-            genericReader, column.GetChildColumns().Select(c => c.OpenReader()));
+        RunLengthReader<int> reader = Assert.InstanceOf<RunLengthReader<int>>(column.OpenReader());
         
-        RunLengthColumn rleColumn = (RunLengthColumn) column;
-        RunLengthReader<int> runLengthReader = (RunLengthReader<int>) reader;
-        Assert.That(((DataColumn)rleColumn.RepeatColumn).OpenReader<int>().Read(), Is.EqualTo(repeats));
-        Assert.That(((DataColumn)rleColumn.ByteColumn).OpenReader<int>().Read(), Is.EqualTo(value));
-        Assert.That(runLengthReader.Length, Is.EqualTo(rleColumn.Length));
-        Assert.That(runLengthReader.ByteLength, Is.EqualTo(rleColumn.ByteLength));
+        Assert.That(column.RepeatColumn.OpenReader<int>().Read(), Is.EqualTo(repeats));
+        Assert.That(column.ByteColumn.OpenReader<int>().Read(), Is.EqualTo(value));
+        Assert.That(reader.Length, Is.EqualTo(column.Length));
         Assert.That(reader.Read(repeats).ToArray(), Is.EqualTo(data));
     }
     
+    [Test]
     public void TestRunLengthEncodingTest()
     {
         int[] data = [1,1,1,1,1,1,1, 5,5,5,5,5, 1,1,1,1,1, 3,3,3,3,3,3];
         DataColumn dataColumn = ColumnBuilder.Create(data.AsSpan());
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
-        ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
-        column.WriteMetadata(metadataBuilder);
-        DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
-        GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
-            LogicalType.SInt32,
-            genericReader, column.GetChildColumns().Select(c => c.OpenReader()));
+        RunLengthReader<int> reader = Assert.InstanceOf<RunLengthReader<int>>(column.OpenReader());
         
-        RunLengthColumn rleColumn = (RunLengthColumn) column;
-        RunLengthReader<int> runLengthReader = (RunLengthReader<int>) reader;
-        Assert.That(((DataColumn)rleColumn.RepeatColumn).OpenReader<int>().Read(4), Is.EqualTo(new[] {7, 5, 5, 6}));
-        Assert.That(((DataColumn)rleColumn.ByteColumn).OpenReader<int>().Read(4), Is.EqualTo(new[] {1, 5, 1, 3}));
-        Assert.That(runLengthReader.Length, Is.EqualTo(rleColumn.Length));
-        Assert.That(runLengthReader.ByteLength, Is.EqualTo(rleColumn.ByteLength));
+        Assert.That(column.RepeatColumn.OpenReader<int>().Read(4), Is.EqualTo(new[] {7, 5, 5, 6}));
+        Assert.That(column.ByteColumn.OpenReader<int>().Read(4), Is.EqualTo(new[] {1, 5, 1, 3}));
+        Assert.That(reader.Length, Is.EqualTo(column.Length));
         Assert.That(reader.Read(data.Length).ToArray(), Is.EqualTo(data));
     }
     
+    [Test]
     public void TestRunLengthEncodingForFloatTest()
     {
         float[] data = [1.1f,1.1f,1.1f,1.1f,1.1f,1.1f,1.1f, 5.5f,5.5f,5.5f,5.5f,5.5f, 1.2f,1.2f, 1.3f,1.3f,1.3f, 3.4f,3.4f,3.4f,3.4f,3.4f,3.4f];
         DataColumn dataColumn = ColumnBuilder.Create(data.AsSpan());
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
-        ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
-        column.WriteMetadata(metadataBuilder);
-        DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
-        GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<int> reader = (IColumnReader<int>)encoding.CreateDecoder(
-            LogicalType.SInt32,
-            genericReader, column.GetChildColumns().Select(c => c.OpenReader()));
+        RunLengthReader<float> reader = Assert.InstanceOf<RunLengthReader<float>>(column.OpenReader());
         
-        RunLengthColumn rleColumn = (RunLengthColumn) column;
-        RunLengthReader<int> runLengthReader = (RunLengthReader<int>) reader;
-        Assert.That(((DataColumn)rleColumn.RepeatColumn).OpenReader<int>().Read(4), Is.EqualTo(new[] {7, 5, 2, 3, 6}));
-        Assert.That(((DataColumn)rleColumn.ByteColumn).OpenReader<int>().Read(4), Is.EqualTo(new[] {1.1f, 5.5f, 1.2f, 1.3f, 3.4f}));
-        Assert.That(runLengthReader.Length, Is.EqualTo(rleColumn.Length));
-        Assert.That(runLengthReader.ByteLength, Is.EqualTo(rleColumn.ByteLength));
+        Assert.That(column.RepeatColumn.OpenReader<int>().Read(5), Is.EqualTo(new[] {7, 5, 2, 3, 6}));
+        Assert.That(column.ByteColumn.OpenReader<float>().Read(5), Is.EqualTo(new[] {1.1f, 5.5f, 1.2f, 1.3f, 3.4f}));
+        Assert.That(reader.Length, Is.EqualTo(column.Length));
         Assert.That(reader.Read(data.Length).ToArray(), Is.EqualTo(data));
     }
 }
