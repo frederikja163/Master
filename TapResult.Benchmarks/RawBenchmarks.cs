@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Parquet;
+using TapResult.Benchmarks.Data;
 using TapResult.Benchmarks.Raw;
 
 namespace TapResult.Benchmarks;
@@ -10,34 +11,35 @@ public class RawBenchmarks : AllBenchmarks
     [ArgumentsSource(nameof(GetImplementations))]
     public void WriteRaw(IRawBenchmark implementation)
     {
+        RawData data = (RawData)Data;
         RunWithTimeout(() =>
         {
-            implementation?.Write(Config.FilePath, Data);
+            implementation.Open(Config.FilePath);
+            for (int i = 0; i < data.Repeats; i++)
+            {
+                implementation?.Write(data);
+            }
+            implementation?.Close();
         }, Timeout);
     }
 
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
         yield return new CascadingBenchmark();
+        yield return new CascadingAsyncBenchmark();
         yield return new EncodingBenchmark();
         yield return new RawBinaryStream();
-        yield return new RawParquet(CompressionMethod.Snappy);
+        // yield return new RawParquetMultiFile(CompressionMethod.Snappy);
+        // yield return new RawParquetMultiFile(CompressionMethod.None);
+        // yield return new RawParquet(CompressionMethod.Snappy);
+        // yield return new RawParquet(CompressionMethod.None);
         // yield return new RawParquet(CompressionMethod.Zstd);
         // yield return new RawParquet(CompressionMethod.Gzip);
-        yield return new RawParquet(CompressionMethod.None);
         // yield return new RawParquet(CompressionMethod.LZ4);
         // yield return new RawParquet(CompressionMethod.Lz4Raw);
         // yield return new RawParquet(CompressionMethod.Brotli);
-        // yield return new RawCsv();
-        // yield return new RawSqlite();
-        // yield return new RawHdf5Benchmark();
-        if (OperatingSystem.IsLinux())
-        {
-            // yield return new RawVortexWriter();
-        }
-        else
-        {
-            Console.WriteLine("Skipping Vortex benchmark since they are only enabled on linux.");
-        }
+        yield return new RawCsv();
+        yield return new RawSqlite();
+        yield return new RawHdf5Benchmark();
     }
 }

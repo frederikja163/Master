@@ -27,14 +27,11 @@ public class SparkBenchmark
             );
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), path);
         
-            for (int i = 0; i < data.Repeats; i++)
-            {
-                var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
-                dataFrame.Write()
-                    .Mode(i == 0 ? SaveMode.Overwrite : SaveMode.Append)
-                    .Format(_format)
-                    .Save(outputPath);
-            }
+            var dataFrame = _spark.CreateDataFrame(data.Rows.Select(row => new GenericRow(row.OfType<object>().Select(ConvertValue).ToArray())), schema);
+            dataFrame.Write()
+                .Mode(SaveMode.Overwrite)
+                .Format(_format)
+                .Save(outputPath);
             return Task.CompletedTask;
         }).Wait();
     }

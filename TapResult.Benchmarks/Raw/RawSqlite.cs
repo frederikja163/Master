@@ -6,46 +6,49 @@ using TapResult.Benchmarks.Data;
 
 namespace TapResult.Benchmarks.Raw;
 
-internal sealed class RawSqlite : IRawBenchmark
+internal sealed class RawSqlite : IRawBenchmark, IAsyncDisposable
 {
-    public void Write(string path, ICustomData data)
+    private SQLiteConnection? connection;
+
+    public void Open(string filePath)
     {
         string connectionString = new SQLiteConnectionStringBuilder()
         {
-            DataSource = path
+            DataSource = filePath
         }.ToString();
 
-        using SQLiteConnection connection = new SQLiteConnection(connectionString);
+        connection = new SQLiteConnection(connectionString);
         connection.Open();
+    }
+
+    public void Write(ICustomData data)
+    {
 
         using (SQLiteCommand command = new SQLiteCommand(
-                   $"CREATE TABLE results({string.Join(",", data.ColumnNames.Zip(data.Columns.Select(GetColumnType)).Select(CreateField))});",
+                   $"CREATE TABLE {data.Name} ({string.Join(",", data.ColumnNames.Zip(data.Columns.Select(GetColumnType)).Select(CreateField))});",
                    connection))
         {
             command.ExecuteNonQuery();
         }
 
-        for (int i = 0; i < data.Repeats; i++)
-        {
-            string names = string.Join(",", data.ColumnNames);
-            string values = string.Join(",", data.ColumnNames.Select(n => $"${n}"));
-            
-            using SQLiteTransaction transaction = connection.BeginTransaction();
-            using SQLiteCommand command = new SQLiteCommand($"INSERT INTO results ({names}) VALUES ({values})", connection);
+        string names = string.Join(",", data.ColumnNames);
+        string values = string.Join(",", data.ColumnNames.Select(n => $"${n}"));
+        
+        using SQLiteTransaction transaction = connection!.BeginTransaction();
+        using SQLiteCommand command1 = new SQLiteCommand($"INSERT INTO results ({names}) VALUES ({values})", connection);
 
-            SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
-                .Select(t => command.Parameters.Add($"${t.First}", t.Second)).ToArray();
-            
-            foreach (Array row in data.Rows)
+        SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
+            .Select(t => command1.Parameters.Add($"${t.First}", t.Second)).ToArray();
+        
+        foreach (Array row in data.Rows)
+        {
+            for (int j = 0; j < row.Length; j++)
             {
-                for (int j = 0; j < row.Length; j++)
-                {
-                    parameters[j].Value = row.GetValue(j);
-                }
-                command.ExecuteNonQuery();
+                parameters[j].Value = row.GetValue(j);
             }
-            transaction.Commit();
+            command1.ExecuteNonQuery();
         }
+        transaction.Commit();
         static string GetColumnType(Array array)
         {
             Type type = array.GetType().GetElementType()?.GetUnderlyingNullableType() ?? throw new ArgumentException(null, nameof(array));
@@ -76,5 +79,15 @@ internal sealed class RawSqlite : IRawBenchmark
     public override string ToString()
     {
         return "Sql";
+    }
+
+    public void Close()
+    {
+        connection?.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await connection!.DisposeAsync();
     }
 }
