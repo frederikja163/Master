@@ -65,7 +65,10 @@ public class TPCHBenchmarks
                 columns.Add(column);
             }
 
-            yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
+            if (tableName != "LINEITEM")
+            {
+                yield return new TpchData(columns, tableName, $"{path}/{tableName}.tbl");
+            }
         }
     }
 
@@ -119,6 +122,7 @@ public class TPCHBenchmarks
     public static IEnumerable<Implementation> GetImplementations()
     {
         TpchData[] data = GetData().ToArray();
+        // TpchData[] data = [GetData().First()];
         yield return new Implementation(new RawBinaryStream(), data);
         yield return new Implementation(new EncodingBenchmark(), data);
         yield return new Implementation(new CascadingBenchmark(), data);

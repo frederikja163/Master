@@ -8,7 +8,7 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawSqlite : IRawBenchmark, IAsyncDisposable
 {
-    private SQLiteConnection connection;
+    private SQLiteConnection? connection;
 
     public void Open(string filePath)
     {
@@ -34,7 +34,7 @@ internal sealed class RawSqlite : IRawBenchmark, IAsyncDisposable
         string names = string.Join(",", data.ColumnNames);
         string values = string.Join(",", data.ColumnNames.Select(n => $"${n}"));
         
-        using SQLiteTransaction transaction = connection.BeginTransaction();
+        using SQLiteTransaction transaction = connection!.BeginTransaction();
         using SQLiteCommand command1 = new SQLiteCommand($"INSERT INTO results ({names}) VALUES ({values})", connection);
 
         SQLiteParameter[] parameters = data.ColumnNames.Zip(data.Columns.Select(GetParamType))
@@ -83,11 +83,11 @@ internal sealed class RawSqlite : IRawBenchmark, IAsyncDisposable
 
     public void Close()
     {
-        connection.Dispose();
+        connection?.Dispose();
     }
 
     public async ValueTask DisposeAsync()
     {
-        await connection.DisposeAsync();
+        await connection!.DisposeAsync();
     }
 }
