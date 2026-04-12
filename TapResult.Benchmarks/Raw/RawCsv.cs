@@ -4,8 +4,8 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawCsv : IRawBenchmark, IAsyncDisposable
 {
-    private Stream _stream;
-    private StreamWriter _writer;
+    private Stream? _stream;
+    private StreamWriter? _writer;
 
     public void Open(string filePath)
     {
@@ -15,7 +15,7 @@ internal sealed class RawCsv : IRawBenchmark, IAsyncDisposable
 
     public void Write(ICustomData data)
     {
-        _writer.WriteLine(string.Join(",", data.ColumnNames));
+        _writer!.WriteLine(string.Join(",", data.ColumnNames));
         
         foreach (Array row in data.Rows)
         {
@@ -30,13 +30,13 @@ internal sealed class RawCsv : IRawBenchmark, IAsyncDisposable
 
     public void Close()
     {
-        _stream.Dispose();
-        _writer.Dispose();
+        _stream!.Dispose();
+        _writer!.Dispose();
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _stream.DisposeAsync();
-        await _writer.DisposeAsync();
+        await _stream!.DisposeAsync();
+        await _writer!.DisposeAsync();
     }
 }

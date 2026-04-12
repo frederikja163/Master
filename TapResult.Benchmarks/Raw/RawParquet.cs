@@ -9,7 +9,7 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawParquet : IRawBenchmark
 {
-    private string _basePath;
+    private string _basePath = "";
     private readonly CompressionMethod _compressionMethod;
     private List<string> _paths = new List<string>();
     private Dictionary<string, List<DataField>> _fields = new Dictionary<string, List<DataField>>();
@@ -183,7 +183,7 @@ internal sealed class RawParquetMultiFile(CompressionMethod method) : IRawBenchm
             
             if (_writer is null)
             {
-                _writer = await ParquetWriter.CreateAsync(_schema, _stream);
+                _writer = await ParquetWriter.CreateAsync(_schema, _stream!);
                 _writer.CompressionMethod = method;
             }
 
@@ -197,8 +197,8 @@ internal sealed class RawParquetMultiFile(CompressionMethod method) : IRawBenchm
 
     public void Close()
     {
-        _writer.Dispose();
-        _stream.Dispose();
+        _writer?.Dispose();
+        _stream?.Dispose();
     }
 
     private static Type GetType(Array arr)

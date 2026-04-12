@@ -4,7 +4,7 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawBinaryStream : IRawBenchmark
 {
-    private ExtendedBinaryWriter _writer;
+    private ExtendedBinaryWriter? _writer;
 
     public void Open(string filePath)
     {
@@ -15,7 +15,7 @@ internal sealed class RawBinaryStream : IRawBenchmark
     {
         foreach (Array array in data.Columns)
         {
-            _writer.Write(array);
+            _writer!.Write(array);
         }
     }
 
@@ -26,6 +26,6 @@ internal sealed class RawBinaryStream : IRawBenchmark
 
     public void Close()
     {
-        _writer.Dispose();
+        _writer!.Dispose();
     }
 }

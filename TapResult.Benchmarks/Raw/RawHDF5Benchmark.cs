@@ -9,17 +9,17 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawHdf5Benchmark : IRawBenchmark
 {
-    private Disposable<long> fileId;
+    private Disposable<long> _fileId = new Disposable<long>(0, _ => { });
 
     public void Open(string filePath)
     {
-        fileId = new Disposable<long>(H5F.create(filePath, H5F.ACC_TRUNC), i => H5F.close(i)); 
-        Debug.Assert(fileId > 0);
+        _fileId = new Disposable<long>(H5F.create(filePath, H5F.ACC_TRUNC), i => H5F.close(i)); 
+        Debug.Assert(_fileId > 0);
     }
 
     public unsafe void Write(ICustomData data)
     {
-        using Disposable<long> groupId = new Disposable<long>(H5G.create(fileId, data.ToString()), i => H5G.close(i));
+        using Disposable<long> groupId = new Disposable<long>(H5G.create(_fileId, data.ToString()), i => H5G.close(i));
         Debug.Assert(groupId > 0);
 
         ulong dims = 0ul;
@@ -106,6 +106,6 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
 
     public void Close()
     {
-        fileId.Dispose();
+        _fileId.Dispose();
     }
 }

@@ -11,7 +11,7 @@ public class RawBenchmarks : AllBenchmarks
     [ArgumentsSource(nameof(GetImplementations))]
     public void WriteRaw(IRawBenchmark implementation)
     {
-        RawData data = Data as RawData;
+        RawData data = (RawData)Data;
         RunWithTimeout(() =>
         {
             implementation.Open(Config.FilePath);
@@ -26,15 +26,18 @@ public class RawBenchmarks : AllBenchmarks
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
         yield return new CascadingBenchmark();
+        yield return new CascadingAsyncBenchmark();
         yield return new EncodingBenchmark();
         yield return new RawBinaryStream();
-        yield return new RawParquet(CompressionMethod.Snappy);
-        yield return new RawParquet(CompressionMethod.Zstd);
-        yield return new RawParquet(CompressionMethod.Gzip);
-        yield return new RawParquet(CompressionMethod.None);
-        yield return new RawParquet(CompressionMethod.LZ4);
-        yield return new RawParquet(CompressionMethod.Lz4Raw);
-        yield return new RawParquet(CompressionMethod.Brotli);
+        // yield return new RawParquetMultiFile(CompressionMethod.Snappy);
+        // yield return new RawParquetMultiFile(CompressionMethod.None);
+        // yield return new RawParquet(CompressionMethod.Snappy);
+        // yield return new RawParquet(CompressionMethod.None);
+        // yield return new RawParquet(CompressionMethod.Zstd);
+        // yield return new RawParquet(CompressionMethod.Gzip);
+        // yield return new RawParquet(CompressionMethod.LZ4);
+        // yield return new RawParquet(CompressionMethod.Lz4Raw);
+        // yield return new RawParquet(CompressionMethod.Brotli);
         yield return new RawCsv();
         yield return new RawSqlite();
         yield return new RawHdf5Benchmark();

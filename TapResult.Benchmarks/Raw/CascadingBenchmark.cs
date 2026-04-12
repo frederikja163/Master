@@ -7,7 +7,7 @@ namespace TapResult.Benchmarks.Raw;
 
 internal abstract class TapResultBenchmark : IRawBenchmark
 {
-    protected Writer Writer;
+    protected Writer? Writer;
 
     public void Open(string filePath)
     {
@@ -18,7 +18,7 @@ internal abstract class TapResultBenchmark : IRawBenchmark
 
     public virtual void Close()
     {
-        Writer.Dispose();
+        Writer?.Dispose();
     }
 }
 
@@ -29,7 +29,7 @@ internal sealed class CascadingBenchmark : TapResultBenchmark
     {
         Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
         table.Compress();
-        Writer.Write(table);
+        Writer?.Write(table);
     }
 
     public override string ToString()
@@ -48,8 +48,8 @@ internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
         _tasks.Add(Task.Run(async () =>
         {
             Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
-            table.CompressAsync().GetAwaiter().GetResult();
-            lock (Writer)
+            await table.CompressAsync();
+            lock (Writer!)
             {
                 Writer.Write(table);
             }
@@ -73,7 +73,7 @@ internal sealed class EncodingBenchmark : TapResultBenchmark
     public override void Write(ICustomData data)
     {
         Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
-        Writer.Write(table);
+        Writer!.Write(table);
     }
 
     public override string ToString()
