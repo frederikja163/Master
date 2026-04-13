@@ -23,13 +23,10 @@ public sealed class Parquets
                 break;
             case Constants.FileType.Csv:
                 throw new NotImplementedException();
-                break;
             case Constants.FileType.Parquet:
                 throw new NotImplementedException();
-                break;
             case Constants.FileType.Unknown:
                 throw new NotImplementedException();
-                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(fileType), fileType, null);
         }

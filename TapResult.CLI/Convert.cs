@@ -1,10 +1,11 @@
+using TapResult.CLI.Options;
 using TapResult.Encodings;
 
 namespace TapResult.CLI;
 
-public class Converter
+public class Convert
 {
-    internal static async Task<int> RunConvertOptions(Program.ConvertOptions opts)
+    internal static async Task<int> RunConvertOptions(ConvertOptions opts)
     {
         if (opts.Verbose)
         {
@@ -36,7 +37,6 @@ public class Converter
                 break;
             case Constants.Parquet:
                 throw new NotImplementedException();
-                break;
             case Constants.TapResult:
                 await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
                 break;
@@ -48,13 +48,11 @@ public class Converter
                         break;
                     case Constants.FileType.Parquet:
                         throw new NotImplementedException();
-                        break;
                     case Constants.FileType.TapResult:
                         await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
                         break;
                     case Constants.FileType.Unknown:
                         throw new NotImplementedException();
-                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -80,7 +78,7 @@ public class Converter
         };
     }
 
-    private static Encoder ParseEncodings(Program.ConvertOptions o)
+    private static Encoder ParseEncodings(ConvertOptions o)
     {
         if (o is { BitPacking: false, Split: false, RunLength: false })
         {
