@@ -15,6 +15,7 @@ public sealed class ColumnBuilder
     private readonly LogicalType _type;
     private byte[]? _nulls = null;
     private byte[] _data;
+    private byte[]? _lengths = null;
     private int _byteIndex = 0;
     private int _valuesLength = 0;
     private int _logicalLength = 0;
@@ -93,7 +94,7 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Write a value of type T to the DataColumn. This increases the length by 1 as opposed to <see cref="WriteRaw{T}(T)"/>
     /// </summary>
-    public void Write<T>(T value)
+    public void WriteValue<T>(T value)
         where T : unmanaged
     {
         WriteRaw(value);
@@ -107,7 +108,7 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Write a value of type T to the DataColumn. This increases the length by values.Length as opposed to <see cref="WriteRaw{T}(System.ReadOnlySpan{T},int)"/>
     /// </summary>
-    public void Write<T>(ReadOnlySpan<T> values)
+    public void WriteValues<T>(ReadOnlySpan<T> values)
         where T : unmanaged
     {
         WriteRaw(values, values.Length);
@@ -118,7 +119,7 @@ public sealed class ColumnBuilder
     /// </summary>
     public void WriteBlob(ReadOnlySpan<byte> blob)
     {
-        Write(blob.Length);
+        WriteValue(blob.Length);
         WriteRaw(blob, 0);
     }
 
@@ -165,7 +166,7 @@ public sealed class ColumnBuilder
 
     /// <summary>
     /// Writes multiple values to the DataColumn, this only increases LogicalLength by the provided value.
-    /// Generally use <see cref="Write{T}(ReadOnlySpan{T})"/> unless you have a good reason to override the added length.
+    /// Generally use <see cref="WriteValues{T}"/> unless you have a good reason to override the added length.
     /// </summary>
     public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength)
         where T : unmanaged
@@ -189,25 +190,25 @@ public sealed class ColumnBuilder
     
     /// <summary>
     /// Writes a single value to the DataColumn, this does not increase the logical length.
-    /// Generally use <see cref="Write{T}(T)"/> unless you have a good reason to not increase the logical length.
+    /// Generally use <see cref="WriteValue{T}"/> unless you have a good reason to not increase the logical length.
     /// </summary>
     public void WriteRaw<T>(T value)
-        where T : unmanaged
     {
-        Span<byte> slice = Slice(Unsafe.SizeOf<T>());
         switch (value)
         {
-            case sbyte sInt8: slice[0] = (byte)sInt8; break;
-            case short sInt16: BinaryPrimitives.WriteInt16LittleEndian(slice, sInt16); break;
-            case int sInt32: BinaryPrimitives.WriteInt32LittleEndian(slice, sInt32); break;
-            case long sInt64: BinaryPrimitives.WriteInt64LittleEndian(slice, sInt64); break;
-            case byte uInt8: slice[0] = uInt8; break;
-            case ushort uInt16: BinaryPrimitives.WriteUInt16LittleEndian(slice, uInt16); break;
-            case uint uInt32: BinaryPrimitives.WriteUInt32LittleEndian(slice, uInt32); break;
-            case ulong uInt64: BinaryPrimitives.WriteUInt64LittleEndian(slice, uInt64); break;
-            case Half float16: BinaryPrimitives.WriteHalfLittleEndian(slice, float16); break;
-            case float float32: BinaryPrimitives.WriteSingleLittleEndian(slice, float32); break;
-            case double float64: BinaryPrimitives.WriteDoubleLittleEndian(slice, float64); break;
+            case sbyte sInt8: Slice(Unsafe.SizeOf<T>())[0] = (byte)sInt8; break;
+            case short sInt16: BinaryPrimitives.WriteInt16LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt16); break;
+            case int sInt32: BinaryPrimitives.WriteInt32LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt32); break;
+            case long sInt64: BinaryPrimitives.WriteInt64LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt64); break;
+            case byte uInt8: Slice(Unsafe.SizeOf<T>())[0] = uInt8; break;
+            case ushort uInt16: BinaryPrimitives.WriteUInt16LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt16); break;
+            case uint uInt32: BinaryPrimitives.WriteUInt32LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt32); break;
+            case ulong uInt64: BinaryPrimitives.WriteUInt64LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt64); break;
+            case Half float16: BinaryPrimitives.WriteHalfLittleEndian(Slice(Unsafe.SizeOf<T>()), float16); break;
+            case float float32: BinaryPrimitives.WriteSingleLittleEndian(Slice(Unsafe.SizeOf<T>()), float32); break;
+            case double float64: BinaryPrimitives.WriteDoubleLittleEndian(Slice(Unsafe.SizeOf<T>()), float64); break;
+            case string str: WriteString(str); break;
+            case byte[] blob: WriteBlob(blob); break;
             default: throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
         }
     }
@@ -243,7 +244,7 @@ public sealed class ColumnBuilder
             ColumnBuilder builder = new ColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
             foreach (T var in data)
             {
-                builder.Write(var);
+                builder.WriteValue(var);
             }
             return builder.BuildDataColumn();
         }
@@ -354,7 +355,7 @@ public sealed class ColumnBuilder
             T? value = array[i];
             if (value is { } val)
             {
-                valueBuilder.Write(val);
+                valueBuilder.WriteValue(val);
             }
             else
             {

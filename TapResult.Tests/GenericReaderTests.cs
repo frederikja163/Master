@@ -30,9 +30,9 @@ internal sealed class GenericReaderTests
     public void ReadPrimitiveTest()
     {
         ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 405);
-        builder.Write<byte>(123);
-        builder.Write(123);
-        builder.Write(Enumerable.Range(0, 100).ToArray());
+        builder.WriteValue<byte>(123);
+        builder.WriteValue(123);
+        builder.WriteValues(Enumerable.Range(0, 100).ToArray());
         GenericReader reader = builder.BuildDataColumn().OpenGenericReader();
 
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));

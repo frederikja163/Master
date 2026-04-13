@@ -57,7 +57,7 @@ internal sealed class ParameterBuilder
     {
         _id.WriteString(id.ToString());
         _names.WriteString(name);
-        _types.Write((int)type);
+        _types.WriteValue((int)type);
         _values.WriteString(value.ToString(CultureInfo.InvariantCulture));
     }
 

@@ -12,17 +12,17 @@ internal sealed class ColumnBuilderTests
     public void WritePrimitiveTest()
     {
         ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 44);
-        builder.Write<sbyte>(1);
-        builder.Write<short>(2);
-        builder.Write<int>(3);
-        builder.Write<long>(4);
-        builder.Write<byte>(5);
-        builder.Write<ushort>(6);
-        builder.Write<uint>(7);
-        builder.Write<ulong>(8);
-        builder.Write<Half>((Half)9);
-        builder.Write<float>(10);
-        builder.Write<double>(11);
+        builder.WriteValue<sbyte>(1);
+        builder.WriteValue<short>(2);
+        builder.WriteValue<int>(3);
+        builder.WriteValue<long>(4);
+        builder.WriteValue<byte>(5);
+        builder.WriteValue<ushort>(6);
+        builder.WriteValue<uint>(7);
+        builder.WriteValue<ulong>(8);
+        builder.WriteValue<Half>((Half)9);
+        builder.WriteValue<float>(10);
+        builder.WriteValue<double>(11);
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(44));
         Assert.That(column.PhysicalSize, Is.EqualTo(44));
@@ -78,11 +78,11 @@ internal sealed class ColumnBuilderTests
     public void CanResizeTest()
     {
         ColumnBuilder builder = new ColumnBuilder(1);
-        builder.Write<byte>(123);
+        builder.WriteValue<byte>(123);
         Assert.That(builder.PhysicalSize, Is.EqualTo(1));
-        builder.Write<byte>(123);
+        builder.WriteValue<byte>(123);
         Assert.That(builder.PhysicalSize, Is.EqualTo(2));
-        builder.Write<byte>(21);
+        builder.WriteValue<byte>(21);
         Assert.That(builder.PhysicalSize, Is.EqualTo(3));
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(3));

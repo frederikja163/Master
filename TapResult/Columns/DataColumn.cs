@@ -85,7 +85,7 @@ public sealed class DataColumn : IColumn
 
     void IColumn.WriteMetadata(ColumnBuilder blobBuilder)
     {
-        blobBuilder.Write(BlobSize);
+        blobBuilder.WriteValue(BlobSize);
         blobBuilder.WriteRaw(PhysicalSize);
         blobBuilder.WriteRaw(LogicalLength);
         blobBuilder.WriteRaw(_offset);

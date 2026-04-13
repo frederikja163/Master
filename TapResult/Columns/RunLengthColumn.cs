@@ -24,7 +24,7 @@ internal sealed class RunLengthColumn : IColumnParent
 
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        blobBuilder.Write(Size);
+        blobBuilder.WriteValue(Size);
         blobBuilder.WriteRaw(Length);
     }
 

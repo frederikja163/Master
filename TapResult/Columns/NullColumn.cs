@@ -21,8 +21,8 @@ internal sealed class NullColumn : IColumnParent
     public LogicalType LogicalType { get; }
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        blobBuilder.Write(Unsafe.SizeOf<int>());
-        blobBuilder.Write(LogicalLength);
+        blobBuilder.WriteValue(Unsafe.SizeOf<int>());
+        blobBuilder.WriteValue(LogicalLength);
     }
 
     public IColumnReader OpenReader() => LogicalType switch

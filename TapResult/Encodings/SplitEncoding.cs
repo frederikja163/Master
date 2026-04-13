@@ -20,7 +20,7 @@ public sealed class SplitEncoding : IEncoding
         {
             ReadOnlySpan<byte> blob = columnReader.ReadUnits(dataColumn.LogicalType);
             lengthBuilder.WriteRaw(blob.Slice(0, Unsafe.SizeOf<int>()), 1);
-            byteBuilder.Write(blob.Slice(Unsafe.SizeOf<int>()));
+            byteBuilder.WriteValues(blob.Slice(Unsafe.SizeOf<int>()));
         }
 
         return new SplitColumn(lengthBuilder.BuildDataColumn(), byteBuilder.BuildDataColumn(), dataColumn.LogicalType);

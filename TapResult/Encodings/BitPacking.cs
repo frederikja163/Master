@@ -77,7 +77,7 @@ public sealed class BitPacking : IEncoding
                  shift = size - shift;
                  T value1 = value >> (packedSize - shift);
                  currentValue = (currentValue << shift) | value1;
-                 builder.Write(currentValue);
+                 builder.WriteValue(currentValue);
 
                  currentValue = value;
                  shift = packedSize - shift;
@@ -85,7 +85,7 @@ public sealed class BitPacking : IEncoding
         }
 
         currentValue <<= size - shift;
-        builder.Write(currentValue);
+        builder.WriteValue(currentValue);
 
         metadata.Column = builder.BuildDataColumn();
     }
