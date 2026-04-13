@@ -6,7 +6,7 @@ namespace TapResult.CLI.Options;
 [Verb("convert", HelpText = "Converts the file from one format to another")]
 internal sealed class ConvertOptions : GeneralOptions
 {
-    [Value(2, MetaName = "outputfile", Required = false, HelpText = "WIP Specify the output file. Currently supports ")] // TODO: add parquet, CSV, our fileformat
+    [Value(2, MetaName = "outputfile", Required = false, HelpText = "WIP Specify the output file. Currently supports ")]
     public string OutputFile { get; set; } = "out.csv";
         
     [Value(4, MetaName = "outputfiletype", Required = false, HelpText = "WIP Override the assumed filetype based off file extension")]

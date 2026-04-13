@@ -19,8 +19,7 @@ public class Convert
         
         var inputPath = new FileInfo(opts.InputFile);
         var outputPath = new FileInfo(opts.OutputFile);
-        using var inputStream = inputPath.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
-        using var outputStream = outputPath.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+        await using var inputStream = inputPath.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
         
         var outputFileType = opts.OutputFileType.ToLower() switch
         {
@@ -33,23 +32,23 @@ public class Convert
         switch (opts.InputFileType.ToLower())
         {
             case Constants.Csv:
-                Converters.Csv.Convert(outputFileType, encoder, inputStream, outputStream);
+                Converters.Csv.Convert(outputFileType, encoder, inputStream, outputPath);
                 break;
             case Constants.Parquet:
                 throw new NotImplementedException();
             case Constants.TapResult:
-                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
+                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath);
                 break;
             case Constants.Auto:
                 switch (GetFileTypeFromPath(inputPath.FullName))
                 {
                     case Constants.FileType.Csv:
-                        Converters.Csv.Convert(outputFileType, encoder, inputStream, outputStream);
+                        Converters.Csv.Convert(outputFileType, encoder, inputStream, outputPath);
                         break;
                     case Constants.FileType.Parquet:
                         throw new NotImplementedException();
                     case Constants.FileType.TapResult:
-                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputStream);
+                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath);
                         break;
                     case Constants.FileType.Unknown:
                         throw new NotImplementedException();

@@ -7,16 +7,18 @@ namespace TapResult.CLI.Converters;
 
 internal static class TapResult
 {
-    internal static async Task Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileStream output)
+    internal static async Task Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output)
     {
         Console.WriteLine($"Converting from {Constants.FileType.TapResult} to {fileType.ToDisplayString()}");
+        
         switch (fileType)
         {
             case Constants.FileType.Csv:
                 await ConvertToCsv(input, output);
                 break;
             case Constants.FileType.Parquet:
-                throw new NotImplementedException();
+                await ConvertToParquet(input, output);
+                break;
             case Constants.FileType.TapResult:
                 if (Program.Verbose)
                 {
@@ -30,12 +32,14 @@ internal static class TapResult
         }
     }
 
-    private static async Task ConvertToCsv(FileStream input, FileStream output)
+    private static async Task ConvertToCsv(FileStream input, FileInfo output)
     {
+        await using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+
         try
         {
             Reader reader = await Reader.CreateReaderAsync(input);
-            await using StreamWriter writer = new StreamWriter(output);
+            await using StreamWriter writer = new StreamWriter(outputStream);
 
             var columns = CombineColumns(reader.GetTables()).ToList();
         
@@ -92,7 +96,7 @@ internal static class TapResult
         return dict.Values.AsEnumerable<List<ColumnInfo>>();
     }
     
-    private static async void ConvertToParquet(FileStream input, FileInfo output)
+    private static async Task ConvertToParquet(FileStream input, FileInfo output)
     {
         try
         {
@@ -100,8 +104,13 @@ internal static class TapResult
             Reader reader = await Reader.CreateReaderAsync(input);
             foreach (TableInfo tableInfo in reader.GetTables())
             {
-                var schema = new ParquetSchema(tableInfo.GetColumns().Select(column => new DataField(column.Name, column.GetType())));
-                FileInfo fileInfo = new FileInfo(output.FullName + "_" + tableInfo.Name);
+                var schema = new ParquetSchema(tableInfo.GetColumns().Select(column => new DataField(column.Name, column.Encoding.Type.ToCsType())));
+                
+                var fileInfo = new FileInfo(
+                    Path.Combine(
+                        output.DirectoryName ?? string.Empty,
+                        $"{Path.GetFileNameWithoutExtension(output.Name)}_{tableInfo.Name}{output.Extension}"
+                    ));
 
                 await using var outputStream = fileInfo.Open(FileMode.Create, FileAccess.Write, FileShare.None);
                 await using ParquetWriter writer = await ParquetWriter.CreateAsync(schema, outputStream);
@@ -109,7 +118,15 @@ internal static class TapResult
                 foreach ((ColumnInfo columnInfo, DataField field) in tableInfo.GetColumns().Zip(schema.DataFields))
                 {
                     var columnReader = reader.OpenColumnReader(columnInfo);
-                    await groupWriter.WriteColumnAsync(new DataColumn(field, columnReader.Read(columnReader.Length).ToArray()));
+                    var values = columnReader.Read(columnReader.Length).ToArray();
+
+                    Array typedValues = Array.CreateInstance(field.ClrType, values.Length);
+
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        typedValues.SetValue(System.Convert.ChangeType(values[i], field.ClrType), i);
+                    }
+                    await groupWriter.WriteColumnAsync(new DataColumn(field, typedValues));
                 }
             }
         }

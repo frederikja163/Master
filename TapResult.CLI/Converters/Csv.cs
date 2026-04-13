@@ -6,7 +6,7 @@ namespace TapResult.CLI.Converters;
 
 internal static class Csv
 {
-    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileStream output)
+    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output)
     {
         if (Program.Verbose)
         {
@@ -30,7 +30,7 @@ internal static class Csv
         }
     }
     
-    private static void ConvertToTapResult(Encoder encoder, FileStream input, FileStream output)
+    private static void ConvertToTapResult(Encoder encoder, FileStream input, FileInfo output)
     {
         var csv = CsvReader.ReadFromStream(input); //TODO: consider ReadFromStreamAsSpan
 
@@ -58,7 +58,9 @@ internal static class Csv
 
         Table table = new Table(datacolumns.Select(datacolumn => datacolumn.BuildDataColumn()), headers, "CSVTable");
         table.Compress(encoder);
-        using Writer writer = new Writer(output);
+        
+        using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+        using Writer writer = new Writer(outputStream);
         writer.Write(table);
     }
 }
