@@ -90,19 +90,16 @@ public sealed class TapResultListener : ResultListener
     public override void OnTestPlanRunStart(TestPlanRun planRun)
     {
         base.OnTestPlanRunStart(planRun);
-        lock (_lock)
+        _ancestryBuilder = new AncestryBuilder();
+        _paramBuilder = new ParameterBuilder();
+        string path = FilePath.Expand(planRun, planRun.StartTime);
+        string dirPath = Path.GetDirectoryName(path) ?? "";
+        if (!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(Path.GetDirectoryName(path)))
         {
-            _ancestryBuilder = new AncestryBuilder();
-            _paramBuilder = new ParameterBuilder();
-            string path = FilePath.Expand(planRun, planRun.StartTime);
-            string dirPath = Path.GetDirectoryName(path) ?? "";
-            if (!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(Path.GetDirectoryName(path)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
-            }
-            _writer = new Writer(File.Create(path), leaveOpen: false);
-            _tasks.Clear();
+            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
         }
+        _writer = new Writer(File.Create(path), leaveOpen: false);
+        _tasks.Clear();
     }
 
     public override void OnTestPlanRunCompleted(TestPlanRun planRun, Stream logStream)
@@ -122,14 +119,11 @@ public sealed class TapResultListener : ResultListener
         }
 
         Task.WaitAll(_tasks);
-        lock (_lock)
-        {
-            _tasks.Clear();
-            _ancestryBuilder = null;
-            _paramBuilder = null;
-            _writer?.Dispose();
-            _writer = null;
-        }
+        _tasks.Clear();
+        _ancestryBuilder = null;
+        _paramBuilder = null;
+        _writer?.Dispose();
+        _writer = null;
     }
 
     public override void OnTestStepRunCompleted(TestStepRun stepRun)
