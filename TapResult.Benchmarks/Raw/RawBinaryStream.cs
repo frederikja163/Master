@@ -4,20 +4,28 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawBinaryStream : IRawBenchmark
 {
-    public void Write(string filePath, ICustomData data)
+    private ExtendedBinaryWriter? _writer;
+
+    public void Open(string filePath)
     {
-        using ExtendedBinaryWriter writer = new ExtendedBinaryWriter(filePath);
-        for (int i = 0; i < data.Repeats; i++)
+        _writer = new ExtendedBinaryWriter(filePath);
+    }
+
+    public void Write(ICustomData data)
+    {
+        foreach (Array array in data.Columns)
         {
-            foreach (Array array in data.Columns)
-            {
-                writer.Write(array);
-            }
+            _writer!.Write(array);
         }
     }
 
     public override string ToString()
     {
         return "Binary";
+    }
+
+    public void Close()
+    {
+        _writer!.Dispose();
     }
 }

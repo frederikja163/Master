@@ -9,12 +9,17 @@ namespace TapResult.Benchmarks.Raw;
 
 internal sealed class RawHdf5Benchmark : IRawBenchmark
 {
-    public unsafe void Write(string path, ICustomData data)
-    {
-        using Disposable<long> fileId = new Disposable<long>(H5F.create(path, H5F.ACC_TRUNC), i => H5F.close(i)); 
-        Debug.Assert(fileId > 0);
+    private Disposable<long> _fileId = new Disposable<long>(0, _ => { });
 
-        using Disposable<long> groupId = new Disposable<long>(H5G.create(fileId, data.ToString()), i => H5G.close(i));
+    public void Open(string filePath)
+    {
+        _fileId = new Disposable<long>(H5F.create(filePath, H5F.ACC_TRUNC), i => H5F.close(i)); 
+        Debug.Assert(_fileId > 0);
+    }
+
+    public unsafe void Write(ICustomData data)
+    {
+        using Disposable<long> groupId = new Disposable<long>(H5G.create(_fileId, data.ToString()), i => H5G.close(i));
         Debug.Assert(groupId > 0);
 
         ulong dims = 0ul;
@@ -32,23 +37,20 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
             .ToDisposableList(i => H5D.close(i));
         Debug.Assert(datasets.All(d => d > 0));
         
-        for (int i = 0; i < data.Repeats; i++)
+        ulong start = dims;
+        ulong count = (ulong)data.Count;
+        dims = start + count;
+        foreach ((long datasetId, Array values) in datasets.Zip(data.Columns))
         {
-            ulong start = dims;
-            ulong count = (ulong)data.Count;
-            dims = start + count;
-            foreach ((long datasetId, Array values) in datasets.Zip(data.Columns))
-            {
-                H5D.set_extent(datasetId, &dims);
-                using Disposable<long> filespace = new Disposable<long>(H5D.get_space(datasetId), id => H5S.close(id));
-                H5S.select_hyperslab(filespace, H5S.seloper_t.SET, &start, null, &count, null);
+            H5D.set_extent(datasetId, &dims);
+            using Disposable<long> filespace = new Disposable<long>(H5D.get_space(datasetId), id => H5S.close(id));
+            H5S.select_hyperslab(filespace, H5S.seloper_t.SET, &start, null, &count, null);
 
-                using Disposable<long> memspace = new Disposable<long>(H5S.create_simple(1, &count, null), id => H5S.close(id));
-                
-                using Disposable<GCHandle> handle = GetValues(values);
-                IntPtr ptr = handle.Value.AddrOfPinnedObject();
-                H5D.write(datasetId, GetType(values.GetType().GetElementType()!.GetUnderlyingNullableType()), memspace, filespace, H5P.DEFAULT, ptr);
-            }
+            using Disposable<long> memspace = new Disposable<long>(H5S.create_simple(1, &count, null), id => H5S.close(id));
+            
+            using Disposable<GCHandle> handle = GetValues(values);
+            IntPtr ptr = handle.Value.AddrOfPinnedObject();
+            H5D.write(datasetId, GetType(values.GetType().GetElementType()!.GetUnderlyingNullableType()), memspace, filespace, H5P.DEFAULT, ptr); 
         }
     }
 
@@ -100,5 +102,10 @@ internal sealed class RawHdf5Benchmark : IRawBenchmark
     public override string ToString()
     {
         return "Hdf5";
+    }
+
+    public void Close()
+    {
+        _fileId.Dispose();
     }
 }

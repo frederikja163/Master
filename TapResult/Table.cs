@@ -63,7 +63,23 @@ public sealed class Table : IColumnParent
         }
     }
 
-    public Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
+    public async Task CompressAsync(Encoder? encoder = null)
+    {
+        encoder ??= Encoder.Default;
+        List<Task> tasks = new();
+        foreach (DataColumn column in this.GetChildColumnsRecursive().OfType<DataColumn>())
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                IColumn encodedColumn = encoder.Encode(column);
+                this.SwapRecursive(column, encodedColumn);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    internal Table(IEnumerable<IColumn> columns, IEnumerable<string> names, string name)
     {
         _columns = columns.ToArray();
         _names = names.ToArray();

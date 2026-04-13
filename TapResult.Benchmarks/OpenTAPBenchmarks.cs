@@ -18,21 +18,18 @@ public class OpenTAPBenchmarks : AllBenchmarks
     {
         RunWithTimeout(() =>
         {
-            for (int i = 0; i < Data.Repeats; i++)
+            TestPlan plan = new();
+            RepeatStep repeatStep = new RepeatStep()
             {
-                TestPlan plan = new();
-                RepeatStep repeatStep = new RepeatStep()
-                {
-                    Repeat = 1, // Data.Repeats,
-                };
-                plan.ChildTestSteps.Add(repeatStep);
-                repeatStep.ChildTestSteps.Add(new ResultStep()
-                {
-                    Data = Data
-                });
-                TestPlanRun planRun = plan.Execute([implementation]);
-                planRun.WaitForResults();
-            }
+                Repeat = 1,
+            };
+            plan.ChildTestSteps.Add(repeatStep);
+            repeatStep.ChildTestSteps.Add(new ResultStep()
+            {
+                Data = Data
+            });
+            TestPlanRun planRun = plan.Execute([implementation]);
+            planRun.WaitForResults();
         }, Timeout);
     }
 
