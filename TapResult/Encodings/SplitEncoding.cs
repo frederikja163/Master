@@ -10,7 +10,7 @@ namespace TapResult.Encodings;
 public sealed class SplitEncoding : IEncoding
 {
     public EncodingType Type { get; } = EncodingType.Split;
-    public IColumn Encode(in DataColumn dataColumn)
+    public IColumn Encode(DataColumn dataColumn)
     {
         GenericReader columnReader = dataColumn.OpenGenericReader();
         int length = dataColumn.LogicalLength;

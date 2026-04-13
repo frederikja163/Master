@@ -13,6 +13,7 @@ public enum EncodingType : byte
     Split = 2,
     BitPacking = 3,
     Null = 4,
+    RunLength = 5,
 }
 
 /// <summary>
@@ -27,7 +28,7 @@ public interface IEncoding
     /// <summary>
     /// Encode a DataColumn using the encoding specified by <see cref="Type"/>.
     /// </summary>
-    IColumn Encode(in DataColumn dataColumn);
+    IColumn Encode(DataColumn dataColumn);
 
     /// <summary>
     /// Create a decoder for this type of encoding.

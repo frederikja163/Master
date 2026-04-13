@@ -24,7 +24,6 @@ internal sealed class BitPackingColumn : IColumnParent
         Prefix = prefix;
         LogicalLength = logicalLength;
         LogicalType = column.LogicalType;
-        
     }
     
     public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix) : this(column, prefixLength, prefix, column.LogicalLength)
