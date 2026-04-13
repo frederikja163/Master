@@ -1,4 +1,5 @@
 using TapResult.CLI.Options;
+using TapResult.Columns;
 using TapResult.Encodings;
 using TapResult.Readers;
 
@@ -6,12 +7,6 @@ namespace TapResult.CLI;
 
 public class Describe
 {
-    const int nameWidth = 10;
-    const int encodingWidth = 11;
-    const int typeWidth = 7;
-    const int idWidth = 3;
-    const int parentIdWidth = 8;
-    const int blobWidth = 50;
     
     internal static async Task<int> RunDescribeOptions(DescribeOptions opts)
     {
@@ -31,37 +26,94 @@ public class Describe
         
         if (opts.DescribeHeader)
         {
-            Console.WriteLine($"| {Center("Name",nameWidth)} | {Center("Encoding",encodingWidth)} | {Center("Type",typeWidth)} | {Center("Id",idWidth)} | {Center("ParentId",parentIdWidth)} | {"Blob Values",-blobWidth} |");
-            Console.WriteLine($"|{new string('-', nameWidth + 2)}|{new string('-', encodingWidth + 2)}|{new string('-', typeWidth + 2)}|{new string('-', idWidth + 2)}|{new string('-', parentIdWidth + 2)}|{new string('-', blobWidth + 2)}|" );
+            Console.WriteLine($"| {Center("Name",opts.NameWidth)} | {Center("Encoding",opts.EncodingWidth)} | {Center("Type",opts.TypeWidth)} | {Center("Id",opts.IdWidth)} | {Center("ParentId",opts.ParentIdWidth)} | {Center("Blob Values",opts.BlobWidth)} |");
+            Console.WriteLine($"|{new string('-', opts.NameWidth + 2)}|{new string('-', opts.EncodingWidth + 2)}|{new string('-', opts.TypeWidth + 2)}|{new string('-', opts.IdWidth + 2)}|{new string('-', opts.ParentIdWidth + 2)}|{new string('-', opts.BlobWidth + 2)}|" );
             foreach (TableInfo tableInfo in reader.GetTables())
             {
-                Console.WriteLine($"| {tableInfo.Name,-nameWidth} | {EncodingToString(tableInfo.Encoding)}");
+                Console.WriteLine($"| {tableInfo.Name.PadRight(opts.NameWidth)} | {EncodingToString(tableInfo.Encoding, opts)}");
                 foreach (ColumnInfo columnInfo in tableInfo.GetColumns())
                 {
                     Console.ForegroundColor = Console.ForegroundColor == ConsoleColor.Gray ? ConsoleColor.White : ConsoleColor.Gray;
-                    Console.WriteLine($"| {columnInfo.Name,-nameWidth} | {EncodingToString(columnInfo.Encoding)}");
-                    RecursiveWriteOutMetadata(columnInfo.Encoding);
+                    Console.WriteLine($"| {columnInfo.Name.PadRight(opts.NameWidth)} | {EncodingToString(columnInfo.Encoding, opts)}");
+                    RecursiveWriteOutMetadata(columnInfo.Encoding, opts);
                 }
             }
         }
 
-        if (opts.DescribeFile)
+        if (!opts.DescribeFile) 
+            return 0;
+        foreach (TableInfo tableInfo in reader.GetTables())
         {
-            foreach (EncodingInfo columnInfo in getDataColumns(reader.GetTables()))
+            Console.WriteLine("---------------------------------------------------------------");
+            Console.WriteLine($"| {Center(tableInfo.Name, opts.MaxColDescribeCharLength)} |");
+            
+            EncodingInfo[] dataColumnInfos = GetDataColumnInfos(tableInfo.Encoding.GetSubEncodings()).ToArray();
+            Console.Write("| ");
+            foreach (EncodingInfo info in dataColumnInfos)
             {
-                var a = reader.OpenColumnReader(columnInfo);
-                for (int i = 0; i < a.Length; i++)
+                Console.Write(Center($"{info.Id} ({info.Type})", opts.MaxColDescribeCharLength) + " | ");
+            }
+            Console.WriteLine();
+            Console.Write("|");
+            for (var i = 0; i < dataColumnInfos.Length; i++)
+            {
+                Console.Write(new string('-', opts.MaxColDescribeCharLength+2) + "|");
+            }
+            Console.WriteLine();
+
+            string[] rows = new string[opts.MaxColDescribeLength + 2];
+            for (int i = 0; i < rows.Length; i++)
+            {
+                rows[i] = "| ";
+            }
+            
+            foreach (EncodingInfo encodingInfo in dataColumnInfos)
+            {
+                var col = GetDataColumn(encodingInfo, inputStream);
+                var columnReader = col.OpenReader();
+            
+                int length = Math.Min(col.LogicalLength, opts.MaxColDescribeLength);
+                for (int i = 0; i < length; i++)
                 {
-                    Console.Write(a.Read());
+                    var str = columnReader.Read()?.ToString();
+                    rows[i] += $"{str?.Substring(0, Math.Min(str.Length, opts.MaxColDescribeCharLength)).PadRight(opts.MaxColDescribeCharLength)} | ";
                 }
-                Console.WriteLine();
+
+                if (col.LogicalLength > opts.MaxColDescribeLength)
+                {
+                    rows[^2] += " ...".PadRight(opts.MaxColDescribeCharLength) + " | ";
+                    rows[^1] += $"{$"[ln: {col.LogicalLength}]".PadRight(opts.MaxColDescribeCharLength)} | ";
+                }
+                else
+                {
+                    rows[^2] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
+                    rows[^1] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
+                }
+            }
+
+            foreach (string row in rows)
+            {
+                Console.ForegroundColor = Console.ForegroundColor == ConsoleColor.Gray ? ConsoleColor.White : ConsoleColor.Gray;
+                Console.WriteLine(row);
             }
         }
-        
-        
+
         return 0;
     }
-    
+
+    private static DataColumn GetDataColumn(EncodingInfo encodingInfo, FileStream inputStream)
+    {
+        GenericReader genericReader = new GenericReader(encodingInfo.Blob);
+        int physicalSize = genericReader.Read<int>();
+        int logicalLength = genericReader.Read<int>();
+        long offset = genericReader.Read<long>();
+        inputStream.Seek(offset, SeekOrigin.Begin);
+        byte[] data = new byte[physicalSize];
+        inputStream.ReadExactly(data);
+        DataColumn col = new DataColumn(encodingInfo.Type, data, logicalLength);
+        return col;
+    }
+
     static string Center(string text, int width)
     {
         if (text.Length >= width) return text;
@@ -69,7 +121,7 @@ public class Describe
         return text.PadLeft(left).PadRight(width);
     }
 
-    private static string EncodingToString(EncodingInfo info)
+    private static string EncodingToString(EncodingInfo info, DescribeOptions opts)
     {
         GenericReader reader = new GenericReader(info.Blob);
         string blob = "";
@@ -85,53 +137,43 @@ public class Describe
                 byte prefixLength = reader.Read<byte>();
                 ulong prefix = reader.Read<ulong>();
                 int logicalLength = reader.Read<int>();
-                blob = $"{prefixLength}, {prefix}, {logicalLength}";
+                blob = $"{{ prefixLn: {prefixLength}, prefix: {prefix}, ln: {logicalLength} }}";
+                break;
+            case EncodingType.Binary:
+                int physicalSize = reader.Read<int>();
+                int logLength = reader.Read<int>();
+                long offset = reader.Read<long>();
+                blob = $"{{ physicalLn: {physicalSize}, ln: {logLength}, offset: {offset} }}";
                 break;
             case EncodingType.Split:
             case EncodingType.Null:
-            case EncodingType.Binary:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
         
-        return $"{info.Encoding, -encodingWidth} | {info.Type, -typeWidth} | {info.Id, -idWidth} | {info.ParentId, -parentIdWidth} | {blob, -blobWidth} |";
+        return $"{info.Encoding.ToString().PadRight(opts.EncodingWidth)} | {info.Type.ToString().PadRight(opts.TypeWidth)} | {info.Id.ToString().PadRight(opts.IdWidth)} | {info.ParentId.ToString().PadRight(opts.ParentIdWidth)} | {blob.PadRight(opts.BlobWidth)} |";
     }
 
-    private static void RecursiveWriteOutMetadata(EncodingInfo encoding)
+    private static void RecursiveWriteOutMetadata(EncodingInfo encoding, DescribeOptions opts)
     {
         foreach (EncodingInfo child in encoding.GetSubEncodings())
         {
-            Console.WriteLine($"| {"", -nameWidth} | {EncodingToString(encoding)}");
-            RecursiveWriteOutMetadata(child);
+            Console.WriteLine($"| {new string(' ', opts.NameWidth)} | {EncodingToString(encoding, opts)}");
+            RecursiveWriteOutMetadata(child, opts);
         }
     }
 
-    private static IEnumerable<EncodingInfo> getDataColumns(IEnumerable<TableInfo> tables)
+    private static IEnumerable<EncodingInfo> GetDataColumnInfos(IEnumerable<EncodingInfo> encodings)
     {
-        foreach (TableInfo tableInfo in tables)
+        foreach (EncodingInfo encodingInfo in encodings)
         {
-            foreach (EncodingInfo encoding in getRecursiveSubEncodings(tableInfo.Encoding.GetSubEncodings()))
+            foreach (EncodingInfo recursiveSubEncoding in GetDataColumnInfos(encodingInfo.GetSubEncodings()))
             {
-                if (encoding is ColumnInfo columnInfo)
-                {
-                    yield return 
-                }
-                if (encoding.Encoding == EncodingType.Binary)
-                    yield return encoding;
+                yield return recursiveSubEncoding;
             }
-        }
-        IEnumerable<EncodingInfo> getRecursiveSubEncodings(IEnumerable<EncodingInfo> encodings)
-        {
-            foreach (EncodingInfo encodingInfo in encodings)
-            {
-                foreach (EncodingInfo recursiveSubEncoding in getRecursiveSubEncodings(encodingInfo.GetSubEncodings()))
-                {
-                    yield return recursiveSubEncoding;
-                }
-
+            if (encodingInfo.Encoding == EncodingType.Binary)
                 yield return encodingInfo;
-            }
         }
     }
 
