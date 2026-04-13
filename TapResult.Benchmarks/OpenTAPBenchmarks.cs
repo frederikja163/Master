@@ -3,7 +3,10 @@ using Keysight.OpenTap.Plugins.Csv;
 using Keysight.OpenTap.Plugins.ResultListeners;
 using OpenTap;
 using OpenTap.Hdf5;
+using OpenTap.Plugins.Parquet;
+using TapResult.Benchmarks.Data;
 using TapResult.Benchmarks.OpenTAP;
+using TapResult.OpenTAP;
 
 // using OpenTap.Plugins.Parquet;
 
@@ -18,10 +21,11 @@ public class OpenTAPBenchmarks : AllBenchmarks
     {
         RunWithTimeout(() =>
         {
+            RawData data = (RawData)Data;
             TestPlan plan = new();
             RepeatStep repeatStep = new RepeatStep()
             {
-                Repeat = 1,
+                Repeat = data.Repeats,
             };
             plan.ChildTestSteps.Add(repeatStep);
             repeatStep.ChildTestSteps.Add(new ResultStep()
@@ -39,11 +43,14 @@ public class OpenTAPBenchmarks : AllBenchmarks
         {
             FilePath = Config.FilePath,
         };
-        // TODO: For some reason the parquet dependency is a bit messed up right now, we should try to resolve this.
-        // yield return new ParquetResultListener()
-        // {
-        //     FilePath = new MacroString() { Text = Config.FilePath }
-        // };
+        yield return new ParquetResultListener()
+        {
+            FilePath = new MacroString() { Text = Config.FilePath }
+        };
+        yield return new TapResultListener()
+        {
+            FilePath = new MacroString() {Text = Config.FilePath}
+        };
         yield return new Hdf5ResultListener()
         {
             FilePath = Config.FilePath
