@@ -43,23 +43,23 @@ public sealed class RunLengthEncoding : IEncoding
         ColumnBuilder byteBuilder = new ColumnBuilder(dataColumn.LogicalType, dataColumn.PhysicalSize);
         ColumnBuilder repeatBuilder = new ColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
         T previous = reader.Read();
-        byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
         int repeats = 1;
         for (int i = 1; i < dataColumn.LogicalLength; i++)
         {
             T current = reader.Read();
             if (current.Equals(previous))
             {
-                genericReader.AdvanceUnits(dataColumn.LogicalType, 1);
                 repeats++;
                 continue;
             }
 
             byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
+            genericReader.AdvanceUnits(dataColumn.LogicalType, repeats - 1);
             repeatBuilder.Write(repeats);
             previous = current;
             repeats = 1;
         }
+        byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
         repeatBuilder.Write(repeats);
 
         return new RunLengthColumn(dataColumn.LogicalType, byteBuilder.Build(), repeatBuilder.Build(), dataColumn.LogicalLength);
