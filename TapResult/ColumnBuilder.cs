@@ -286,30 +286,6 @@ public sealed partial class ColumnBuilder
     {
         return Create(data, typeof(T).ToLogicalType());
     }
-    
-    /// <summary>
-    /// Create a new DataColumn from a collection of blobs.
-    /// </summary>
-    public static DataColumn Create(ICollection<ReadOnlyMemory<byte>> data)
-    {
-        int length = 0;
-        foreach (ReadOnlyMemory<byte> blob in data)
-        {
-            length += blob.Length;
-        }
-
-        byte[] bytes = new byte[length + sizeof(int) * data.Count];
-        int index = 0;
-        foreach (ReadOnlyMemory<byte> blob in data)
-        {
-            BitConverter.TryWriteBytes(bytes.AsSpan(index, sizeof(int)), blob.Length);
-            index += 4;
-            blob.Span.CopyTo(bytes.AsSpan(index));
-            index += blob.Length;
-        }
-
-        return new DataColumn(LogicalType.Blob, bytes, data.Count);
-    }
 
     public static IColumn Create<T>(IEnumerable<T> values)
     {
