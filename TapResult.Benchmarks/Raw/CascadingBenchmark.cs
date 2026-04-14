@@ -27,7 +27,7 @@ internal sealed class CascadingBenchmark : TapResultBenchmark
     
     public override void Write(ICustomData data)
     {
-        Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
+        Table table = new Table(data.Columns.Select(ColumnBuilder.Create), data.ColumnNames, data.Name);
         table.Compress();
         Writer?.Write(table);
     }
@@ -47,7 +47,7 @@ internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
     {
         _tasks.Add(Task.Run(async () =>
         {
-            Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
+            Table table = new Table(data.Columns.Select(ColumnBuilder.Create), data.ColumnNames, data.Name);
             await table.CompressAsync();
             lock (Writer!)
             {
@@ -72,7 +72,7 @@ internal sealed class EncodingBenchmark : TapResultBenchmark
 {
     public override void Write(ICustomData data)
     {
-        Table table = new Table(data.Columns.Select(a => ColumnBuilder.Create(a, out _)), data.ColumnNames, data.Name);
+        Table table = new Table(data.Columns.Select(ColumnBuilder.Create), data.ColumnNames, data.Name);
         Writer!.Write(table);
     }
 
