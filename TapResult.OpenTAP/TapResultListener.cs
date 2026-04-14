@@ -11,22 +11,22 @@ namespace TapResult.OpenTAP;
 
 internal sealed class AncestryBuilder
 {
-    private ColumnBuilder _id = new ColumnBuilder(LogicalType.String, 16);
-    private ColumnBuilder _parent = new ColumnBuilder(LogicalType.String, 16);
-    private ColumnBuilder _name = new ColumnBuilder(LogicalType.String, 16);
+    private readonly ColumnBuilder _id = new ColumnBuilder(LogicalType.String, 16);
+    private readonly ColumnBuilder _parent = new ColumnBuilder(LogicalType.String, 16);
+    private readonly ColumnBuilder _name = new ColumnBuilder(LogicalType.String, 16);
     
     public void Add(Guid id, Guid? parent, string name)
     {
-        _id.WriteString(id.ToString());
+        _id.WriteValue(id.ToString());
         if (parent.HasValue)
         {
-            _parent.WriteString(parent.Value.ToString());
+            _parent.WriteValue(parent.Value.ToString());
         }
         else
         {
             _parent.WriteNull();
         }
-        _name.WriteString(name);
+        _name.WriteValue(name);
     }
 
     public Table Build()
@@ -55,10 +55,10 @@ internal sealed class ParameterBuilder
     
     private void Add(Guid id, string name, TypeCode type, IConvertible value)
     {
-        _id.WriteString(id.ToString());
-        _names.WriteString(name);
+        _id.WriteValue(id.ToString());
+        _names.WriteValue(name);
         _types.WriteValue((int)type);
-        _values.WriteString(value.ToString(CultureInfo.InvariantCulture));
+        _values.WriteValue(value.ToString(CultureInfo.InvariantCulture));
     }
 
     public Table Build()

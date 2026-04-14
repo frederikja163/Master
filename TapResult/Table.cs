@@ -43,9 +43,9 @@ public sealed class Table : IColumnParent
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
-        builder.WriteString(Name);
+        builder.WriteValue(Name);
         builder.WriteStrings(_names);
-        blobBuilder.WriteBlob(builder.BuildDataColumn().Data.ToArray());
+        blobBuilder.WriteValue(builder.BuildDataColumn().Data.ToArray());
     }
 
     IColumnReader IColumn.OpenReader()

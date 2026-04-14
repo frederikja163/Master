@@ -20,7 +20,7 @@ internal sealed class SplitColumn : IColumnParent
 
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
+        blobBuilder.WriteValues(ReadOnlySpan<byte>.Empty);
     }
 
     public IColumnReader OpenReader()

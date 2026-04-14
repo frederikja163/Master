@@ -23,7 +23,7 @@ internal sealed class MyColumn : IColumnParent
 
     public void WriteMetadata(ColumnBuilder blobBuilder)
     {
-        blobBuilder.WriteBlob(Blob);
+        blobBuilder.WriteValue(Blob);
     }
 
     public IColumnReader OpenReader()

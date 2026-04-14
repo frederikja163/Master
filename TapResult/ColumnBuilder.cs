@@ -95,7 +95,6 @@ public sealed class ColumnBuilder
     /// Write a value of type T to the DataColumn. This increases the length by 1 as opposed to <see cref="WriteRaw{T}(T)"/>
     /// </summary>
     public void WriteValue<T>(T value)
-        where T : unmanaged
     {
         WriteRaw(value);
         
@@ -117,32 +116,10 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Writes a single blob to the DataColumn.
     /// </summary>
-    public void WriteBlob(ReadOnlySpan<byte> blob)
+    private void WriteBlob(ReadOnlySpan<byte> blob)
     {
         WriteValue(blob.Length);
         WriteRaw(blob, 0);
-    }
-
-    /// <summary>
-    /// Writes blobs to the DataColumn.
-    /// </summary>
-    public void WriteBlobs(IEnumerable<ReadOnlyMemory<byte>> blobs)
-    {
-        foreach (ReadOnlyMemory<byte> blob in blobs)
-        {
-            WriteBlob(blob.Span);
-        }
-    }
-
-    /// <summary>
-    /// Writes multiple blobs to the DataColumn.
-    /// </summary>
-    public void WriteBlobs(IEnumerable<byte[]> blobs)
-    {
-        foreach (ReadOnlyMemory<byte> blob in blobs)
-        {
-            WriteBlob(blob.Span);
-        }
     }
     
     /// <summary>
@@ -150,7 +127,7 @@ public sealed class ColumnBuilder
     /// </summary>
     public void WriteString(string str)
     {
-        WriteBlob(Encoding.UTF8.GetBytes(str));
+        WriteValue(Encoding.UTF8.GetBytes(str));
     }
     
     /// <summary>
@@ -160,7 +137,7 @@ public sealed class ColumnBuilder
     {
         foreach (string str in strs)
         {
-            WriteString(str);
+            WriteValue(str);
         }
     }
 
