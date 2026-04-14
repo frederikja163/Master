@@ -1,6 +1,7 @@
 ﻿using TapResult;
 using TapResult.Columns;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests.Encodings;
 
@@ -61,7 +62,7 @@ internal sealed class EncodingTests
             CascadingEncodings = 2,
         };
 
-        DataColumn expected = ColumnBuilder.Create(data);
+        DataColumn expected = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(data));
         IColumn column = encoder.Encode(expected);
         // TODO: Read
         // DataColumnBuilder builder = new DataColumnBuilder(100);

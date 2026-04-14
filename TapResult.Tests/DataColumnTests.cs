@@ -4,6 +4,7 @@ using TapResult;
 using TapResult.Columns;
 using TapResult.Extensions;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests;
 
@@ -13,7 +14,7 @@ internal sealed class DataColumnTests
     public void CreateStringsTest()
     {
         string[] strings = ["Abcd", "1234", "Hello world!", "CSharp"];
-        DataColumn column = ColumnBuilder.Create(strings);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
         int physicalLength = strings.Select(str => Unsafe.SizeOf<int>() + Encoding.UTF8.GetByteCount(str)).Sum();
         Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));

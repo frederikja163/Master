@@ -288,23 +288,6 @@ public sealed partial class ColumnBuilder
     }
 
     /// <summary>
-    /// Create a new DataColumn from any collection of strings.
-    /// </summary>
-    public static DataColumn Create(ICollection<string> data)
-    {
-        int length = 0;
-        foreach (string str in data)
-        {
-            length += Encoding.UTF8.GetByteCount(str);
-        }
-
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length + sizeof(int) * data.Count);
-        builder.WriteStrings(data);
-
-        return builder.BuildDataColumn();
-    }
-
-    /// <summary>
     /// Create a new DataColumn from an IEnumerable of blobs.
     /// </summary>
     public static DataColumn Create(IEnumerable<byte[]> data)

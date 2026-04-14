@@ -2,6 +2,7 @@
 using TapResult.Columns;
 using TapResult.Encodings;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests.Encodings;
 

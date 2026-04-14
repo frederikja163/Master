@@ -1,6 +1,7 @@
 ﻿using TapResult;
 using TapResult.Columns;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests;
 
@@ -52,7 +53,7 @@ internal sealed class GenericReaderTests
     public void ReadVariableLengthUnitsTest()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = ColumnBuilder.Create(strings);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
         GenericReader reader = column.OpenGenericReader();
         Assert.That(reader.ReadUnits(LogicalType.String, 3).ToArray(),
             Is.EqualTo(column.Data.Span.Slice(0, 36).ToArray()));
@@ -72,7 +73,7 @@ internal sealed class GenericReaderTests
     public void ReadStringsTests()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = ColumnBuilder.Create(strings);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadString(), Is.EqualTo("test"));
@@ -85,7 +86,7 @@ internal sealed class GenericReaderTests
     public void ReadBlobsTest()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = ColumnBuilder.Create(strings);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadBlob().ToArray(), Is.EqualTo("test"u8.ToArray()));

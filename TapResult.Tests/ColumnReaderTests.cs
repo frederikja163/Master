@@ -1,5 +1,6 @@
 ﻿using TapResult.Columns;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests;
 
@@ -26,7 +27,7 @@ internal sealed class ColumnReaderTests
     public void VarLengthReaderTest()
     {
         string[] arr = ["This", "is", "a", "test"];
-        DataColumn column = ColumnBuilder.Create(arr);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(arr));
         IColumnReader<string> reader = column.OpenReader<string>();
         
         Assert.That(reader.Peek(), Is.EqualTo("This"));
