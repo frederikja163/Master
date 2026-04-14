@@ -79,6 +79,7 @@ public sealed class TapResultListener : ResultListener
     private ParameterBuilder? _paramBuilder = null;
     private AncestryBuilder? _ancestryBuilder = null;
     private readonly object _lock = new object();
+    private Stream? _stream;
     private Writer? _writer = null;
     private ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
 
@@ -98,7 +99,9 @@ public sealed class TapResultListener : ResultListener
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
         }
-        _writer = new Writer(File.Create(path), leaveOpen: false);
+
+        _stream = File.Create(path);
+        _writer = new Writer(_stream);
         _tasks.Clear();
     }
 
@@ -124,6 +127,8 @@ public sealed class TapResultListener : ResultListener
         _paramBuilder = null;
         _writer?.Dispose();
         _writer = null;
+        _stream?.Dispose();
+        _stream = null;
     }
 
     public override void OnTestStepRunCompleted(TestStepRun stepRun)

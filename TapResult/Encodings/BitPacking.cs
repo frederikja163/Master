@@ -37,8 +37,6 @@ public sealed class BitPacking : IEncoding
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
             throw new Exception("Expected a child column to a bitpack encoded column, but found none.");
-        if (metadataReader.Read<int>() != BitPackingColumn.Size)
-            throw new Exception("BitPacking metadata was malformed.");
         byte prefixLength = metadataReader.Read<byte>();
         ulong prefix = metadataReader.Read<ulong>();
         int logicalLength = metadataReader.Read<int>();

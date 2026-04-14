@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using TapResult.Columns;
 
@@ -13,9 +14,9 @@ namespace TapResult;
 public sealed class ColumnBuilder
 {
     private readonly LogicalType _type;
+    private BlobBuilder? _blobBuilder = null;
     private byte[]? _nulls = null;
     private byte[] _data;
-    private byte[]? _lengths = null;
     private int _byteIndex = 0;
     private int _valuesLength = 0;
     private int _logicalLength = 0;
@@ -98,10 +99,8 @@ public sealed class ColumnBuilder
     {
         WriteRaw(value);
         
-        if (!_type.TryGetSize(out int size))
-            size = Unsafe.SizeOf<T>();
-        _logicalLength += Unsafe.SizeOf<T>() / size;
-        _valuesLength += Unsafe.SizeOf<T>() / size;
+        _logicalLength += 1;
+        _valuesLength += 1;
     }
 
     /// <summary>
@@ -113,12 +112,20 @@ public sealed class ColumnBuilder
         WriteRaw(values, values.Length);
     }
 
+    public void WriteValues<T>(IEnumerable<T> values)
+    {
+        foreach (T value in values)
+        {
+            WriteValue(value);
+        }
+    }
+
     /// <summary>
     /// Writes a single blob to the DataColumn.
     /// </summary>
     private void WriteBlob(ReadOnlySpan<byte> blob)
     {
-        WriteValue(blob.Length);
+        WriteRaw(blob.Length);
         WriteRaw(blob, 0);
     }
     
@@ -127,7 +134,7 @@ public sealed class ColumnBuilder
     /// </summary>
     public void WriteString(string str)
     {
-        WriteValue(Encoding.UTF8.GetBytes(str));
+        WriteRaw(Encoding.UTF8.GetBytes(str));
     }
     
     /// <summary>
@@ -341,5 +348,111 @@ public sealed class ColumnBuilder
         }
         
         return valueBuilder.Build();
+    }
+
+    /// <summary>
+    /// Opens a new <see cref="BlobBuilder"/> on this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    public BlobBuilder OpenBlob()
+    {
+        if (_blobBuilder is not null)
+        {
+            throw new Exception($"Cannot open more than one blob on a {nameof(ColumnBuilder)} at a time.");
+        }
+
+        _byteIndex += Unsafe.SizeOf<int>();
+        _blobBuilder = new BlobBuilder(this)
+        {
+            StartIndex = _byteIndex
+        };
+        // Make sure there is space for an integer later.
+        Slice(Unsafe.SizeOf<int>());
+        return _blobBuilder;
+    }
+
+    /// <summary>
+    /// Closes the currently open <see cref="BlobBuilder"/>, if one exists, on this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    internal void CloseBlob()
+    {
+        if (_blobBuilder is null)
+        {
+            throw new Exception(
+                $"This {nameof(ColumnBuilder)} does not have an open {nameof(BlobBuilder)}");
+        }
+
+        int startIndex = _blobBuilder.StartIndex;
+        int length = _byteIndex - _blobBuilder.StartIndex;
+        Span<byte> span = _data.AsSpan(startIndex - Unsafe.SizeOf<int>(), Unsafe.SizeOf<int>());
+        BinaryPrimitives.WriteInt32LittleEndian(span, length);
+        _blobBuilder = null;
+        _logicalLength += 1;
+        _valuesLength += 1;
+    }
+}
+
+/// <summary>
+/// Writes blobs to a <see cref="ColumnBuilder"/>.
+/// Created using <see cref="ColumnBuilder.OpenBlob"/>
+/// </summary>
+public interface IBlobBuilder
+{
+    /// <summary>
+    /// Write values to this Blob.
+    /// </summary>
+    public void WriteValue<T>(T value);
+
+    /// <summary>
+    /// Writes an amount of bytes to the blob without a length prefix.
+    /// If you want your blob to contain another blob use <see cref="WriteValue{T}"/>
+    /// </summary>
+    public void WriteRaw(ReadOnlySpan<byte> bytes);
+}
+
+
+/// <summary>
+/// Writes blobs to a <see cref="ColumnBuilder"/>.
+/// Created using <see cref="ColumnBuilder.OpenBlob"/>
+/// </summary>
+public sealed class BlobBuilder : IBlobBuilder, IDisposable
+{
+    private readonly ColumnBuilder _builder;
+
+    internal BlobBuilder(ColumnBuilder builder)
+    {
+        _builder = builder;
+    }
+    
+    internal int StartIndex { get; init; }
+
+    public void WriteValue<T>(T value)
+    {
+        switch (value)
+        {
+            case string str:
+                WriteBlob(Encoding.UTF8.GetBytes(str));
+                break;
+            case byte[] blob:
+                WriteBlob(blob);
+                break;
+            default:
+                _builder.WriteRaw(value);
+                break;
+        }
+    }
+
+    private void WriteBlob(ReadOnlySpan<byte> bytes)
+    {
+        _builder.WriteRaw(bytes.Length);
+        _builder.WriteRaw(bytes, 0);
+    }
+    public void WriteRaw(ReadOnlySpan<byte> bytes)
+    {
+        _builder.WriteRaw(bytes, 0);
+    }
+
+    public void Dispose()
+    {
+        _builder.CloseBlob();
     }
 }

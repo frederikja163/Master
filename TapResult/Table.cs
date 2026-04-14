@@ -40,12 +40,13 @@ public sealed class Table : IColumnParent
         return false;
     }
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
-        builder.WriteValue(Name);
-        builder.WriteStrings(_names);
-        blobBuilder.WriteValue(builder.BuildDataColumn().Data.ToArray());
+        blobBuilder.WriteValue(Name);
+        foreach (string name in _names)
+        {
+            blobBuilder.WriteValue(name);
+        }
     }
 
     IColumnReader IColumn.OpenReader()

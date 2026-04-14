@@ -12,20 +12,22 @@ internal sealed class ColumnBuilderTests
     public void WritePrimitiveTest()
     {
         ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 44);
-        builder.WriteValue<sbyte>(1);
-        builder.WriteValue<short>(2);
-        builder.WriteValue<int>(3);
-        builder.WriteValue<long>(4);
-        builder.WriteValue<byte>(5);
-        builder.WriteValue<ushort>(6);
-        builder.WriteValue<uint>(7);
-        builder.WriteValue<ulong>(8);
-        builder.WriteValue<Half>((Half)9);
-        builder.WriteValue<float>(10);
-        builder.WriteValue<double>(11);
+        BlobBuilder blob = builder.OpenBlob();
+        blob.WriteValue<sbyte>(1);
+        blob.WriteValue<short>(2);
+        blob.WriteValue<int>(3);
+        blob.WriteValue<long>(4);
+        blob.WriteValue<byte>(5);
+        blob.WriteValue<ushort>(6);
+        blob.WriteValue<uint>(7);
+        blob.WriteValue<ulong>(8);
+        blob.WriteValue<Half>((Half)9);
+        blob.WriteValue<float>(10);
+        blob.WriteValue<double>(11);
+        blob.Dispose();
         DataColumn column = builder.BuildDataColumn();
-        Assert.That(column.LogicalLength, Is.EqualTo(44));
-        Assert.That(column.PhysicalSize, Is.EqualTo(44));
+        Assert.That(column.LogicalLength, Is.EqualTo(1));
+        Assert.That(column.PhysicalSize, Is.EqualTo(48));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.UInt8));
 
         byte[] bytes = new byte[14];
@@ -33,6 +35,7 @@ internal sealed class ColumnBuilderTests
         BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(2), 10);
         BinaryPrimitives.WriteDoubleLittleEndian(bytes.AsSpan(6), 11);
         Assert.That(column.Data.ToArray(), Is.EqualTo(new byte[]{
+            44, 0, 0, 0,
             1,
             2, 0,
             3, 0, 0, 0,
@@ -66,7 +69,7 @@ internal sealed class ColumnBuilderTests
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
         ColumnBuilder builder = new ColumnBuilder(LogicalType.Blob, length);
-        builder.WriteBlobs(strs.Select(Encoding.UTF8.GetBytes));
+        builder.WriteValues(strs.Select(Encoding.UTF8.GetBytes).ToArray());
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
