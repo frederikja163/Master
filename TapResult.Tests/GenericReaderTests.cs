@@ -10,7 +10,7 @@ internal sealed class GenericReaderTests
     [Test]
     public void AdvanceTest()
     {
-        DataColumn column = ColumnBuilder.Create(Enumerable.Range(0, 100).ToArray());
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(Enumerable.Range(0, 100).ToArray()));
         IColumnReader<int> reader = column.OpenReader<int>();
         reader.Advance(12);
         Assert.That(reader.Read(), Is.EqualTo(12));
@@ -63,7 +63,7 @@ internal sealed class GenericReaderTests
     public void ReadMultiplePrimitivesTest()
     {
         float[] data = Enumerable.Range(0, 100).Select(i => MathF.Sin(i / 10f)).ToArray();
-        DataColumn column = ColumnBuilder.Create(data);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(data));
         IColumnReader<float> reader = column.OpenReader<float>();
         
         Assert.That(reader.Read(40).ToArray(), Is.EqualTo(data.Take(40)));

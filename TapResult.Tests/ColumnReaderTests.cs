@@ -10,7 +10,7 @@ internal sealed class ColumnReaderTests
     public void PrimitiveReaderTest(int start, int count)
     {
         int[] arr = Enumerable.Range(start, count).ToArray();
-        DataColumn column = ColumnBuilder.Create(arr);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(arr));
         IColumnReader<int> reader = column.OpenReader<int>();
         
         Assert.That(reader.Peek(), Is.EqualTo(start));

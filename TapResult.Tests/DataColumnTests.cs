@@ -90,7 +90,7 @@ internal sealed class DataColumnTests
     public void CreatePrimitivesTest((Array array, LogicalType type) tuple)
     {
         (Array array, LogicalType type) = tuple;
-        IColumn column = ColumnBuilder.Create(array, out _);
+        IColumn column = ColumnBuilder.Create(array);
         IColumnReader reader = column.OpenReader();
         Assert.That(column.LogicalType, Is.EqualTo(type));
         Assert.That(reader.Read(reader.Length), Is.EqualTo(array));
@@ -100,6 +100,6 @@ internal sealed class DataColumnTests
     [Test]
     public void DataColumnCreateFailsOnInvalidType()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColumnBuilder.Create(Array.Empty<object>(), out _));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ColumnBuilder.Create(Array.Empty<object>()));
     }
 }

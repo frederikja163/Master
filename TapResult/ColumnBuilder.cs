@@ -315,9 +315,9 @@ public sealed partial class ColumnBuilder
     /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
     /// A separate nulls DataColumn is created if the underlying type is nullable.
     /// </summary>
-    public static IColumn Create(Array array, out DataColumn? nulls)
+    [OverloadResolutionPriority(1)]
+    public static IColumn Create(Array array)
     {
-        nulls = null;
         return array switch
         {
             sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
@@ -338,8 +338,8 @@ public sealed partial class ColumnBuilder
             Half?[] values => SplitNulls<Half>(values),
             float?[] values => SplitNulls<float>(values),
             double?[] values => SplitNulls<double>(values),
-            string[] str => Create(str),
-            byte[][] blobs => Create(blobs),
+            string[] str => Create<string>(str),
+            byte[][] blobs => Create<byte[]>(blobs),
             _ => throw new ArgumentOutOfRangeException(nameof(array))
         };
     }
