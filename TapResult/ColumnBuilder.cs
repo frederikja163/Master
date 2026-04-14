@@ -11,7 +11,7 @@ namespace TapResult;
 /// <summary>
 /// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
-public sealed class ColumnBuilder
+public sealed partial class ColumnBuilder
 {
     private readonly LogicalType _type;
     private BlobBuilder? _blobBuilder = null;
@@ -220,7 +220,49 @@ public sealed class ColumnBuilder
     {
         return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
-    
+
+    /// <summary>
+    /// Opens a new <see cref="BlobBuilder"/> on this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    public BlobBuilder OpenBlob()
+    {
+        if (_blobBuilder is not null)
+        {
+            throw new Exception($"Cannot open more than one blob on a {nameof(ColumnBuilder)} at a time.");
+        }
+
+        Slice(Unsafe.SizeOf<int>());
+        _blobBuilder = new BlobBuilder(this)
+        {
+            StartIndex = _byteIndex
+        };
+        // Make sure there is space for an integer later.
+        return _blobBuilder;
+    }
+
+    /// <summary>
+    /// Closes the currently open <see cref="BlobBuilder"/>, if one exists, on this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    internal void CloseBlob()
+    {
+        if (_blobBuilder is null)
+        {
+            throw new Exception(
+                $"This {nameof(ColumnBuilder)} does not have an open {nameof(BlobBuilder)}");
+        }
+
+        int startIndex = _blobBuilder.StartIndex;
+        int length = _byteIndex - _blobBuilder.StartIndex;
+        Span<byte> span = _data.AsSpan(startIndex - Unsafe.SizeOf<int>(), Unsafe.SizeOf<int>());
+        BinaryPrimitives.WriteInt32LittleEndian(span, length);
+        _blobBuilder = null;
+        _logicalLength += 1;
+        _valuesLength += 1;
+    }
+}
+
+public sealed partial class ColumnBuilder
+{
     private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
     {
         if (!BitConverter.IsLittleEndian)
@@ -236,8 +278,7 @@ public sealed class ColumnBuilder
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
         return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
     }
-
-    // TODO: Switch all create methods to return an IColumn instead of DataColumn.
+    
     /// <summary>
     /// Create a new DataColumn from a span of data.
     /// </summary>
@@ -348,44 +389,5 @@ public sealed class ColumnBuilder
         }
         
         return valueBuilder.Build();
-    }
-
-    /// <summary>
-    /// Opens a new <see cref="BlobBuilder"/> on this <see cref="ColumnBuilder"/>.
-    /// </summary>
-    public BlobBuilder OpenBlob()
-    {
-        if (_blobBuilder is not null)
-        {
-            throw new Exception($"Cannot open more than one blob on a {nameof(ColumnBuilder)} at a time.");
-        }
-
-        Slice(Unsafe.SizeOf<int>());
-        _blobBuilder = new BlobBuilder(this)
-        {
-            StartIndex = _byteIndex
-        };
-        // Make sure there is space for an integer later.
-        return _blobBuilder;
-    }
-
-    /// <summary>
-    /// Closes the currently open <see cref="BlobBuilder"/>, if one exists, on this <see cref="ColumnBuilder"/>.
-    /// </summary>
-    internal void CloseBlob()
-    {
-        if (_blobBuilder is null)
-        {
-            throw new Exception(
-                $"This {nameof(ColumnBuilder)} does not have an open {nameof(BlobBuilder)}");
-        }
-
-        int startIndex = _blobBuilder.StartIndex;
-        int length = _byteIndex - _blobBuilder.StartIndex;
-        Span<byte> span = _data.AsSpan(startIndex - Unsafe.SizeOf<int>(), Unsafe.SizeOf<int>());
-        BinaryPrimitives.WriteInt32LittleEndian(span, length);
-        _blobBuilder = null;
-        _logicalLength += 1;
-        _valuesLength += 1;
     }
 }
