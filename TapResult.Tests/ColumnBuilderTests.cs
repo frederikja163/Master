@@ -54,7 +54,7 @@ internal sealed class ColumnBuilderTests
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
         ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length);
-        builder.WriteStrings(strs);
+        builder.WriteValues(strs);
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));

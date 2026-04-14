@@ -132,7 +132,7 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Writes a string to the DataColumn.
     /// </summary>
-    public void WriteString(string str)
+    private void WriteString(string str)
     {
         WriteRaw(Encoding.UTF8.GetBytes(str));
     }
@@ -140,7 +140,7 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Writes multiple strings to the DataColumn.
     /// </summary>
-    public void WriteStrings(IEnumerable<string> strs)
+    private void WriteStrings(IEnumerable<string> strs)
     {
         foreach (string str in strs)
         {
@@ -360,13 +360,12 @@ public sealed class ColumnBuilder
             throw new Exception($"Cannot open more than one blob on a {nameof(ColumnBuilder)} at a time.");
         }
 
-        _byteIndex += Unsafe.SizeOf<int>();
+        Slice(Unsafe.SizeOf<int>());
         _blobBuilder = new BlobBuilder(this)
         {
             StartIndex = _byteIndex
         };
         // Make sure there is space for an integer later.
-        Slice(Unsafe.SizeOf<int>());
         return _blobBuilder;
     }
 
