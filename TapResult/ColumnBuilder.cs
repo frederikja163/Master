@@ -282,7 +282,7 @@ public sealed partial class ColumnBuilder
     /// <summary>
     /// Create a new DataColumn from a span of data.
     /// </summary>
-    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
+    public static IColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         return Create(data, typeof(T).ToLogicalType());
     }

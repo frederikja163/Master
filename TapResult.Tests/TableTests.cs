@@ -65,13 +65,13 @@ public class TableTests
     public void CreateMetaDataTest(int start, int length)
     {
         int[] data = Enumerable.Range(start, length).ToArray();
-        DataColumn[] dataColumns = [
+        IColumn[] dataColumns = [
             ColumnBuilder.Create<int>(data.AsSpan()),
             ColumnBuilder.Create<int>(data.AsSpan()),
             ColumnBuilder.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
+        Table table = new Table(dataColumns, names, "table");
         // Encoding is skipped
         Writer writer = new Writer(Stream.Null);
         writer.Write(table);
@@ -154,14 +154,14 @@ public class TableTests
     public void WriteTableTest(int start, int length)
     {
         int[] data = Enumerable.Range(start, length).ToArray();
-        DataColumn[] dataColumns =
+        IColumn[] dataColumns =
         [
             ColumnBuilder.Create<int>(data.AsSpan()),
             ColumnBuilder.Create<int>(data.AsSpan()),
             ColumnBuilder.Create<int>(data.AsSpan())
         ];
         string[] names = ["columnA", "columnB", "columnC"];
-        Table table = new Table(dataColumns.OfType<IColumn>(), names, "table");
+        Table table = new Table(dataColumns, names, "table");
 
         Stream stream = new MemoryStream();
         Writer writer = new(stream, leaveOpen: true);

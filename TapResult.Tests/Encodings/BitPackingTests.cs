@@ -18,7 +18,7 @@ internal sealed class BitPackingTests
     public void BitPackEncodingRoundTripTest(int start, int length)
     {
         int[] data = Enumerable.Range(start, length).ToArray();
-        DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<int>(data.AsSpan()));
         IEncoding encoding = new BitPacking();
         BitPackingColumn column = Assert.InstanceOf<BitPackingColumn>(encoding.Encode(dataColumn));
         IColumnReader<int> reader = column.OpenReader<int>();
@@ -30,7 +30,8 @@ internal sealed class BitPackingTests
     public void GetBitCountsTest()
     {
         Span<int> bitCounts = stackalloc int[sizeof(ulong) * 8];
-        BitPacking.GetBitCounts<byte>(ColumnBuilder.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()),
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
+        BitPacking.GetBitCounts<byte>(column,
             bitCounts);
         Assert.That(bitCounts.Slice(0, 8).ToArray(), Is.EqualTo(new int[8] {21, 0, 0, 5, 8, 9, 10, 10 }));
         Assert.That(bitCounts.Slice(8).ToArray().All(i => i == 0), Is.True);
@@ -39,7 +40,8 @@ internal sealed class BitPackingTests
     [Test]
     public void GetMetadataTest()
     {
-        BitPackingColumn metadata = BitPacking.GetMetadata<byte>(ColumnBuilder.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
+        BitPackingColumn metadata = BitPacking.GetMetadata<byte>(column);
         Assert.That(metadata.LogicalLength, Is.EqualTo(21));
         Assert.That(metadata.LogicalType, Is.EqualTo(LogicalType.UInt8));
         Assert.That(metadata.Prefix, Is.EqualTo(0b100));

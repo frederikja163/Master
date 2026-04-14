@@ -43,9 +43,8 @@ internal sealed class ColumnReaderTests
     [Test]
     public void ThrowsExceptionOnWrongType()
     {
-        DataColumn column = ColumnBuilder.Create([0, 1, 2, 3]);
+        IColumn column = ColumnBuilder.Create([0, 1, 2, 3]);
         Assert.Throws<ArgumentException>(() => column.OpenReader<string>());
         Assert.DoesNotThrow(() => column.OpenReader());
-        Assert.DoesNotThrow(() => column.OpenGenericReader());
     }
 }
