@@ -336,6 +336,29 @@ public sealed partial class ColumnBuilder
         return new DataColumn(LogicalType.Blob, bytes, data.Count);
     }
 
+    public static IColumn Create<T>(IEnumerable<T> values)
+    {
+        if (!values.TryGetNonEnumeratedCount(out int count))
+        {
+            count = 16;
+        }
+
+        int size = count * Unsafe.SizeOf<T>();
+        ColumnBuilder builder = new ColumnBuilder(typeof(T).ToLogicalType(), size);
+        foreach (T value in values)
+        {
+            if (value is null)
+            {
+                builder.WriteNull();
+            }
+            else
+            {
+                builder.WriteValue(value);
+            }
+        }
+        return builder.Build();
+    }
+
     /// <summary>
     /// Create a new DataColumn based on an array.
     /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
@@ -350,10 +373,9 @@ public sealed partial class ColumnBuilder
             short[] values => Create<short>(values, array.GetType().GetElementType()! == typeof(short) ? LogicalType.SInt16 : LogicalType.UInt16),
             int[] values => Create<int>(values, array.GetType().GetElementType()! == typeof(int) ? LogicalType.SInt32 : LogicalType.UInt32),
             long[] values => Create<long>(values, array.GetType().GetElementType()! == typeof(long) ? LogicalType.SInt64 : LogicalType.UInt64),
-            Half[] values => Create<Half>(values),
-            float[] values => Create<float>(values),
-            double[] values => Create<double>(values),
-            string[] str => Create(str), // TODO: Split nulls for strings.
+            Half[] values => Create<Half>(values.AsSpan()),
+            float[] values => Create<float>(values.AsSpan()),
+            double[] values => Create<double>(values.AsSpan()),
             sbyte?[] values => SplitNulls<sbyte>(values),
             short?[] values => SplitNulls<short>(values),
             int?[] values => SplitNulls<int>(values),
@@ -365,6 +387,8 @@ public sealed partial class ColumnBuilder
             Half?[] values => SplitNulls<Half>(values),
             float?[] values => SplitNulls<float>(values),
             double?[] values => SplitNulls<double>(values),
+            string[] str => Create(str),
+            byte[][] blobs => Create(blobs),
             _ => throw new ArgumentOutOfRangeException(nameof(array))
         };
     }
