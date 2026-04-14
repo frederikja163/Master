@@ -286,14 +286,6 @@ public sealed partial class ColumnBuilder
     {
         return Create(data, typeof(T).ToLogicalType());
     }
-
-    /// <summary>
-    /// Create a new DataColumn from an IEnumerable of blobs.
-    /// </summary>
-    public static DataColumn Create(IEnumerable<byte[]> data)
-    {
-        return Create(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
-    }
     
     /// <summary>
     /// Create a new DataColumn from a collection of blobs.

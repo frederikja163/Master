@@ -28,7 +28,7 @@ internal sealed class DataColumnTests
     public void CreateBlobsTest()
     {
         byte[][] blobs = [[0, 1, 2], [1,2,3], [2,3,4]];
-        DataColumn column = ColumnBuilder.Create(blobs);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(blobs));
         int physicalLength = blobs.Select(blob => Unsafe.SizeOf<int>() + blob.Length).Sum();
         Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
