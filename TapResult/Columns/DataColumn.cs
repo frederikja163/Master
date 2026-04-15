@@ -83,12 +83,11 @@ public sealed class DataColumn : IColumn
         return new GenericReader(Data);
     }
 
-    void IColumn.WriteMetadata(ColumnBuilder blobBuilder)
+    void IColumn.WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.Write(BlobSize);
-        blobBuilder.WriteRaw(PhysicalSize);
-        blobBuilder.WriteRaw(LogicalLength);
-        blobBuilder.WriteRaw(_offset);
+        blobBuilder.WriteValue(PhysicalSize);
+        blobBuilder.WriteValue(LogicalLength);
+        blobBuilder.WriteValue(_offset);
     }
 
     internal void Write(Stream stream)

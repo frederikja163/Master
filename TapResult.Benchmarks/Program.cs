@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
+using TapResult.OpenTAP;
 
 namespace TapResult.Benchmarks;
 

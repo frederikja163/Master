@@ -23,7 +23,7 @@ public class ColumnParent : IColumnParent
         throw new NotSupportedException();
     }
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
         throw new NotSupportedException();
     }

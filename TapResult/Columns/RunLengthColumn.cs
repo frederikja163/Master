@@ -20,12 +20,10 @@ internal sealed class RunLengthColumn : IColumnParent
     public IColumn ByteColumn { get; set; }
     public IColumn RepeatColumn { get; set; }
     public int Length { get; set; }
-    internal static readonly int Size = Unsafe.SizeOf<int>();
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.Write(Size);
-        blobBuilder.WriteRaw(Length);
+        blobBuilder.WriteValue(Length);
     }
 
     public IColumnReader OpenReader()

@@ -21,9 +21,9 @@ internal sealed class MyColumn : IColumnParent
         return 0;
     }
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.WriteBlob(Blob);
+        blobBuilder.WriteRaw(Blob);
     }
 
     public IColumnReader OpenReader()

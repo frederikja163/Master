@@ -55,12 +55,12 @@ public sealed class RunLengthEncoding : IEncoding
 
             byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
             genericReader.AdvanceUnits(dataColumn.LogicalType, repeats - 1);
-            repeatBuilder.Write(repeats);
+            repeatBuilder.WriteValue(repeats);
             previous = current;
             repeats = 1;
         }
         byteBuilder.WriteRaw(genericReader.ReadUnits(dataColumn.LogicalType), 1);
-        repeatBuilder.Write(repeats);
+        repeatBuilder.WriteValue(repeats);
 
         return new RunLengthColumn(dataColumn.LogicalType, byteBuilder.Build(), repeatBuilder.Build(), dataColumn.LogicalLength);
     }

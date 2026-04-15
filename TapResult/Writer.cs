@@ -66,9 +66,9 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         long metadataLogicalLength = idColumn.LogicalLength;
         
         ColumnBuilder postScript = new(LogicalType.UInt64, 24);
-        postScript.Write(metadataStart);
-        postScript.Write(metadataLength);
-        postScript.Write(metadataLogicalLength);
+        postScript.WriteValue(metadataStart);
+        postScript.WriteValue(metadataLength);
+        postScript.WriteValue(metadataLogicalLength);
         
         _outStream.Write(postScript.BuildDataColumn().Data.Span);
         _outStream.Write(MagicNumber);
@@ -119,11 +119,12 @@ public sealed class Writer : IDisposable, IAsyncDisposable
             foreach (IColumn childColumn in parent.GetChildColumns()) 
                 SaveMetaDataForColumn(childColumn, id);
         }
-        _idBuilder.Write(id);
-        _parentIdBuilder.Write(parentId);
-        _encodingIdBuilder.Write((byte) column.EncodingType);
-        _logicalTypeBuilder.Write((byte) column.LogicalType);
-        column.WriteMetadata(_blobBuilder);
+        _idBuilder.WriteValue(id);
+        _parentIdBuilder.WriteValue(parentId);
+        _encodingIdBuilder.WriteValue((byte) column.EncodingType);
+        _logicalTypeBuilder.WriteValue((byte) column.LogicalType);
+        column.WriteMetadata(_blobBuilder.OpenBlob());
+        _blobBuilder.CloseBlob();
     }
     
     internal Table GetMetadata()

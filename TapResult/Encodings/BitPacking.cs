@@ -37,8 +37,6 @@ public sealed class BitPacking : IEncoding
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
             throw new Exception("Expected a child column to a bitpack encoded column, but found none.");
-        if (metadataReader.Read<int>() != BitPackingColumn.Size)
-            throw new Exception("BitPacking metadata was malformed.");
         byte prefixLength = metadataReader.Read<byte>();
         ulong prefix = metadataReader.Read<ulong>();
         int logicalLength = metadataReader.Read<int>();
@@ -77,7 +75,7 @@ public sealed class BitPacking : IEncoding
                  shift = size - shift;
                  T value1 = value >> (packedSize - shift);
                  currentValue = (currentValue << shift) | value1;
-                 builder.Write(currentValue);
+                 builder.WriteValue(currentValue);
 
                  currentValue = value;
                  shift = packedSize - shift;
@@ -85,7 +83,7 @@ public sealed class BitPacking : IEncoding
         }
 
         currentValue <<= size - shift;
-        builder.Write(currentValue);
+        builder.WriteValue(currentValue);
 
         metadata.Column = builder.BuildDataColumn();
     }

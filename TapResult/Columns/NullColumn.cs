@@ -19,10 +19,9 @@ internal sealed class NullColumn : IColumnParent
     public int LogicalLength { get; }
     public EncodingType EncodingType { get; } = EncodingType.Null;
     public LogicalType LogicalType { get; }
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.Write(Unsafe.SizeOf<int>());
-        blobBuilder.Write(LogicalLength);
+        blobBuilder.WriteValue(LogicalLength);
     }
 
     public IColumnReader OpenReader() => LogicalType switch

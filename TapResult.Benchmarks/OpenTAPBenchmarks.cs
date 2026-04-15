@@ -37,7 +37,7 @@ public class OpenTAPBenchmarks : AllBenchmarks
         }, Timeout);
     }
 
-    public IEnumerable<ResultListener> GetResultListeners()
+    public static IEnumerable<ResultListener> GetResultListeners()
     {
         yield return new BinaryResultListener()
         {

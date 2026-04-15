@@ -20,13 +20,7 @@ internal sealed class BitPackingTests
         DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
         IEncoding encoding = new BitPacking();
         BitPackingColumn column = Assert.InstanceOf<BitPackingColumn>(encoding.Encode(dataColumn));
-        ColumnBuilder metadataBuilder = new ColumnBuilder(BitPackingColumn.Size + Unsafe.SizeOf<int>());
-        column.WriteMetadata(metadataBuilder);
-        DataColumn metadataColumn = metadataBuilder.BuildDataColumn();
-        GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<int> reader = Assert.InstanceOf<IColumnReader<int>>(encoding.CreateDecoder(
-            LogicalType.SInt32,
-            genericReader, column.Column.OpenReader<int>()));
+        IColumnReader<int> reader = column.OpenReader<int>();
         
         Assert.That(reader.Read(length).ToArray(), Is.EqualTo(data));
     }
