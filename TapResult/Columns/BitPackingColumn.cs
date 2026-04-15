@@ -40,7 +40,6 @@ internal sealed class BitPackingColumn : IColumnParent
     {
         blobBuilder.WriteValue(PrefixLength);
         blobBuilder.WriteValue(Prefix);
-        blobBuilder.WriteValue(LogicalLength);
     }
 
     public IColumnReader OpenReader()

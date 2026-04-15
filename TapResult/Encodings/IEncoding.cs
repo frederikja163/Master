@@ -35,7 +35,7 @@ public interface IEncoding
     /// The decoder must be an IColumnReader,
     /// and the IColumnReader should ideally have a more specific type that depends on the type of LogicalType.
     /// </summary>
-    IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns);
+    IColumnReader CreateDecoder(LogicalType type, int length, GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns);
 
     /// <summary>
     /// Gets the supported LogicalTypes of this Encoding.

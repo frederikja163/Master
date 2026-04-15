@@ -16,6 +16,7 @@ public interface IColumn
     /// The logical type of this column.
     /// </summary>
     public LogicalType LogicalType { get; }
+    public int LogicalLength { get; }
     internal void WriteMetadata(IBlobBuilder blobBuilder);
 
     /// <summary>

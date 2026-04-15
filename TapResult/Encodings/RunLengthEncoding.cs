@@ -39,14 +39,13 @@ public sealed class RunLengthEncoding : IEncoding
     }
 
 
-    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns)
+    public IColumnReader CreateDecoder(LogicalType type, int length, GenericReader metadataReader, params IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not { } bytes ||
             !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<int> repeats ||
             childColumnEnumerator.MoveNext())
             throw new Exception("Child columns not configured correctly for RunLength column.");
-        int length = metadataReader.Read<int>();
         return CreateReader(type, bytes, repeats, length);
     }
 

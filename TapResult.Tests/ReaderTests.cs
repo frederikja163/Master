@@ -12,6 +12,8 @@ internal sealed class MyColumn : IColumnParent
 
     public required EncodingType EncodingType { get; set; } = EncodingType.Binary;
     public required LogicalType LogicalType { get; set; } = LogicalType.UInt8;
+    public int LogicalLength { get; } = 0;
+
     public IEnumerable<DataColumn> GetDataColumns()
     {
         yield break;

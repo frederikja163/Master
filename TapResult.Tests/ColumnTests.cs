@@ -17,6 +17,7 @@ public class ColumnParent : IColumnParent
     
     public EncodingType EncodingType { get; } = EncodingType.Table;
     public LogicalType LogicalType { get; } = LogicalType.UInt8;
+    public int LogicalLength { get; } = 0;
 
     public IColumnReader OpenReader()
     {

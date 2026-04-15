@@ -29,15 +29,14 @@ public sealed class BitPacking : IEncoding
         };
     }
 
-    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
+    public IColumnReader CreateDecoder(LogicalType type, int length, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
             throw new Exception("Expected a child column to a bitpack encoded column, but found none.");
         byte prefixLength = metadataReader.Read<byte>();
         ulong prefix = metadataReader.Read<ulong>();
-        int logicalLength = metadataReader.Read<int>();
-        return OpenReader(reader, logicalLength, type, prefixLength, prefix);
+        return OpenReader(reader, length, type, prefixLength, prefix);
     }
 
     private static IColumn EncodeData<T>(IColumnReader<T> reader)

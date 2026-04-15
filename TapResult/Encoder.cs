@@ -48,10 +48,10 @@ public sealed class Encoder
             .ToLookup(t => t.t, t => t.e);
     }
 
-    internal IColumnReader Decode(EncodingType encodingType, LogicalType type, ref GenericReader blobReader, IEnumerable<IColumnReader> childColumns)
+    internal IColumnReader Decode(EncodingType encodingType, LogicalType type, int length, ref GenericReader blobReader, IEnumerable<IColumnReader> childColumns)
     {
         IEncoding encoding = _encodingsById[encodingType];
-        return encoding.CreateDecoder(type, blobReader, childColumns);
+        return encoding.CreateDecoder(type, length, blobReader, childColumns);
     }
     
     /// <summary>
