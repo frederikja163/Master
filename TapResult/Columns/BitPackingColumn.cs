@@ -12,7 +12,7 @@ internal sealed class BitPackingColumn : IColumnParent
     public int LogicalLength { get; }
     public LogicalType LogicalType { get; }
     public EncodingType EncodingType => EncodingType.BitPacking;
-    public IColumn Column { get; set; }
+    public IColumn Column { get; private set; }
 
     public BitPackingColumn(IColumn column, byte prefixLength, ulong prefix, int logicalLength)
     {
@@ -22,9 +22,6 @@ internal sealed class BitPackingColumn : IColumnParent
         LogicalLength = logicalLength;
         LogicalType = column.LogicalType;
     }
-    
-    public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix) : this(column, prefixLength, prefix, column.LogicalLength)
-    { }
 
     public IEnumerable<IColumn> GetChildColumns()
     {

@@ -118,11 +118,11 @@ public class TableTests
             new BitPackingColumn(
                 new BitPackingColumn(
                     new BitPackingColumn(
-                        DataColumn.Empty, 0, 0
+                        DataColumn.Empty, 0, 0, 0
                         ), 0, 0, 0
                     ), 0, 0, 0
                 ), 
-            new BitPackingColumn(DataColumn.Empty, 0, 0), 
+            new BitPackingColumn(DataColumn.Empty, 0, 0, 0), 
             LogicalType.Blob
         );
         

@@ -53,6 +53,11 @@ public sealed partial class ColumnBuilder : IRawWriter
     /// </summary>
     public int PhysicalSize => _byteIndex;
 
+    /// <summary>
+    /// The current logical length of this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    public int LogicalLength => _logicalLength;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
     {
