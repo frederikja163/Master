@@ -8,10 +8,18 @@ using TapResult.Columns;
 
 namespace TapResult;
 
+internal interface IRawWriter
+{
+    public void WriteRaw<T>(ReadOnlySpan<T> bytes, int count = 0) where T : unmanaged;
+    public void WriteRaw<T>(T bytes);
+    public void CloseBlob();
+}
+
+
 /// <summary>
 /// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
-public sealed partial class ColumnBuilder
+public sealed partial class ColumnBuilder : IRawWriter
 {
     private readonly LogicalType _type;
     private BlobBuilder? _blobBuilder = null;
@@ -126,7 +134,7 @@ public sealed partial class ColumnBuilder
     private void WriteBlob(ReadOnlySpan<byte> blob)
     {
         WriteRaw(blob.Length);
-        WriteRaw(blob, 0);
+        WriteRaw(blob);
     }
     
     /// <summary>
@@ -136,23 +144,12 @@ public sealed partial class ColumnBuilder
     {
         WriteRaw(Encoding.UTF8.GetBytes(str));
     }
-    
-    /// <summary>
-    /// Writes multiple strings to the DataColumn.
-    /// </summary>
-    private void WriteStrings(IEnumerable<string> strs)
-    {
-        foreach (string str in strs)
-        {
-            WriteValue(str);
-        }
-    }
 
     /// <summary>
     /// Writes multiple values to the DataColumn, this only increases LogicalLength by the provided value.
-    /// Generally use <see cref="WriteValues{T}"/> unless you have a good reason to override the added length.
+    /// Generally use <see cref="WriteValue{T}"/> unless you have a good reason to override the added length.
     /// </summary>
-    public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength)
+    public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength = 0)
         where T : unmanaged
     {
         _logicalLength += logicalLength;
@@ -243,7 +240,7 @@ public sealed partial class ColumnBuilder
     /// <summary>
     /// Closes the currently open <see cref="BlobBuilder"/>, if one exists, on this <see cref="ColumnBuilder"/>.
     /// </summary>
-    internal void CloseBlob()
+    void IRawWriter.CloseBlob()
     {
         if (_blobBuilder is null)
         {

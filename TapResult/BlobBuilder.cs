@@ -27,9 +27,9 @@ public interface IBlobBuilder
 /// </summary>
 public sealed class BlobBuilder : IBlobBuilder, IDisposable
 {
-    private readonly ColumnBuilder _builder;
+    private readonly IRawWriter _builder;
 
-    internal BlobBuilder(ColumnBuilder builder)
+    internal BlobBuilder(IRawWriter builder)
     {
         _builder = builder;
     }
@@ -55,11 +55,11 @@ public sealed class BlobBuilder : IBlobBuilder, IDisposable
     private void WriteBlob(ReadOnlySpan<byte> bytes)
     {
         _builder.WriteRaw(bytes.Length);
-        _builder.WriteRaw(bytes, 0);
+        _builder.WriteRaw(bytes);
     }
     public void WriteRaw(ReadOnlySpan<byte> bytes)
     {
-        _builder.WriteRaw(bytes, 0);
+        _builder.WriteRaw(bytes);
     }
 
     public void Dispose()

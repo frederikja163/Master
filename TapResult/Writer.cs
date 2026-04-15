@@ -123,8 +123,8 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         _parentIdBuilder.WriteValue(parentId);
         _encodingIdBuilder.WriteValue((byte) column.EncodingType);
         _logicalTypeBuilder.WriteValue((byte) column.LogicalType);
-        column.WriteMetadata(_blobBuilder.OpenBlob());
-        _blobBuilder.CloseBlob();
+        using BlobBuilder blobBuilder = _blobBuilder.OpenBlob();
+        column.WriteMetadata(blobBuilder);
     }
     
     internal Table GetMetadata()
