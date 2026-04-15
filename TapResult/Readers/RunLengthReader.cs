@@ -42,6 +42,20 @@ public class RunLengthReader<T> : IColumnReader<T>
         return Peek(offset, count).OfType<object?>();
     }
 
+    public IColumnReader<T> Clone()
+    {
+        return new RunLengthReader<T>(_byteColumn.Clone(), _repeatColumn.Clone(), Length)
+        {
+            Index = Index,
+            _repeatIndex = _repeatIndex,
+        };
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
+    }
+
     public T Peek(int offset = 0)
     {
         int indexOffset = 0;

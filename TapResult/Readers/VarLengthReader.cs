@@ -5,7 +5,7 @@ using System.Text;
 
 namespace TapResult.Readers;
 
-internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
+internal sealed class VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 {
     private readonly ReadOnlyMemory<byte> _data;
     private readonly LogicalType _type;
@@ -104,5 +104,28 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
         {
             yield return blobReader.Peek(offset + i);
         }
+    }
+
+    private VarLengthReader Clone()
+    {
+        return new VarLengthReader(_data, Length, _type)
+        {
+            Index = Index,
+        };
+    }
+
+    IColumnReader<byte[]> IColumnReader<byte[]>.Clone()
+    {
+        return Clone();
+    }
+
+    IColumnReader<string> IColumnReader<string>.Clone()
+    {
+        return Clone();
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
     }
 }

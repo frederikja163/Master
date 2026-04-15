@@ -31,6 +31,11 @@ public interface IColumnReader
     /// Peeks multiple values with some offset. Does not consume.
     /// </summary>
     public IEnumerable<object?> Peek(int offset, int count);
+
+    /// <summary>
+    /// Clone this column reader at the current index.
+    /// </summary>
+    public IColumnReader Clone();
 }
 
 /// <summary>
@@ -46,6 +51,11 @@ public interface IColumnReader<out T> : IColumnReader
     /// Peeks multiple values with some offset. Does not consume.
     /// </summary>
     public new IEnumerable<T> Peek(int offset, int count);
+
+    /// <summary>
+    /// Clone this column reader at the current index.
+    /// </summary>
+    public new IColumnReader<T> Clone();
 }
 
 /// <summary>

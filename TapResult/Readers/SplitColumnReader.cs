@@ -42,6 +42,26 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
         throw new UnreachableException();
     }
 
+    private SplitColumnReader Clone()
+    {
+        return new SplitColumnReader(_lengthColumn.Clone(), _byteColumn.Clone(), _type);
+    }
+
+    IColumnReader<byte[]> IColumnReader<byte[]>.Clone()
+    {
+        return Clone();
+    }
+
+    IColumnReader<string> IColumnReader<string>.Clone()
+    {
+        return Clone();
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
+    }
+
     object IColumnReader.Peek(int offset)
     {
         if (_type == LogicalType.Blob)
