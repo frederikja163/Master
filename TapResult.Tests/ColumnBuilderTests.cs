@@ -11,7 +11,7 @@ internal sealed class ColumnBuilderTests
     [Test]
     public void WritePrimitiveTest()
     {
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 44);
+        ColumnBuilder<byte> builder = new ColumnBuilder<byte>(44);
         BlobBuilder blob = builder.OpenBlob();
         blob.WriteValue<sbyte>(1);
         blob.WriteValue<short>(2);
@@ -53,7 +53,7 @@ internal sealed class ColumnBuilderTests
         string[] strs = ["test", "hello world", "abcd1234"];
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length);
+        ColumnBuilder<string> builder = new(length);
         builder.WriteValues(strs);
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
@@ -68,7 +68,7 @@ internal sealed class ColumnBuilderTests
         string[] strs = ["test", "hello world", "abcd1234"];
         int length = strs.Select(Encoding.UTF8.GetByteCount).Sum() + strs.Length * Unsafe.SizeOf<int>();
         
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.Blob, length);
+        ColumnBuilder<byte[]> builder = new ColumnBuilder<byte[]>(length);
         builder.WriteValues(strs.Select(Encoding.UTF8.GetBytes).ToArray());
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
@@ -80,12 +80,12 @@ internal sealed class ColumnBuilderTests
     [Test]
     public void CanResizeTest()
     {
-        ColumnBuilder builder = new ColumnBuilder(1);
-        builder.WriteValue<byte>(123);
+        ColumnBuilder<byte> builder = new (1);
+        builder.WriteValue(123);
         Assert.That(builder.PhysicalSize, Is.EqualTo(1));
-        builder.WriteValue<byte>(123);
+        builder.WriteValue(123);
         Assert.That(builder.PhysicalSize, Is.EqualTo(2));
-        builder.WriteValue<byte>(21);
+        builder.WriteValue(21);
         Assert.That(builder.PhysicalSize, Is.EqualTo(3));
         DataColumn column = builder.BuildDataColumn();
         Assert.That(column.LogicalLength, Is.EqualTo(3));

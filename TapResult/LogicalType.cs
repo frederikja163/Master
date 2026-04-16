@@ -126,6 +126,9 @@ public static class TypeHelper
             yield return [LogicalType.SInt16, LogicalType.UInt16];
             yield return [LogicalType.SInt32, LogicalType.UInt32];
             yield return [LogicalType.SInt64, LogicalType.UInt64];
+            yield return [LogicalType.Float16];
+            yield return [LogicalType.Float32];
+            yield return [LogicalType.Float64];
         }
     }
     

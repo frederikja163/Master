@@ -30,22 +30,22 @@ internal sealed class GenericReaderTests
     [Test]
     public void ReadPrimitiveTest()
     {
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.UInt8, 405);
-        builder.WriteValue<byte>(123);
+        ColumnBuilder<byte> builder = new (402);
         builder.WriteValue(123);
-        builder.WriteValues(Enumerable.Range(0, 100).ToArray());
+        builder.WriteValue(123);
+        builder.WriteValues(Enumerable.Range(0, 100).Select(i => (byte)i).ToArray());
         GenericReader reader = builder.BuildDataColumn().OpenGenericReader();
 
         Assert.That(reader.Peek<byte>(), Is.EqualTo((byte)123));
-        Assert.That(reader.Peek<int>(1), Is.EqualTo((int)123));
+        Assert.That(reader.Peek<byte>(1), Is.EqualTo((int)123));
         Assert.That(reader.IsAtEnd, Is.False);
         
         Assert.That(reader.Read<byte>(), Is.EqualTo((byte)123));
-        Assert.That(reader.Peek<int>(), Is.EqualTo(123));
+        Assert.That(reader.Peek<byte>(), Is.EqualTo(123));
         Assert.That(reader.IsAtEnd, Is.False);
 
-        Assert.That(reader.Read<int>(), Is.EqualTo(123));
-        Assert.That(reader.Read<int>(100).ToArray(), Is.EqualTo(Enumerable.Range(0, 100)));
+        Assert.That(reader.Read<byte>(), Is.EqualTo(123));
+        Assert.That(reader.Read<byte>(100).ToArray(), Is.EqualTo(Enumerable.Range(0, 100)));
         Assert.That(reader.IsAtEnd, Is.True);
     }
 

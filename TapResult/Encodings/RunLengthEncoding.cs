@@ -14,8 +14,8 @@ public sealed class RunLengthEncoding : IEncoding
     
     public IColumn Encode<T>(IColumnReader<T> reader) where T : notnull
     {
-        ColumnBuilder byteBuilder = new ColumnBuilder(typeof(T).ToLogicalType(), reader.Length * 4);
-        ColumnBuilder repeatBuilder = new ColumnBuilder(LogicalType.SInt32, reader.Length * Unsafe.SizeOf<int>());
+        ColumnBuilder<T> byteBuilder = new (reader.Length * 4);
+        ColumnBuilder<int> repeatBuilder = new (reader.Length * Unsafe.SizeOf<int>());
         T previous = reader.Read();
         int repeats = 1;
         for (int i = 1; i < reader.Length; i++)

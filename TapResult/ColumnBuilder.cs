@@ -19,9 +19,8 @@ internal interface IRawWriter
 /// <summary>
 /// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
-public sealed partial class ColumnBuilder : IRawWriter
+public sealed class ColumnBuilder<T> : IRawWriter
 {
-    private readonly LogicalType _type;
     private BlobBuilder? _blobBuilder = null;
     private byte[]? _nulls = null;
     private byte[] _data;
@@ -30,20 +29,11 @@ public sealed partial class ColumnBuilder : IRawWriter
     private int _logicalLength = 0;
     
     /// <summary>
-    /// Create a new DataColumnBuilder with type <see cref="LogicalType.UInt8"/>.
-    /// Size is specified in bytes.
-    /// </summary>
-    public ColumnBuilder(int size) : this(LogicalType.UInt8, size)
-    {
-    }
-
-    /// <summary>
     /// Create a new DataColumnBuilder.
     /// Size is specified in bytes.
     /// </summary>
-    public ColumnBuilder(LogicalType type, int size)
+    public ColumnBuilder(int size)
     {
-        _type = type;
         _data = new byte[size];
     }
 
@@ -79,15 +69,7 @@ public sealed partial class ColumnBuilder : IRawWriter
         if (_nulls is null)
         {
             // Guess how many nulls we based on length.
-            int capacity;
-            if (_type.TryGetSize(out int size))
-            {
-                capacity = _data.Length / size * 2;
-            }
-            else
-            {
-                capacity = _data.Length / 8;
-            }
+            int capacity = _data.Length / 8;
             capacity = Math.Max(capacity, _logicalLength / 4);
             
             _nulls = new byte[capacity];
@@ -108,7 +90,7 @@ public sealed partial class ColumnBuilder : IRawWriter
     /// <summary>
     /// Write a value of type T to the DataColumn. This increases the length by 1 as opposed to <see cref="WriteRaw{T}(T)"/>
     /// </summary>
-    public void WriteValue<T>(T value)
+    public void WriteValue(T value)
     {
         WriteRaw(value);
         
@@ -119,13 +101,36 @@ public sealed partial class ColumnBuilder : IRawWriter
     /// <summary>
     /// Write a value of type T to the DataColumn. This increases the length by values.Length as opposed to <see cref="WriteRaw{T}(System.ReadOnlySpan{T},int)"/>
     /// </summary>
-    public void WriteValues<T>(ReadOnlySpan<T> values)
-        where T : unmanaged
+    [OverloadResolutionPriority(1)]
+    public void WriteValues(ReadOnlySpan<T> values)
     {
-        WriteRaw(values, values.Length);
+        switch (typeof(T).ToLogicalType())
+        {
+            case LogicalType.SInt8:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<sbyte>>(values)); break;
+            case LogicalType.SInt16:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<short>>(values)); break;
+            case LogicalType.SInt32:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<int>>(values)); break;
+            case LogicalType.SInt64:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<long>>(values)); break;
+            case LogicalType.UInt8:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<byte>>(values)); break;
+            case LogicalType.UInt16:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<ushort>>(values)); break;
+            case LogicalType.UInt32:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<uint>>(values)); break;
+            case LogicalType.UInt64:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<ulong>>(values)); break;
+            case LogicalType.Float16:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<Half>>(values)); break;
+            case LogicalType.Float32:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<float>>(values)); break;
+            case LogicalType.Float64:  WriteRaw(Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<double>>(values)); break;
+            default:
+                foreach (T value in values)
+                {
+                    WriteValue(value);
+                }
+
+                return;
+        }
+
+        _logicalLength += values.Length;
+        _valuesLength += values.Length;
     }
 
-    public void WriteValues<T>(IEnumerable<T> values)
+    public void WriteValues(IEnumerable<T> values)
     {
         foreach (T value in values)
         {
@@ -152,18 +157,18 @@ public sealed partial class ColumnBuilder : IRawWriter
 
     /// <summary>
     /// Writes multiple values to the DataColumn, this only increases LogicalLength by the provided value.
-    /// Generally use <see cref="WriteValue{T}"/> unless you have a good reason to override the added length.
+    /// Generally use <see cref="WriteValue"/> unless you have a good reason to override the added length.
     /// </summary>
-    public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength = 0)
-        where T : unmanaged
+    public void WriteRaw<TValue>(ReadOnlySpan<TValue> values, int logicalLength = 0)
+        where TValue : unmanaged
     {
         _logicalLength += logicalLength;
         _valuesLength += logicalLength;
         
         if (BitConverter.IsLittleEndian)
         {
-            Span<byte> slice = Slice(values.Length * Unsafe.SizeOf<T>());
-            ReadOnlySpan<byte> bytes = MemoryMarshal.Cast<T, byte>(values);
+            Span<byte> slice = Slice(values.Length * Unsafe.SizeOf<TValue>());
+            ReadOnlySpan<byte> bytes = MemoryMarshal.Cast<TValue, byte>(values);
             bytes.CopyTo(slice);
             return;
         }
@@ -176,26 +181,26 @@ public sealed partial class ColumnBuilder : IRawWriter
     
     /// <summary>
     /// Writes a single value to the DataColumn, this does not increase the logical length.
-    /// Generally use <see cref="WriteValue{T}"/> unless you have a good reason to not increase the logical length.
+    /// Generally use <see cref="WriteValue"/> unless you have a good reason to not increase the logical length.
     /// </summary>
-    public void WriteRaw<T>(T value)
+    public void WriteRaw<TValue>(TValue value)
     {
         switch (value)
         {
-            case sbyte sInt8: Slice(Unsafe.SizeOf<T>())[0] = (byte)sInt8; break;
-            case short sInt16: BinaryPrimitives.WriteInt16LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt16); break;
-            case int sInt32: BinaryPrimitives.WriteInt32LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt32); break;
-            case long sInt64: BinaryPrimitives.WriteInt64LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt64); break;
-            case byte uInt8: Slice(Unsafe.SizeOf<T>())[0] = uInt8; break;
-            case ushort uInt16: BinaryPrimitives.WriteUInt16LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt16); break;
-            case uint uInt32: BinaryPrimitives.WriteUInt32LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt32); break;
-            case ulong uInt64: BinaryPrimitives.WriteUInt64LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt64); break;
-            case Half float16: BinaryPrimitives.WriteHalfLittleEndian(Slice(Unsafe.SizeOf<T>()), float16); break;
-            case float float32: BinaryPrimitives.WriteSingleLittleEndian(Slice(Unsafe.SizeOf<T>()), float32); break;
-            case double float64: BinaryPrimitives.WriteDoubleLittleEndian(Slice(Unsafe.SizeOf<T>()), float64); break;
+            case sbyte sInt8: Slice(Unsafe.SizeOf<TValue>())[0] = (byte)sInt8; break;
+            case short sInt16: BinaryPrimitives.WriteInt16LittleEndian(Slice(Unsafe.SizeOf<TValue>()), sInt16); break;
+            case int sInt32: BinaryPrimitives.WriteInt32LittleEndian(Slice(Unsafe.SizeOf<TValue>()), sInt32); break;
+            case long sInt64: BinaryPrimitives.WriteInt64LittleEndian(Slice(Unsafe.SizeOf<TValue>()), sInt64); break;
+            case byte uInt8: Slice(Unsafe.SizeOf<TValue>())[0] = uInt8; break;
+            case ushort uInt16: BinaryPrimitives.WriteUInt16LittleEndian(Slice(Unsafe.SizeOf<TValue>()), uInt16); break;
+            case uint uInt32: BinaryPrimitives.WriteUInt32LittleEndian(Slice(Unsafe.SizeOf<TValue>()), uInt32); break;
+            case ulong uInt64: BinaryPrimitives.WriteUInt64LittleEndian(Slice(Unsafe.SizeOf<TValue>()), uInt64); break;
+            case Half float16: BinaryPrimitives.WriteHalfLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float16); break;
+            case float float32: BinaryPrimitives.WriteSingleLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float32); break;
+            case double float64: BinaryPrimitives.WriteDoubleLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float64); break;
             case string str: WriteString(str); break;
             case byte[] blob: WriteBlob(blob); break;
-            default: throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
+            default: throw new ArgumentOutOfRangeException(nameof(TValue), typeof(TValue), null);
         }
     }
 
@@ -205,22 +210,32 @@ public sealed partial class ColumnBuilder : IRawWriter
     /// <returns></returns>
     public IColumn Build()
     {
-        if (_valuesLength == _logicalLength)
-        {
-            return BuildDataColumn();
-        }
-        return new NullColumn(_type, new DataColumn(LogicalType.UInt8, _nulls, _logicalLength / 8 + 1),
-            new DataColumn(_type, new Memory<byte>(_data, 0, _byteIndex), _valuesLength),
-            _logicalLength);
+        return Build(typeof(T).ToLogicalType());
     }
 
-    /// <summary>
-    /// Builds this DataColumnBuilder into a DataColumn and returns it.
-    /// </summary>
-    /// <remarks>If this ColumnBuilder has any nulls written into it, those values will disappear. Consider using <see cref="Build"/> instead.</remarks>
+    public IColumn Build(LogicalType overrideType)
+    {
+        if (!overrideType.IsCompatible(typeof(T).ToLogicalType()))
+        {
+            throw new Exception($"{overrideType} is not compatible with {typeof(T).ToLogicalType()}");
+        }
+
+        LogicalType type = typeof(T).ToLogicalType();
+        if (_valuesLength == _logicalLength)
+        {
+            return BuildDataColumn(type);
+        }
+        return new NullColumn(type, new DataColumn(LogicalType.UInt8, _nulls, _logicalLength / 8 + 1),
+            new DataColumn(type, new Memory<byte>(_data, 0, _byteIndex), _valuesLength), _logicalLength);
+    }
     public DataColumn BuildDataColumn()
     {
-        return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
+        return BuildDataColumn(typeof(T).ToLogicalType());
+    }
+
+    public DataColumn BuildDataColumn(LogicalType type)
+    {
+        return new DataColumn(type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
 
     /// <summary>
@@ -263,27 +278,28 @@ public sealed partial class ColumnBuilder : IRawWriter
     }
 }
 
-public sealed partial class ColumnBuilder
+public static class ColumnBuilder
 {
-    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
+    private static IColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
     {
         if (!BitConverter.IsLittleEndian)
         {
-            ColumnBuilder builder = new ColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
+            ColumnBuilder<T> builder = new ColumnBuilder<T>(data.Length * Unsafe.SizeOf<T>());
             foreach (T var in data)
             {
                 builder.WriteValue(var);
             }
-            return builder.BuildDataColumn();
+            return builder.Build();
         }
         
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
-        return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
+        return new DataColumn(typeof(T).ToLogicalType(), new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
     }
     
     /// <summary>
     /// Create a new DataColumn from a span of data.
     /// </summary>
+    [OverloadResolutionPriority(1)]
     public static IColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         return Create(data, typeof(T).ToLogicalType());
@@ -297,7 +313,7 @@ public sealed partial class ColumnBuilder
         }
 
         int size = count * Unsafe.SizeOf<T>();
-        ColumnBuilder builder = new ColumnBuilder(typeof(T).ToLogicalType(), size);
+        ColumnBuilder<T> builder = new ColumnBuilder<T>(size);
         foreach (T value in values)
         {
             if (value is null)
@@ -322,26 +338,26 @@ public sealed partial class ColumnBuilder
     {
         return array switch
         {
-            sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
-            short[] values => Create<short>(values, array.GetType().GetElementType()! == typeof(short) ? LogicalType.SInt16 : LogicalType.UInt16),
-            int[] values => Create<int>(values, array.GetType().GetElementType()! == typeof(int) ? LogicalType.SInt32 : LogicalType.UInt32),
-            long[] values => Create<long>(values, array.GetType().GetElementType()! == typeof(long) ? LogicalType.SInt64 : LogicalType.UInt64),
+            sbyte[] values => array.GetType().GetElementType()! == typeof(sbyte) ? Create<sbyte>(values) : Create<byte>(Unsafe.As<byte[]>(values)),
+            short[] values => array.GetType().GetElementType()! == typeof(short) ? Create<short>(values) : Create<ushort>(Unsafe.As<ushort[]>(values)),
+            int[] values => array.GetType().GetElementType()! == typeof(int) ? Create<int>(values) : Create<uint>(Unsafe.As<uint[]>(values)),
+            long[] values => array.GetType().GetElementType()! == typeof(long) ? Create<long>(values) : Create<ulong>(Unsafe.As<ulong[]>(values)),
             Half[] values => Create<Half>(values.AsSpan()),
             float[] values => Create<float>(values.AsSpan()),
             double[] values => Create<double>(values.AsSpan()),
-            sbyte?[] values => SplitNulls<sbyte>(values),
-            short?[] values => SplitNulls<short>(values),
-            int?[] values => SplitNulls<int>(values),
-            long?[] values => SplitNulls<long>(values),
-            byte?[] values => SplitNulls<byte>(values),
-            ushort?[] values => SplitNulls<ushort>(values),
-            uint?[] values => SplitNulls<uint>(values),
-            ulong?[] values => SplitNulls<ulong>(values),
-            Half?[] values => SplitNulls<Half>(values),
-            float?[] values => SplitNulls<float>(values),
-            double?[] values => SplitNulls<double>(values),
-            string[] str => Create<string>(str),
-            byte[][] blobs => Create<byte[]>(blobs),
+            sbyte?[] values => SplitNulls(values),
+            short?[] values => SplitNulls(values),
+            int?[] values => SplitNulls(values),
+            long?[] values => SplitNulls(values),
+            byte?[] values => SplitNulls(values),
+            ushort?[] values => SplitNulls(values),
+            uint?[] values => SplitNulls(values),
+            ulong?[] values => SplitNulls(values),
+            Half?[] values => SplitNulls(values),
+            float?[] values => SplitNulls(values),
+            double?[] values => SplitNulls(values),
+            string[] str => Create<string>((IEnumerable<string>)str),
+            byte[][] blobs => Create<byte[]>((IEnumerable<byte[]>)blobs),
             _ => throw new ArgumentOutOfRangeException(nameof(array))
         };
     }
@@ -351,7 +367,7 @@ public sealed partial class ColumnBuilder
     {
         LogicalType type = typeof(T).ToLogicalType();
         type.TryGetSize(out int size);
-        ColumnBuilder valueBuilder = new ColumnBuilder(type, size * array.Length);
+        ColumnBuilder<T> valueBuilder = new ColumnBuilder<T>(size * array.Length);
         for (int i = 0; i < array.Length; i++)
         {
             T? value = array[i];

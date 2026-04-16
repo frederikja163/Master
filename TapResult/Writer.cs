@@ -12,12 +12,12 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     private readonly bool _leaveOpen;
     
     private int _currentId = 0;
-    private ColumnBuilder _idBuilder = new (LogicalType.SInt32, 200);
-    private ColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200);
-    private ColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200);
-    private ColumnBuilder _logicalTypeBuilder = new (LogicalType.UInt8, 200);
-    private ColumnBuilder _lengthBuilder = new (LogicalType.SInt32, 200);
-    private ColumnBuilder _blobBuilder = new (LogicalType.Blob, 200);
+    private ColumnBuilder<int> _idBuilder = new (200);
+    private ColumnBuilder<int> _parentIdBuilder = new (200);
+    private ColumnBuilder<byte> _encodingIdBuilder = new (200);
+    private ColumnBuilder<byte> _logicalTypeBuilder = new (200);
+    private ColumnBuilder<int> _lengthBuilder = new (200);
+    private ColumnBuilder<byte[]> _blobBuilder = new (200);
     
     private const byte MajorVersion = 1;
     private const byte MinorVersion = 0;
@@ -67,7 +67,7 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = idColumn.LogicalLength;
         
-        ColumnBuilder postScript = new(LogicalType.UInt64, 24);
+        ColumnBuilder<long> postScript = new(24);
         postScript.WriteValue(metadataStart);
         postScript.WriteValue(metadataLength);
         postScript.WriteValue(metadataLogicalLength);

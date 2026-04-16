@@ -199,7 +199,7 @@ public sealed class Encoder
         sampleLength = Math.Min(sampleLength, SampleMaxLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = reader.Type.TryGetSize(out int s) ? s : 1;
-        ColumnBuilder builder = new ColumnBuilder(reader.Type, totalSampleLength * size);
+        ColumnBuilder<T> builder = new (totalSampleLength * size);
         
         int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)
@@ -210,6 +210,6 @@ public sealed class Encoder
             reader.Advance(sectionLength - index - sampleLength);
         }
 
-        return builder.BuildDataColumn();
+        return builder.Build();
     }
 }
