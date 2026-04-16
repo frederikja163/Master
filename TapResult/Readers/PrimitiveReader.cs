@@ -9,11 +9,13 @@ internal sealed class PrimitiveReader<T> : IColumnReader<T>
     private ReadOnlyMemory<byte> _data;
     public int Length { get; }
     public int Index { get; private set; } = 0;
+    public LogicalType Type { get; }
 
-    internal PrimitiveReader(ReadOnlyMemory<byte> data)
+    internal PrimitiveReader(ReadOnlyMemory<byte> data, LogicalType type)
     {
         Length = data.Length / Unsafe.SizeOf<T>();
         _data = data;
+        Type = type;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -40,7 +42,7 @@ internal sealed class PrimitiveReader<T> : IColumnReader<T>
 
     public IColumnReader<T> Clone()
     {
-        return new PrimitiveReader<T>(_data)
+        return new PrimitiveReader<T>(_data, Type)
         {
             Index = Index,
         };

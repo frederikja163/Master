@@ -7,16 +7,16 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
 {
     private readonly IColumnReader<int> _lengthColumn;
     private readonly IColumnReader<byte> _byteColumn;
-    private readonly LogicalType _type;
 
     public int Length => _lengthColumn.Length;
     public int Index => _lengthColumn.Index;
+    public LogicalType Type { get; }
 
     public SplitColumnReader(IColumnReader<int> lengthColumn, IColumnReader<byte> byteColumn, LogicalType type)
     {
         _lengthColumn = lengthColumn;
         _byteColumn = byteColumn;
-        _type = type;
+        Type = type;
     }
 
     public void Advance(int units)
@@ -30,11 +30,11 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
 
     IEnumerable<object> IColumnReader.Peek(int offset, int count)
     {
-        if (_type == LogicalType.Blob)
+        if (Type == LogicalType.Blob)
         {
             return ((IColumnReader<byte[]>)this).Peek(offset, count);
         }
-        if (_type == LogicalType.String)
+        if (Type == LogicalType.String)
         {
             return ((IColumnReader<string>)this).Peek(offset, count);
         }
@@ -44,7 +44,7 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
 
     private SplitColumnReader Clone()
     {
-        return new SplitColumnReader(_lengthColumn.Clone(), _byteColumn.Clone(), _type);
+        return new SplitColumnReader(_lengthColumn.Clone(), _byteColumn.Clone(), Type);
     }
 
     IColumnReader<byte[]> IColumnReader<byte[]>.Clone()
@@ -64,11 +64,11 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
 
     object IColumnReader.Peek(int offset)
     {
-        if (_type == LogicalType.Blob)
+        if (Type == LogicalType.Blob)
         {
             return ((IColumnReader<byte[]>)this).Peek(offset);
         }
-        if (_type == LogicalType.String)
+        if (Type == LogicalType.String)
         {
             return ((IColumnReader<string>)this).Peek(offset);
         }

@@ -49,8 +49,8 @@ public static class TypeHelper
             LogicalType.Float16 => typeof(Half),
             LogicalType.Float32 => typeof(float),
             LogicalType.Float64 => typeof(double),
-            LogicalType.String => typeof(string),
             LogicalType.Blob => typeof(byte[]),
+            LogicalType.String => typeof(string),
             _ => throw new ArgumentOutOfRangeException(nameof(logicalType), logicalType, null)
         };
 
@@ -104,6 +104,44 @@ public static class TypeHelper
     /// </summary>
     public static LogicalType ToLogicalType(this Type type) => PhysicalTypes[type];
 
+    private static readonly Dictionary<LogicalType, HashSet<LogicalType>> CompatibilityGroups = GetCompatibilityLookup();
+
+    private static Dictionary<LogicalType, HashSet<LogicalType>> GetCompatibilityLookup()
+    {
+        Dictionary<LogicalType, HashSet<LogicalType>> compatibilityLookup = new Dictionary<LogicalType, HashSet<LogicalType>>();
+        foreach (HashSet<LogicalType> compatibilityGroup in CompatibilityGroups().Select(c => c.ToHashSet()))
+        {
+            foreach (LogicalType logicalType in compatibilityGroup)
+            {
+                compatibilityLookup.Add(logicalType, compatibilityGroup);
+            }
+        }
+
+        return compatibilityLookup;
+        
+        IEnumerable<IEnumerable<LogicalType>> CompatibilityGroups()
+        {
+            yield return VariableLengthTypes();
+            yield return [LogicalType.SInt8, LogicalType.UInt8];
+            yield return [LogicalType.SInt16, LogicalType.UInt16];
+            yield return [LogicalType.SInt32, LogicalType.UInt32];
+            yield return [LogicalType.SInt64, LogicalType.UInt64];
+        }
+    }
+    
+    /// <summary>
+    /// Checks whether two logical types are compatible with each other.
+    /// Compatibility means they have the same length and it makes sense to read one value as the other.
+    /// For example a string is the same as a blob, and a uint32 is the same as a sint32.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="type2"></param>
+    /// <returns></returns>
+    public static bool IsCompatible(this LogicalType type, LogicalType type2)
+    {
+        return CompatibilityGroups.TryGetValue(type, out HashSet<LogicalType>? group) && group.Contains(type2);
+    }
+    
     /// <summary>
     /// Gets all integer types as logical types.
     /// SInt8-SInt64 and UInt8-UInt64.

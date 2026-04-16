@@ -21,7 +21,8 @@ internal sealed class EncodingTests
             SamplePercentage = samplePercentage,
         };
         int[] data = Enumerable.Range(0, dataSize).ToArray();
-        DataColumn sample = encoder.CreateSample(Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<int>(data)));
+        IColumn column = ColumnBuilder.Create<int>(data);
+        IColumn sample = encoder.CreateSample<int>(column.OpenReader<int>()) ?? column;
 
         int sampleLength = (int)(dataSize * samplePercentage / sampleCount);
         int totalSampleLength = sampleLength * sampleCount;

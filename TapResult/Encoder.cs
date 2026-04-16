@@ -14,7 +14,6 @@ public sealed class Encoder
     /// </summary>
     public static IEnumerable<IEncoding> GetDefaultEncodings()
     {
-        yield return new SplitEncoding();
         yield return new BitPacking();
         yield return new RunLengthEncoding();
     }
@@ -75,14 +74,48 @@ public sealed class Encoder
     /// <remarks> Only relevant on encode. </remarks>
     public int SampleMaxLength { get; init; } = 1024;
     
-    internal IColumn Encode(DataColumn column)
+    internal IColumn Encode(IColumn column)
     {
-        DataColumn sample = CreateSample(column);
+        return column.LogicalType switch
+        {
+            LogicalType.SInt8 => Encode<sbyte>(column),
+            LogicalType.SInt16 => Encode<short>(column),
+            LogicalType.SInt32 => Encode<int>(column),
+            LogicalType.SInt64 => Encode<long>(column),
+            LogicalType.UInt8 => Encode<byte>(column),
+            LogicalType.UInt16 => Encode<ushort>(column),
+            LogicalType.UInt32 => Encode<uint>(column),
+            LogicalType.UInt64 => Encode<ulong>(column),
+            LogicalType.Float16 => Encode<Half>(column),
+            LogicalType.Float32 => Encode<float>(column),
+            LogicalType.Float64 => Encode<double>(column),
+            LogicalType.Blob => Encode<byte[]>(column),
+            LogicalType.String => Encode<string>(column),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    private IColumn Encode<T>(IColumn column)
+    {
+        IColumn? sample;
+        if (typeof(T) == typeof(string))
+        {
+            IColumnReader<string> columnReader = column.OpenReader<string>();
+            sample = columnReader.TryConvertReader<byte[]>(out IColumnReader<byte[]>? reader) ?
+                CreateSample<byte[]>(reader) :
+                CreateSample<string>(columnReader);
+        }
+        else
+        {
+            sample = CreateSample<T>(column.OpenReader<T>());
+        }
+
+        sample ??= column;
         IColumn metadataSample = PickEncoding(sample, CascadingEncodings);
         return Encode(column, metadataSample);
     }
 
-    private IColumn Encode(DataColumn inData, IColumn metadataSample)
+    private IColumn Encode(IColumn inData, IColumn metadataSample)
     {
         if (metadataSample is DataColumn)
         {
@@ -105,13 +138,13 @@ public sealed class Encoder
         return columns;
     }
 
-    private IColumn PickEncoding(DataColumn sample, int cascades)
+    private IColumn PickEncoding(IColumn sample, int cascades)
     {
         if (cascades == 0)
         {
             return sample;
         }
-        int minSize = sample.PhysicalSize / 4 * 3;
+        int minSize = CalculateTotalLength(sample) / 4 * 3;
         IColumn bestEncoding = sample;
         if (!_encodingsByType.Contains(sample.LogicalType))
         {
@@ -153,29 +186,28 @@ public sealed class Encoder
         return 0;
     }
 
-    internal DataColumn CreateSample(in DataColumn data)
+    internal IColumn? CreateSample<T>(IColumnReader<T> reader)
     {
-        int length = data.LogicalLength;
+        int length = reader.Length;
         if (length * SamplePercentage < SampleCount)
         {
-            return data;
+            return null;
         }
         
         // Need to calculate sample length first, to round correctly.
         var sampleLength = (int)(length * SamplePercentage) / SampleCount;
         sampleLength = Math.Min(sampleLength, SampleMaxLength);
         var totalSampleLength = sampleLength * SampleCount;
-        int size = data.LogicalType.TryGetSize(out int s) ? s : 1;
-        ColumnBuilder builder = new ColumnBuilder(data.LogicalType, totalSampleLength * size);
-        GenericReader reader = data.OpenGenericReader();
+        int size = reader.Type.TryGetSize(out int s) ? s : 1;
+        ColumnBuilder builder = new ColumnBuilder(reader.Type, totalSampleLength * size);
         
         int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)
         {
             int index = Random.Shared.Next(0, sectionLength - sampleLength);
-            reader.AdvanceUnits(data.LogicalType, index);
-            builder.WriteRaw(reader.ReadUnits(data.LogicalType, sampleLength), sampleLength);
-            reader.AdvanceUnits(data.LogicalType, sectionLength - index - sampleLength);
+            reader.Advance(index);
+            builder.WriteValues(reader.Read(sampleLength));
+            reader.Advance(sectionLength - index - sampleLength);
         }
 
         return builder.BuildDataColumn();

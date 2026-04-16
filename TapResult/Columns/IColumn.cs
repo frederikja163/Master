@@ -1,4 +1,5 @@
-﻿using TapResult.Encodings;
+﻿using System.Diagnostics.CodeAnalysis;
+using TapResult.Encodings;
 using TapResult.Readers;
 
 namespace TapResult.Columns;

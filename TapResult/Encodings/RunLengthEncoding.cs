@@ -53,17 +53,17 @@ public sealed class RunLengthEncoding : IEncoding
     {
         return type switch
         {
-            LogicalType.SInt8 => new RunLengthReader<sbyte>(byteReader, repeatReader, length),
-            LogicalType.SInt16 => new RunLengthReader<short>(byteReader, repeatReader, length),
-            LogicalType.SInt32 => new RunLengthReader<int>(byteReader, repeatReader, length),
-            LogicalType.SInt64 => new RunLengthReader<long>(byteReader, repeatReader, length),
-            LogicalType.UInt8 => new RunLengthReader<byte>(byteReader, repeatReader, length),
-            LogicalType.UInt16 => new RunLengthReader<ushort>(byteReader, repeatReader, length),
-            LogicalType.UInt32 => new RunLengthReader<uint>(byteReader, repeatReader, length),
-            LogicalType.UInt64 => new RunLengthReader<ulong>(byteReader, repeatReader, length),
-            LogicalType.Float16 => new RunLengthReader<Half>(byteReader, repeatReader, length),
-            LogicalType.Float32 => new RunLengthReader<float>(byteReader, repeatReader, length),
-            LogicalType.Float64 => new RunLengthReader<double>(byteReader, repeatReader, length),
+            LogicalType.SInt8 => new RunLengthReader<sbyte>(byteReader, repeatReader, length, type),
+            LogicalType.SInt16 => new RunLengthReader<short>(byteReader, repeatReader, length, type),
+            LogicalType.SInt32 => new RunLengthReader<int>(byteReader, repeatReader, length, type),
+            LogicalType.SInt64 => new RunLengthReader<long>(byteReader, repeatReader, length, type),
+            LogicalType.UInt8 => new RunLengthReader<byte>(byteReader, repeatReader, length, type),
+            LogicalType.UInt16 => new RunLengthReader<ushort>(byteReader, repeatReader, length, type),
+            LogicalType.UInt32 => new RunLengthReader<uint>(byteReader, repeatReader, length, type),
+            LogicalType.UInt64 => new RunLengthReader<ulong>(byteReader, repeatReader, length, type),
+            LogicalType.Float16 => new RunLengthReader<Half>(byteReader, repeatReader, length, type),
+            LogicalType.Float32 => new RunLengthReader<float>(byteReader, repeatReader, length, type),
+            LogicalType.Float64 => new RunLengthReader<double>(byteReader, repeatReader, length, type),
 
             // Explicitly throw argument out of range exception so we can get warnings if LogicalType adds new types.
             LogicalType.Blob => throw new ArgumentOutOfRangeException(nameof(type), type, null),

@@ -5,17 +5,19 @@ internal abstract class NullReaderBase : IColumnReader
     protected IColumnReader<byte> NullReader { get; }
     protected IColumnReader ValueReader { get; }
 
-    protected NullReaderBase(IColumnReader<byte> nullReader, IColumnReader valueReader, int length)
+    protected NullReaderBase(IColumnReader<byte> nullReader, IColumnReader valueReader, int length, LogicalType type)
     {
         NullReader = nullReader;
         ValueReader = valueReader;
         Length = length;
+        Type = type;
     }
 
     public int Length { get; }
     public int Index { get; protected set; } = 0;
+    public LogicalType Type { get; }
 
-    
+
     private int IsNull(int offset)
     {
         int index = Index + offset;
@@ -90,7 +92,8 @@ internal abstract class NullReaderBase : IColumnReader
 internal sealed class NullReaderValType<T> : NullReaderBase, IColumnReader<T?>
     where T : struct
 {
-    public NullReaderValType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length) : base(nullReader, valueReader, length)
+    public NullReaderValType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length, LogicalType type)
+        : base(nullReader, valueReader, length, type)
     {
     }
 
@@ -107,7 +110,7 @@ internal sealed class NullReaderValType<T> : NullReaderBase, IColumnReader<T?>
 
     IColumnReader<T?> IColumnReader<T?>.Clone()
     {
-        return new NullReaderValType<T>(NullReader.Clone(), ValueReader.Clone(), Length)
+        return new NullReaderValType<T>(NullReader.Clone(), ValueReader.Clone(), Length, Type)
         {
             Index = Index,
         };
@@ -122,7 +125,8 @@ internal sealed class NullReaderValType<T> : NullReaderBase, IColumnReader<T?>
 internal sealed class NullReaderRefType<T> : NullReaderBase, IColumnReader<T?>
     where T : class
 {
-    public NullReaderRefType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length) : base(nullReader, valueReader, length)
+    public NullReaderRefType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length, LogicalType type)
+        : base(nullReader, valueReader, length, type)
     {
     }
 
@@ -138,7 +142,7 @@ internal sealed class NullReaderRefType<T> : NullReaderBase, IColumnReader<T?>
 
     IColumnReader<T?> IColumnReader<T?>.Clone()
     {
-        return new NullReaderRefType<T>(NullReader.Clone(), ValueReader.Clone(), Length)
+        return new NullReaderRefType<T>(NullReader.Clone(), ValueReader.Clone(), Length, Type)
         {
             Index = Index,
         };

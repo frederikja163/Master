@@ -8,15 +8,15 @@ namespace TapResult.Readers;
 internal sealed class VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 {
     private readonly ReadOnlyMemory<byte> _data;
-    private readonly LogicalType _type;
     private int _byteIndex;
     public int Length { get; }
     public int Index { get; private set; }
+    public LogicalType Type { get; }
 
     internal VarLengthReader(ReadOnlyMemory<byte> data, int length, LogicalType type)
     {
         _data = data;
-        _type = type;
+        Type = type;
         Length = length;
     }
 
@@ -52,11 +52,11 @@ internal sealed class VarLengthReader : IColumnReader<string>, IColumnReader<byt
 
     IEnumerable<object> IColumnReader.Peek(int offset, int count)
     {
-        if (_type == LogicalType.Blob)
+        if (Type == LogicalType.Blob)
         {
             return ((IColumnReader<byte[]>)this).Peek(offset, count);
         }
-        if (_type == LogicalType.String)
+        if (Type == LogicalType.String)
         {
             return ((IColumnReader<string>)this).Peek(offset, count);
         }
@@ -66,11 +66,11 @@ internal sealed class VarLengthReader : IColumnReader<string>, IColumnReader<byt
 
     object IColumnReader.Peek(int offset)
     {
-        if (_type == LogicalType.Blob)
+        if (Type == LogicalType.Blob)
         {
             return ((IColumnReader<byte[]>)this).Peek(offset);
         }
-        if (_type == LogicalType.String)
+        if (Type == LogicalType.String)
         {
             return ((IColumnReader<string>)this).Peek(offset);
         }
@@ -108,7 +108,7 @@ internal sealed class VarLengthReader : IColumnReader<string>, IColumnReader<byt
 
     private VarLengthReader Clone()
     {
-        return new VarLengthReader(_data, Length, _type)
+        return new VarLengthReader(_data, Length, Type)
         {
             Index = Index,
         };
