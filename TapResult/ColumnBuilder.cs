@@ -99,7 +99,7 @@ public sealed class ColumnBuilder<T> : IRawWriter
     }
 
     /// <summary>
-    /// Write a value of type T to the DataColumn. This increases the length by values.Length as opposed to <see cref="WriteRaw{T}(System.ReadOnlySpan{T},int)"/>
+    /// Write values of type T to the DataColumn.
     /// </summary>
     [OverloadResolutionPriority(1)]
     public void WriteValues(ReadOnlySpan<T> values)
@@ -130,6 +130,9 @@ public sealed class ColumnBuilder<T> : IRawWriter
         _valuesLength += values.Length;
     }
 
+    /// <summary>
+    /// Write values of type T to the DataColumn.
+    /// </summary>
     public void WriteValues(IEnumerable<T> values)
     {
         foreach (T value in values)
@@ -138,28 +141,14 @@ public sealed class ColumnBuilder<T> : IRawWriter
         }
     }
 
-    /// <summary>
-    /// Writes a single blob to the DataColumn.
-    /// </summary>
-    private void WriteBlob(ReadOnlySpan<byte> blob)
-    {
-        WriteRaw(blob.Length);
-        WriteRaw(blob);
-    }
+    void IRawWriter.WriteRaw<TValue>(ReadOnlySpan<TValue> values, int logicalLength) =>
+        WriteRaw(values, logicalLength);
     
-    /// <summary>
-    /// Writes a string to the DataColumn.
-    /// </summary>
-    private void WriteString(string str)
-    {
-        WriteRaw(Encoding.UTF8.GetBytes(str));
-    }
-
     /// <summary>
     /// Writes multiple values to the DataColumn, this only increases LogicalLength by the provided value.
     /// Generally use <see cref="WriteValue"/> unless you have a good reason to override the added length.
     /// </summary>
-    public void WriteRaw<TValue>(ReadOnlySpan<TValue> values, int logicalLength = 0)
+    private void WriteRaw<TValue>(ReadOnlySpan<TValue> values, int logicalLength = 0)
         where TValue : unmanaged
     {
         _logicalLength += logicalLength;
@@ -178,12 +167,10 @@ public sealed class ColumnBuilder<T> : IRawWriter
             WriteRaw(values[i]);
         }
     }
+
+    void IRawWriter.WriteRaw<TValue>(TValue value) => WriteRaw(value);
     
-    /// <summary>
-    /// Writes a single value to the DataColumn, this does not increase the logical length.
-    /// Generally use <see cref="WriteValue"/> unless you have a good reason to not increase the logical length.
-    /// </summary>
-    public void WriteRaw<TValue>(TValue value)
+    private void WriteRaw<TValue>(TValue value)
     {
         switch (value)
         {
@@ -198,14 +185,17 @@ public sealed class ColumnBuilder<T> : IRawWriter
             case Half float16: BinaryPrimitives.WriteHalfLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float16); break;
             case float float32: BinaryPrimitives.WriteSingleLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float32); break;
             case double float64: BinaryPrimitives.WriteDoubleLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float64); break;
-            case string str: WriteString(str); break;
-            case byte[] blob: WriteBlob(blob); break;
+            case string str: WriteRaw(Encoding.UTF8.GetBytes(str)); break;
+            case byte[] blob:
+                WriteRaw(((ReadOnlySpan<byte>)blob).Length);
+                WriteRaw((ReadOnlySpan<byte>)blob);
+                break;
             default: throw new ArgumentOutOfRangeException(nameof(TValue), typeof(TValue), null);
         }
     }
 
     /// <summary>
-    /// Builds this ColumnBuilder into an IColumn, will automatically determine if the column should be nullable or not.
+    /// Builds this ColumnBuilder into an IColumn.
     /// </summary>
     /// <returns></returns>
     public IColumn Build()
@@ -213,6 +203,9 @@ public sealed class ColumnBuilder<T> : IRawWriter
         return Build(typeof(T).ToLogicalType());
     }
 
+    /// <summary>
+    /// Builds this <see cref="ColumnBuilder"/>, but overrides the <see cref="LogicalType"/> to a compatible type.
+    /// </summary>
     public IColumn Build(LogicalType overrideType)
     {
         if (!overrideType.IsCompatible(typeof(T).ToLogicalType()))
@@ -228,12 +221,13 @@ public sealed class ColumnBuilder<T> : IRawWriter
         return new NullColumn(type, new DataColumn(LogicalType.UInt8, _nulls, _logicalLength / 8 + 1),
             new DataColumn(type, new Memory<byte>(_data, 0, _byteIndex), _valuesLength), _logicalLength);
     }
-    public DataColumn BuildDataColumn()
+    
+    internal DataColumn BuildDataColumn()
     {
         return BuildDataColumn(typeof(T).ToLogicalType());
     }
 
-    public DataColumn BuildDataColumn(LogicalType type)
+    private DataColumn BuildDataColumn(LogicalType type)
     {
         return new DataColumn(type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }

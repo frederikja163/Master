@@ -35,7 +35,7 @@ public sealed class SplitEncoding : IEncoding
             byteBuilder.WriteValues(values);
         }
 
-        return new SplitColumn(lengthBuilder.BuildDataColumn(), byteBuilder.BuildDataColumn(), typeof(T).ToLogicalType());
+        return new SplitColumn(lengthBuilder.Build(), byteBuilder.Build(), typeof(T).ToLogicalType());
     }
 
     public IColumnReader CreateDecoder(LogicalType type, int length,

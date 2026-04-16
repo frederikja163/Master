@@ -1,7 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Text;
-using TapResult;
+using TapResult.Tests.Extensions;
 using TapResult.Columns;
 
 namespace TapResult.Tests;
@@ -25,7 +25,7 @@ internal sealed class ColumnBuilderTests
         blob.WriteValue<float>(10);
         blob.WriteValue<double>(11);
         blob.Dispose();
-        DataColumn column = builder.BuildDataColumn();
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         Assert.That(column.LogicalLength, Is.EqualTo(1));
         Assert.That(column.PhysicalSize, Is.EqualTo(48));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.UInt8));
@@ -55,7 +55,7 @@ internal sealed class ColumnBuilderTests
         
         ColumnBuilder<string> builder = new(length);
         builder.WriteValues(strs);
-        DataColumn column = builder.BuildDataColumn();
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
@@ -70,7 +70,7 @@ internal sealed class ColumnBuilderTests
         
         ColumnBuilder<byte[]> builder = new ColumnBuilder<byte[]>(length);
         builder.WriteValues(strs.Select(Encoding.UTF8.GetBytes).ToArray());
-        DataColumn column = builder.BuildDataColumn();
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
         Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
@@ -87,7 +87,7 @@ internal sealed class ColumnBuilderTests
         Assert.That(builder.PhysicalSize, Is.EqualTo(2));
         builder.WriteValue(21);
         Assert.That(builder.PhysicalSize, Is.EqualTo(3));
-        DataColumn column = builder.BuildDataColumn();
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         Assert.That(column.LogicalLength, Is.EqualTo(3));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.UInt8));
         Assert.That(column.PhysicalSize, Is.EqualTo(3));

@@ -210,6 +210,6 @@ public sealed class Encoder
             reader.Advance(sectionLength - index - sampleLength);
         }
 
-        return builder.Build();
+        return builder.Build(reader.Type);
     }
 }
