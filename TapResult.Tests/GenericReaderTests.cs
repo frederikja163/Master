@@ -53,7 +53,15 @@ internal sealed class GenericReaderTests
     public void ReadVariableLengthUnitsTest()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
+        ColumnBuilder<byte[]> builder = new ColumnBuilder<byte[]>(strings.Length);
+        using (BlobBuilder blobBuilder = builder.OpenBlob())
+        {
+            foreach (string blob in strings)
+            {
+                blobBuilder.WriteValue(blob);
+            }
+        }
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         GenericReader reader = column.OpenGenericReader();
         Assert.That(reader.ReadUnits(LogicalType.String, 3).ToArray(),
             Is.EqualTo(column.Data.Span.Slice(0, 36).ToArray()));
@@ -73,7 +81,15 @@ internal sealed class GenericReaderTests
     public void ReadStringsTests()
     {
         string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
+        ColumnBuilder<byte[]> builder = new ColumnBuilder<byte[]>(strings.Length);
+        using (BlobBuilder blobBuilder = builder.OpenBlob())
+        {
+            foreach (string blob in strings)
+            {
+                blobBuilder.WriteValue(blob);
+            }
+        }
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadString(), Is.EqualTo("test"));
@@ -85,8 +101,22 @@ internal sealed class GenericReaderTests
     [Test]
     public void ReadBlobsTest()
     {
-        string[] strings = ["test", "hello world", "i am here", "This", "Is", "Test", "Data"];
-        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
+        byte[][] data = new byte[][]{"test"u8.ToArray(),
+                "hello world"u8.ToArray(),
+                "i am here"u8.ToArray(),
+                "This"u8.ToArray(),
+                "Is"u8.ToArray(),
+                "Test"u8.ToArray(),
+                "Data"u8.ToArray()};
+        ColumnBuilder<byte[]> builder = new ColumnBuilder<byte[]>(data.Length);
+        using (BlobBuilder blobBuilder = builder.OpenBlob())
+        {
+            foreach (byte[] blob in data)
+            {
+                blobBuilder.WriteValue(blob);
+            }
+        }
+        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         GenericReader reader = column.OpenGenericReader();
 
         Assert.That(reader.ReadBlob().ToArray(), Is.EqualTo("test"u8.ToArray()));

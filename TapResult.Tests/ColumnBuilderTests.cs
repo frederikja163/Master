@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using TapResult.Tests.Extensions;
 using TapResult.Columns;
+using TapResult.Readers;
 
 namespace TapResult.Tests;
 
@@ -27,7 +28,7 @@ internal sealed class ColumnBuilderTests
         blob.Dispose();
         DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
         Assert.That(column.LogicalLength, Is.EqualTo(1));
-        Assert.That(column.PhysicalSize, Is.EqualTo(48));
+        Assert.That(column.PhysicalSize, Is.EqualTo(44));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.UInt8));
 
         byte[] bytes = new byte[14];
@@ -35,7 +36,6 @@ internal sealed class ColumnBuilderTests
         BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(2), 10);
         BinaryPrimitives.WriteDoubleLittleEndian(bytes.AsSpan(6), 11);
         Assert.That(column.Data.ToArray(), Is.EqualTo(new byte[]{
-            44, 0, 0, 0,
             1,
             2, 0,
             3, 0, 0, 0,
@@ -55,11 +55,10 @@ internal sealed class ColumnBuilderTests
         
         ColumnBuilder<string> builder = new(length);
         builder.WriteValues(strs);
-        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
+        SplitColumn column = Assert.InstanceOf<SplitColumn>(builder.Build());
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
-        Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
-        Assert.That(column.Data.ToArray(), Is.EqualTo(strs.SelectMany(DataHelper.GetBytes)));
+        Assert.That(column.OpenReader<string>().Read(strs.Length), Is.EqualTo(strs));
     }
 
     [Test]
@@ -70,11 +69,10 @@ internal sealed class ColumnBuilderTests
         
         ColumnBuilder<byte[]> builder = new ColumnBuilder<byte[]>(length);
         builder.WriteValues(strs.Select(Encoding.UTF8.GetBytes).ToArray());
-        DataColumn column = Assert.InstanceOf<DataColumn>(builder.BuildDataColumn());
+        SplitColumn column = Assert.InstanceOf<SplitColumn>(builder.Build(LogicalType.Blob));
         Assert.That(column.LogicalLength, Is.EqualTo(strs.Length));
-        Assert.That(column.PhysicalSize, Is.EqualTo(length));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
-        Assert.That(column.Data.ToArray(), Is.EqualTo(strs.SelectMany(DataHelper.GetBytes)));
+        Assert.That(column.OpenReader<byte[]>().Read(strs.Length), Is.EqualTo(strs));
     }
 
     [Test]

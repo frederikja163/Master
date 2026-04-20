@@ -76,10 +76,21 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
         throw new UnreachableException();
     }
 
-    string IColumnReader<string>.Peek(int byteOffset)
+    private byte[] Peek(int offset)
     {
-        int length = _lengthColumn.Peek(byteOffset);
-        return Encoding.UTF8.GetString(_byteColumn.Peek(byteOffset, length).ToArray());
+        int byteOffset = 0;
+        for (int i = 0; i < offset; i++)
+        {
+            byteOffset += _lengthColumn.Peek(i);
+        }
+
+        int length = _lengthColumn.Peek(offset);
+        return _byteColumn.Peek(byteOffset, length).ToArray();
+    }
+
+    string IColumnReader<string>.Peek(int offset)
+    {
+        return Encoding.UTF8.GetString(Peek(offset));
     }
 
     IEnumerable<string> IColumnReader<string>.Peek(int offset, int count)
@@ -93,8 +104,7 @@ internal sealed class SplitColumnReader : IColumnReader<string>, IColumnReader<b
 
     byte[] IColumnReader<byte[]>.Peek(int offset)
     {
-        int length = _lengthColumn.Peek(offset);
-        return _byteColumn.Peek(offset, length).ToArray();
+        return Peek(offset);
     }
 
     IEnumerable<byte[]> IColumnReader<byte[]>.Peek(int offset, int count)

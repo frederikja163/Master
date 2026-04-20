@@ -117,13 +117,10 @@ public sealed class Encoder
 
     private IColumn Encode(IColumn inData, IColumn metadataSample)
     {
-        if (metadataSample is DataColumn)
-        {
-            return inData;
-        }
         EncodingType type = metadataSample.EncodingType;
-        
-        IEncoding encoding = _encodingsById[type];
+        if (metadataSample is DataColumn || !_encodingsById.TryGetValue(type, out IEncoding? encoding))
+            return inData;
+
         IColumn columns = encoding.Encode(inData);
         if (columns is not IColumnParent parent || metadataSample is not IColumnParent parentMeta)
             return columns;

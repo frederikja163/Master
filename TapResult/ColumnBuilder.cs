@@ -23,6 +23,7 @@ public sealed class ColumnBuilder<T> : IRawWriter
 {
     private BlobBuilder? _blobBuilder = null;
     private byte[]? _nulls = null;
+    private int[]? _lengths = null;
     private byte[] _data;
     private int _byteIndex = 0;
     private int _valuesLength = 0;
@@ -85,6 +86,21 @@ public sealed class ColumnBuilder<T> : IRawWriter
         value |= (byte)(1 << bitIndex);
         _nulls[byteIndex] = value;
         _logicalLength += 1;
+    }
+
+    private void WriteLength(int length)
+    {
+        if (_lengths is null)
+        {
+            _lengths = new int[16];
+        }
+
+        int index = _valuesLength;
+        if (index >= _lengths.Length)
+        {
+            Array.Resize(ref _lengths, Math.Max(index, _lengths.Length * 2));
+        }
+        _lengths[index] = length;
     }
 
     /// <summary>
@@ -187,7 +203,7 @@ public sealed class ColumnBuilder<T> : IRawWriter
             case double float64: BinaryPrimitives.WriteDoubleLittleEndian(Slice(Unsafe.SizeOf<TValue>()), float64); break;
             case string str: WriteRaw(Encoding.UTF8.GetBytes(str)); break;
             case byte[] blob:
-                WriteRaw(((ReadOnlySpan<byte>)blob).Length);
+                WriteLength(blob.Length);
                 WriteRaw((ReadOnlySpan<byte>)blob);
                 break;
             default: throw new ArgumentOutOfRangeException(nameof(TValue), typeof(TValue), null);
@@ -213,23 +229,28 @@ public sealed class ColumnBuilder<T> : IRawWriter
             throw new Exception($"{overrideType} is not compatible with {typeof(T).ToLogicalType()}");
         }
 
-        LogicalType type = typeof(T).ToLogicalType();
+        IColumn column;
+        if (_lengths is not null)
+        {
+            IColumn length = ColumnBuilder.Create<int>(_lengths.AsSpan(0, _logicalLength));
+            IColumn data = ColumnBuilder.Create<byte>(_data.AsSpan(0, _byteIndex));
+            column = new SplitColumn(length, data, overrideType);
+        }
+        else
+        {
+            column = new DataColumn(overrideType, new Memory<byte>(_data, 0, _byteIndex), _valuesLength);
+        }
+
         if (_valuesLength == _logicalLength)
         {
-            return BuildDataColumn(type);
+            return column;
         }
-        return new NullColumn(type, new DataColumn(LogicalType.UInt8, _nulls, _logicalLength / 8 + 1),
-            new DataColumn(type, new Memory<byte>(_data, 0, _byteIndex), _valuesLength), _logicalLength);
+        return new NullColumn(overrideType, ColumnBuilder.Create<byte>(_nulls.AsSpan(0, _logicalLength / 8 + 1)), column, _logicalLength);
     }
     
     internal DataColumn BuildDataColumn()
     {
-        return BuildDataColumn(typeof(T).ToLogicalType());
-    }
-
-    private DataColumn BuildDataColumn(LogicalType type)
-    {
-        return new DataColumn(type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
+        return new DataColumn(typeof(T).ToLogicalType(), new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
 
     /// <summary>
@@ -241,8 +262,7 @@ public sealed class ColumnBuilder<T> : IRawWriter
         {
             throw new Exception($"Cannot open more than one blob on a {nameof(ColumnBuilder)} at a time.");
         }
-
-        Slice(Unsafe.SizeOf<int>());
+        
         _blobBuilder = new BlobBuilder(this)
         {
             StartIndex = _byteIndex
@@ -262,10 +282,8 @@ public sealed class ColumnBuilder<T> : IRawWriter
                 $"This {nameof(ColumnBuilder)} does not have an open {nameof(BlobBuilder)}");
         }
 
-        int startIndex = _blobBuilder.StartIndex;
         int length = _byteIndex - _blobBuilder.StartIndex;
-        Span<byte> span = _data.AsSpan(startIndex - Unsafe.SizeOf<int>(), Unsafe.SizeOf<int>());
-        BinaryPrimitives.WriteInt32LittleEndian(span, length);
+        WriteLength(length);
         _blobBuilder = null;
         _logicalLength += 1;
         _valuesLength += 1;
