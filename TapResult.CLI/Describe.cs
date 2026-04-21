@@ -35,7 +35,10 @@ public class Describe
                 {
                     Console.ForegroundColor = Console.ForegroundColor == ConsoleColor.Gray ? ConsoleColor.White : ConsoleColor.Gray;
                     Console.WriteLine($"| {columnInfo.Name.PadRight(opts.NameWidth)} | {EncodingToString(columnInfo.Encoding, opts)}");
-                    RecursiveWriteOutMetadata(columnInfo.Encoding, opts);
+                    foreach (EncodingInfo subEncoding in columnInfo.Encoding.GetSubEncodings())
+                    {
+                        RecursiveWriteOutMetadata(subEncoding, opts);
+                    }
                 }
             }
         }
@@ -157,9 +160,9 @@ public class Describe
 
     private static void RecursiveWriteOutMetadata(EncodingInfo encoding, DescribeOptions opts)
     {
+        Console.WriteLine($"| {new string(' ', opts.NameWidth)} | {EncodingToString(encoding, opts)}");
         foreach (EncodingInfo child in encoding.GetSubEncodings())
         {
-            Console.WriteLine($"| {new string(' ', opts.NameWidth)} | {EncodingToString(encoding, opts)}");
             RecursiveWriteOutMetadata(child, opts);
         }
     }
