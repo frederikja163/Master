@@ -141,7 +141,7 @@ public sealed class TapResultListener : ResultListener
     public override void OnResultPublished(Guid stepRunId, ResultTable result)
     {
         base.OnResultPublished(stepRunId, result);
-        Table table = new Table(result.Columns.Select(column => ColumnBuilder.Create(column.Data, out _)),
+        Table table = new Table(result.Columns.Select(column => ColumnBuilder.Create(column.Data)),
             result.Columns.Select(col => col.Name), string.Join('/', stepRunId, result.Name));
         _tasks.Add(WriteAndCompressAsync(table));
     }

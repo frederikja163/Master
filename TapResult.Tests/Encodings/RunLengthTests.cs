@@ -2,6 +2,7 @@
 using TapResult.Columns;
 using TapResult.Encodings;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests.Encodings;
 
@@ -15,7 +16,7 @@ public class RunLengthTests
     public void RunLengthEncodingRoundTripTest(int start, int length)
     {
         int[] data = Enumerable.Range(start, length).ToArray();
-        DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<int>(data.AsSpan()));
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
         RunLengthReader<int> reader = Assert.InstanceOf<RunLengthReader<int>>(column.OpenReader());
@@ -32,7 +33,7 @@ public class RunLengthTests
     public void RunLengthEncodingRepeatingValuesRoundTripTest(int value, int repeats)
     {
         int[] data = Enumerable.Repeat(value, repeats).ToArray();
-        DataColumn dataColumn = ColumnBuilder.Create<int>(data.AsSpan());
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<int>(data.AsSpan()));
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
         RunLengthReader<int> reader = Assert.InstanceOf<RunLengthReader<int>>(column.OpenReader());
@@ -47,7 +48,7 @@ public class RunLengthTests
     public void TestRunLengthEncodingTest()
     {
         int[] data = [1,1,1,1,1,1,1, 5,5,5,5,5, 1,1,1,1,1, 3,3,3,3,3,3];
-        DataColumn dataColumn = ColumnBuilder.Create(data.AsSpan());
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(data.AsSpan()));
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
         RunLengthReader<int> reader = Assert.InstanceOf<RunLengthReader<int>>(column.OpenReader());
@@ -62,7 +63,7 @@ public class RunLengthTests
     public void TestRunLengthEncodingForFloatTest()
     {
         float[] data = [1.1f,1.1f,1.1f,1.1f,1.1f,1.1f,1.1f, 5.5f,5.5f,5.5f,5.5f,5.5f, 1.2f,1.2f, 1.3f,1.3f,1.3f, 3.4f,3.4f,3.4f,3.4f,3.4f,3.4f];
-        DataColumn dataColumn = ColumnBuilder.Create(data.AsSpan());
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(data.AsSpan()));
         IEncoding encoding = new RunLengthEncoding();
         RunLengthColumn column = Assert.InstanceOf<RunLengthColumn>(encoding.Encode(dataColumn));
         RunLengthReader<float> reader = Assert.InstanceOf<RunLengthReader<float>>(column.OpenReader());

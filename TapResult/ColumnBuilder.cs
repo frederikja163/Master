@@ -11,7 +11,7 @@ namespace TapResult;
 /// <summary>
 /// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
-public sealed class ColumnBuilder
+public sealed partial class ColumnBuilder
 {
     private readonly LogicalType _type;
     private BlobBuilder? _blobBuilder = null;
@@ -220,135 +220,6 @@ public sealed class ColumnBuilder
     {
         return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
-    
-    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
-    {
-        if (!BitConverter.IsLittleEndian)
-        {
-            ColumnBuilder builder = new ColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
-            foreach (T var in data)
-            {
-                builder.WriteValue(var);
-            }
-            return builder.BuildDataColumn();
-        }
-        
-        ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
-        return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
-    }
-
-    // TODO: Switch all create methods to return an IColumn instead of DataColumn.
-    /// <summary>
-    /// Create a new DataColumn from a span of data.
-    /// </summary>
-    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
-    {
-        return Create(data, typeof(T).ToLogicalType());
-    }
-
-    /// <summary>
-    /// Create a new DataColumn from any collection of strings.
-    /// </summary>
-    public static DataColumn Create(ICollection<string> data)
-    {
-        int length = 0;
-        foreach (string str in data)
-        {
-            length += Encoding.UTF8.GetByteCount(str);
-        }
-
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length + sizeof(int) * data.Count);
-        builder.WriteStrings(data);
-
-        return builder.BuildDataColumn();
-    }
-
-    /// <summary>
-    /// Create a new DataColumn from an IEnumerable of blobs.
-    /// </summary>
-    public static DataColumn Create(IEnumerable<byte[]> data)
-    {
-        return Create(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
-    }
-    
-    /// <summary>
-    /// Create a new DataColumn from a collection of blobs.
-    /// </summary>
-    public static DataColumn Create(ICollection<ReadOnlyMemory<byte>> data)
-    {
-        int length = 0;
-        foreach (ReadOnlyMemory<byte> blob in data)
-        {
-            length += blob.Length;
-        }
-
-        byte[] bytes = new byte[length + sizeof(int) * data.Count];
-        int index = 0;
-        foreach (ReadOnlyMemory<byte> blob in data)
-        {
-            BitConverter.TryWriteBytes(bytes.AsSpan(index, sizeof(int)), blob.Length);
-            index += 4;
-            blob.Span.CopyTo(bytes.AsSpan(index));
-            index += blob.Length;
-        }
-
-        return new DataColumn(LogicalType.Blob, bytes, data.Count);
-    }
-
-    /// <summary>
-    /// Create a new DataColumn based on an array.
-    /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
-    /// A separate nulls DataColumn is created if the underlying type is nullable.
-    /// </summary>
-    public static IColumn Create(Array array, out DataColumn? nulls)
-    {
-        nulls = null;
-        return array switch
-        {
-            sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
-            short[] values => Create<short>(values, array.GetType().GetElementType()! == typeof(short) ? LogicalType.SInt16 : LogicalType.UInt16),
-            int[] values => Create<int>(values, array.GetType().GetElementType()! == typeof(int) ? LogicalType.SInt32 : LogicalType.UInt32),
-            long[] values => Create<long>(values, array.GetType().GetElementType()! == typeof(long) ? LogicalType.SInt64 : LogicalType.UInt64),
-            Half[] values => Create<Half>(values),
-            float[] values => Create<float>(values),
-            double[] values => Create<double>(values),
-            string[] str => Create(str), // TODO: Split nulls for strings.
-            sbyte?[] values => SplitNulls<sbyte>(values),
-            short?[] values => SplitNulls<short>(values),
-            int?[] values => SplitNulls<int>(values),
-            long?[] values => SplitNulls<long>(values),
-            byte?[] values => SplitNulls<byte>(values),
-            ushort?[] values => SplitNulls<ushort>(values),
-            uint?[] values => SplitNulls<uint>(values),
-            ulong?[] values => SplitNulls<ulong>(values),
-            Half?[] values => SplitNulls<Half>(values),
-            float?[] values => SplitNulls<float>(values),
-            double?[] values => SplitNulls<double>(values),
-            _ => throw new ArgumentOutOfRangeException(nameof(array))
-        };
-    }
-
-    private static IColumn SplitNulls<T>(T?[] array)
-        where T : unmanaged
-    {
-        LogicalType type = typeof(T).ToLogicalType();
-        type.TryGetSize(out int size);
-        ColumnBuilder valueBuilder = new ColumnBuilder(type, size * array.Length);
-        for (int i = 0; i < array.Length; i++)
-        {
-            T? value = array[i];
-            if (value is { } val)
-            {
-                valueBuilder.WriteValue(val);
-            }
-            else
-            {
-                valueBuilder.WriteNull();
-            }
-        }
-        
-        return valueBuilder.Build();
-    }
 
     /// <summary>
     /// Opens a new <see cref="BlobBuilder"/> on this <see cref="ColumnBuilder"/>.
@@ -387,5 +258,111 @@ public sealed class ColumnBuilder
         _blobBuilder = null;
         _logicalLength += 1;
         _valuesLength += 1;
+    }
+}
+
+public sealed partial class ColumnBuilder
+{
+    private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
+    {
+        if (!BitConverter.IsLittleEndian)
+        {
+            ColumnBuilder builder = new ColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
+            foreach (T var in data)
+            {
+                builder.WriteValue(var);
+            }
+            return builder.BuildDataColumn();
+        }
+        
+        ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
+        return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
+    }
+    
+    /// <summary>
+    /// Create a new DataColumn from a span of data.
+    /// </summary>
+    public static IColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
+    {
+        return Create(data, typeof(T).ToLogicalType());
+    }
+
+    public static IColumn Create<T>(IEnumerable<T> values)
+    {
+        if (!values.TryGetNonEnumeratedCount(out int count))
+        {
+            count = 16;
+        }
+
+        int size = count * Unsafe.SizeOf<T>();
+        ColumnBuilder builder = new ColumnBuilder(typeof(T).ToLogicalType(), size);
+        foreach (T value in values)
+        {
+            if (value is null)
+            {
+                builder.WriteNull();
+            }
+            else
+            {
+                builder.WriteValue(value);
+            }
+        }
+        return builder.Build();
+    }
+
+    /// <summary>
+    /// Create a new DataColumn based on an array.
+    /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
+    /// A separate nulls DataColumn is created if the underlying type is nullable.
+    /// </summary>
+    [OverloadResolutionPriority(1)]
+    public static IColumn Create(Array array)
+    {
+        return array switch
+        {
+            sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
+            short[] values => Create<short>(values, array.GetType().GetElementType()! == typeof(short) ? LogicalType.SInt16 : LogicalType.UInt16),
+            int[] values => Create<int>(values, array.GetType().GetElementType()! == typeof(int) ? LogicalType.SInt32 : LogicalType.UInt32),
+            long[] values => Create<long>(values, array.GetType().GetElementType()! == typeof(long) ? LogicalType.SInt64 : LogicalType.UInt64),
+            Half[] values => Create<Half>(values.AsSpan()),
+            float[] values => Create<float>(values.AsSpan()),
+            double[] values => Create<double>(values.AsSpan()),
+            sbyte?[] values => SplitNulls<sbyte>(values),
+            short?[] values => SplitNulls<short>(values),
+            int?[] values => SplitNulls<int>(values),
+            long?[] values => SplitNulls<long>(values),
+            byte?[] values => SplitNulls<byte>(values),
+            ushort?[] values => SplitNulls<ushort>(values),
+            uint?[] values => SplitNulls<uint>(values),
+            ulong?[] values => SplitNulls<ulong>(values),
+            Half?[] values => SplitNulls<Half>(values),
+            float?[] values => SplitNulls<float>(values),
+            double?[] values => SplitNulls<double>(values),
+            string[] str => Create<string>(str),
+            byte[][] blobs => Create<byte[]>(blobs),
+            _ => throw new ArgumentOutOfRangeException(nameof(array))
+        };
+    }
+
+    private static IColumn SplitNulls<T>(T?[] array)
+        where T : unmanaged
+    {
+        LogicalType type = typeof(T).ToLogicalType();
+        type.TryGetSize(out int size);
+        ColumnBuilder valueBuilder = new ColumnBuilder(type, size * array.Length);
+        for (int i = 0; i < array.Length; i++)
+        {
+            T? value = array[i];
+            if (value is { } val)
+            {
+                valueBuilder.WriteValue(val);
+            }
+            else
+            {
+                valueBuilder.WriteNull();
+            }
+        }
+        
+        return valueBuilder.Build();
     }
 }
