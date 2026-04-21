@@ -27,7 +27,7 @@ internal sealed class ColumnReaderTests
     public void VarLengthReaderTest()
     {
         string[] arr = ["This", "is", "a", "test"];
-        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(arr));
+        SplitColumn column = Assert.InstanceOf<SplitColumn>(ColumnBuilder.Create(arr));
         IColumnReader<string> reader = column.OpenReader<string>();
         
         Assert.That(reader.Peek(), Is.EqualTo("This"));

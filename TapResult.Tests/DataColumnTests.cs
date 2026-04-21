@@ -14,28 +14,32 @@ internal sealed class DataColumnTests
     public void CreateStringsTest()
     {
         string[] strings = ["Abcd", "1234", "Hello world!", "CSharp"];
-        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
-        int physicalLength = strings.Select(str => Unsafe.SizeOf<int>() + Encoding.UTF8.GetByteCount(str)).Sum();
-        Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
+        SplitColumn column = Assert.InstanceOf<SplitColumn>(ColumnBuilder.Create(strings));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
         Assert.That(column.LogicalLength, Is.EqualTo(strings.Length));
         
-        byte[] data = strings.SelectMany(DataHelper.GetBytes).ToArray();
-        Assert.That(column.Data.ToArray(), Is.EqualTo(data));
+        IColumnReader reader = column.OpenReader<string>();
+        for (int i = 0; i < strings.Length; i++)
+        {
+            Assert.That(reader.Read(), Is.EqualTo(strings[i]));
+        }
+        Assert.That(reader.IsAtEnd);
     }
     
     [Test]
     public void CreateBlobsTest()
     {
         byte[][] blobs = [[0, 1, 2], [1,2,3], [2,3,4]];
-        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(blobs));
-        int physicalLength = blobs.Select(blob => Unsafe.SizeOf<int>() + blob.Length).Sum();
-        Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
+        SplitColumn column = Assert.InstanceOf<SplitColumn>(ColumnBuilder.Create(blobs));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
         Assert.That(column.LogicalLength, Is.EqualTo(blobs.Length));
 
-        byte[] data = blobs.SelectMany(DataHelper.GetBytes).ToArray();
-        Assert.That(column.Data.ToArray(), Is.EqualTo(data));
+        IColumnReader reader = column.OpenReader<byte[]>();
+        for (int i = 0; i < blobs.Length; i++)
+        {
+            Assert.That(reader.Read(), Is.EqualTo(blobs[i]));
+        }
+        Assert.That(reader.IsAtEnd);
     }
 
     public static IEnumerable<(Array, LogicalType type)> CreatePrimitivesTestSource()

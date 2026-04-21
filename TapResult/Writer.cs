@@ -12,12 +12,12 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     private readonly bool _leaveOpen;
     
     private int _currentId = 0;
-    private ColumnBuilder _idBuilder = new (LogicalType.SInt32, 200);
-    private ColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200);
-    private ColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200);
-    private ColumnBuilder _logicalTypeBuilder = new (LogicalType.UInt8, 200);
-    private ColumnBuilder _lengthBuilder = new (LogicalType.SInt32, 200);
-    private ColumnBuilder _blobBuilder = new (LogicalType.Blob, 200);
+    private ColumnBuilder<int> _idBuilder = new (200);
+    private ColumnBuilder<int> _parentIdBuilder = new (200);
+    private ColumnBuilder<byte> _encodingIdBuilder = new (200);
+    private ColumnBuilder<byte> _logicalTypeBuilder = new (200);
+    private ColumnBuilder<int> _lengthBuilder = new (200);
+    private ColumnBuilder<byte[]> _blobBuilder = new (200);
     
     private const byte MajorVersion = 1;
     private const byte MinorVersion = 0;
@@ -55,19 +55,18 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         // Metadata
         long metadataStart = _outStream.Position; // for Postscript
 
-        DataColumn idColumn = _idBuilder.BuildDataColumn();
-        idColumn.Write(_outStream);
-        _parentIdBuilder.BuildDataColumn().Write(_outStream);
-        _encodingIdBuilder.BuildDataColumn().Write(_outStream);
-        _logicalTypeBuilder.BuildDataColumn().Write(_outStream);
-        _lengthBuilder.BuildDataColumn().Write(_outStream);
-        _blobBuilder.BuildDataColumn().Write(_outStream);
+        Write(_idBuilder.Build());
+        Write(_parentIdBuilder.Build());
+        Write(_encodingIdBuilder.Build());
+        Write(_logicalTypeBuilder.Build());
+        Write(_lengthBuilder.Build());
+        Write(_blobBuilder.Build());
         
         // Postscript
         long metadataLength = _outStream.Position - metadataStart;
-        long metadataLogicalLength = idColumn.LogicalLength;
+        long metadataLogicalLength = _idBuilder.LogicalLength;
         
-        ColumnBuilder postScript = new(LogicalType.UInt64, 24);
+        ColumnBuilder<long> postScript = new(24);
         postScript.WriteValue(metadataStart);
         postScript.WriteValue(metadataLength);
         postScript.WriteValue(metadataLogicalLength);
@@ -79,6 +78,26 @@ public sealed class Writer : IDisposable, IAsyncDisposable
             _outStream.Flush();
         else
             _outStream.Close();
+    }
+
+    private void Write(IColumn column)
+    {
+        if (column is IColumnParent parent)
+        {
+            foreach (DataColumn col in parent.GetChildColumnsRecursive().OfType<DataColumn>())
+            {
+                Write(col);
+            }
+        }
+        else if (column is DataColumn dataColumn)
+        {
+            Write(dataColumn);
+        }
+    }
+
+    private void Write(DataColumn column)
+    {
+        column.Write(_outStream);
     }
     
 
@@ -105,10 +124,7 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     /// </summary>
     public void Write(Table table)
     {
-        foreach (DataColumn dataColumn in table.GetChildColumnsRecursive().OfType<DataColumn>())
-        {
-            dataColumn.Write(_outStream);
-        }
+        Write((IColumn)table);
 
         SaveMetaDataForColumn(table, -1);
     }
@@ -132,7 +148,7 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     
     internal Table GetMetadata()
     {
-        return new Table([_idBuilder.BuildDataColumn(), _parentIdBuilder.BuildDataColumn(), _encodingIdBuilder.BuildDataColumn(), _logicalTypeBuilder.BuildDataColumn(), _lengthBuilder.BuildDataColumn(), _blobBuilder.BuildDataColumn()],
+        return new Table([_idBuilder.Build(), _parentIdBuilder.Build(), _encodingIdBuilder.Build(), _logicalTypeBuilder.Build(), _lengthBuilder.Build(), _blobBuilder.Build()],
             ["Id", "ParentId", "Encoding", "LogicalType", "Length", "Blob"],
             "schema");
     }

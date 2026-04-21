@@ -11,9 +11,9 @@ namespace TapResult.OpenTAP;
 
 internal sealed class AncestryBuilder
 {
-    private readonly ColumnBuilder _id = new ColumnBuilder(LogicalType.String, 16);
-    private readonly ColumnBuilder _parent = new ColumnBuilder(LogicalType.String, 16);
-    private readonly ColumnBuilder _name = new ColumnBuilder(LogicalType.String, 16);
+    private readonly ColumnBuilder<string> _id = new(16);
+    private readonly ColumnBuilder<string> _parent = new (16);
+    private readonly ColumnBuilder<string> _name = new (16);
     
     public void Add(Guid id, Guid? parent, string name)
     {
@@ -37,10 +37,10 @@ internal sealed class AncestryBuilder
 
 internal sealed class ParameterBuilder
 {
-    private readonly ColumnBuilder _id = new ColumnBuilder(LogicalType.String, 16);
-    private readonly ColumnBuilder _names = new ColumnBuilder(LogicalType.String, 16);
-    private readonly ColumnBuilder _types = new ColumnBuilder(LogicalType.SInt32, 16);
-    private readonly ColumnBuilder _values = new ColumnBuilder(LogicalType.String, 16);
+    private readonly ColumnBuilder<string> _id = new(16);
+    private readonly ColumnBuilder<string> _names = new(16);
+    private readonly ColumnBuilder<int> _types = new(16);
+    private readonly ColumnBuilder<string> _values = new(16);
 
     public void Add(TestRun run)
     {

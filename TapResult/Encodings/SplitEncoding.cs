@@ -14,8 +14,8 @@ public sealed class SplitEncoding : IEncoding
     public EncodingType Type { get; } = EncodingType.Split;
     public IColumn Encode<T>(IColumnReader<T> reader) where T : notnull
     {
-        ColumnBuilder lengthBuilder = new ColumnBuilder(LogicalType.SInt32, reader.Length * Unsafe.SizeOf<int>());
-        ColumnBuilder byteBuilder = new ColumnBuilder(LogicalType.UInt8, reader.Length - lengthBuilder.PhysicalSize);
+        ColumnBuilder<int> lengthBuilder = new (reader.Length * Unsafe.SizeOf<int>());
+        ColumnBuilder<byte> byteBuilder = new (reader.Length - lengthBuilder.PhysicalSize);
         for (int i = 0; i < reader.Length; i++)
         {
             byte[] values;
@@ -35,7 +35,7 @@ public sealed class SplitEncoding : IEncoding
             byteBuilder.WriteValues(values);
         }
 
-        return new SplitColumn(lengthBuilder.BuildDataColumn(), byteBuilder.BuildDataColumn(), typeof(T).ToLogicalType());
+        return new SplitColumn(lengthBuilder.Build(), byteBuilder.Build(), typeof(T).ToLogicalType());
     }
 
     public IColumnReader CreateDecoder(LogicalType type, int length,

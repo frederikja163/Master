@@ -64,11 +64,12 @@ public sealed class Reader
         ReadOnlySpan<byte> encodingIds = schemaReader.Read<byte>(logicalLength);
         ReadOnlySpan<byte> types = schemaReader.Read<byte>(logicalLength);
         ReadOnlySpan<int> lengths = schemaReader.Read<int>(logicalLength);
+        ReadOnlySpan<int> blobLengths = schemaReader.Read<int>(logicalLength);
 
         Dictionary<int, EncodingInfo> encodingsById = new Dictionary<int, EncodingInfo>();
         for (int i = 0; i < logicalLength; i++)
         {
-            int blobLength = schemaReader.Read<int>();
+            int blobLength = blobLengths[i];
             ReadOnlyMemory<byte> blob = new ReadOnlyMemory<byte>(schema, schemaReader.ByteIndex, blobLength);
             schemaReader.Advance(blobLength);
             encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingType)encodingIds[i], (LogicalType)types[i], lengths[i], blob));

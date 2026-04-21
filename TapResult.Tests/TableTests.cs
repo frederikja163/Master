@@ -77,19 +77,19 @@ public class TableTests
         writer.Write(table);
 
         Table metadata = writer.GetMetadata();
-        DataColumn[] metadataColumns = metadata.Columns.OfType<DataColumn>().ToArray();
-        DataColumn idColumn = metadataColumns[0];
-        DataColumn parentIdColumn = metadataColumns[1];
-        DataColumn encodingIdColumn = metadataColumns[2];
-        DataColumn logicalTypeColumn = metadataColumns[3];
-        DataColumn lengthColumn = metadataColumns[4];
-        DataColumn blobColumn = metadataColumns[5];
+        IColumn[] metadataColumns = metadata.Columns.ToArray();
+        IColumn idColumn = metadataColumns[0];
+        IColumn parentIdColumn = metadataColumns[1];
+        IColumn encodingIdColumn = metadataColumns[2];
+        IColumn logicalTypeColumn = metadataColumns[3];
+        IColumn lengthColumn = metadataColumns[4];
+        IColumn blobColumn = metadataColumns[5];
         
         /* Table should look the following:
          * | Id | ParentId | Encoding | LogicalType | Blob
-         * | 1  | 0        | Binary   | SInt32      | { PhysicalSize, LogicalLength }
-         * | 2  | 0        | Binary   | SInt32      | { PhysicalSize, LogicalLength }
-         * | 3  | 0        | Binary   | SInt32      | { PhysicalSize, LogicalLength }
+         * | 1  | 0        | Binary   | SInt32      | { PhysicalSize, Offset }
+         * | 2  | 0        | Binary   | SInt32      | { PhysicalSize, Offset }
+         * | 3  | 0        | Binary   | SInt32      | { PhysicalSize, Offset }
          * | 0  | -1       | Table    | SInt32      | { (id, name)[] }
          */
         Assert.That(idColumn.OpenReader<int>().Read(4), Is.EqualTo(new [] { 1, 2, 3, 0 }));
@@ -98,18 +98,19 @@ public class TableTests
         Assert.That(logicalTypeColumn.OpenReader<byte>().Read(4), Is.EqualTo(new byte[] { (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.SInt32, (byte)LogicalType.UInt8 }));
         Assert.That(lengthColumn.OpenReader<int>().Read(4), Is.EqualTo(new []{length, length, length, length}));
         
-        var blobReader = blobColumn.OpenGenericReader();
+        IColumnReader<byte[]> blobReader = blobColumn.OpenReader<byte[]>();
+        GenericReader blob;
         for (int i = 0; i < 3; i++)
         {
-            Assert.That(blobReader.Read<int>(), Is.EqualTo(Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>())); // Size of blob
-            Assert.That(blobReader.Read<int>(), Is.EqualTo(length * Unsafe.SizeOf<int>())); // PhysicalSize
-            Assert.That(blobReader.Read<long>(), Is.EqualTo(0)); // Offset, although the Column is not written out
+            blob = new GenericReader(blobReader.Read());
+            Assert.That(blob.Read<int>(), Is.EqualTo(length * Unsafe.SizeOf<int>())); // PhysicalSize
+            Assert.That(blob.Read<long>(), Is.EqualTo(0)); // Offset, although the Column is not written out
         }
-        Assert.That(blobReader.Read<int>(), Is.EqualTo(42));
-        Assert.That(blobReader.ReadString(), Is.EqualTo("table"));
-        Assert.That(blobReader.ReadString(), Is.EqualTo("columnA"));
-        Assert.That(blobReader.ReadString(), Is.EqualTo("columnB"));
-        Assert.That(blobReader.ReadString(), Is.EqualTo("columnC"));
+        blob = new GenericReader(blobReader.Read());
+        Assert.That(blob.ReadString(), Is.EqualTo("table"u8.ToArray()));
+        Assert.That(blob.ReadString(), Is.EqualTo("columnA"u8.ToArray()));
+        Assert.That(blob.ReadString(), Is.EqualTo("columnB"u8.ToArray()));
+        Assert.That(blob.ReadString(), Is.EqualTo("columnC"u8.ToArray()));
     }
 
     [Test]
@@ -227,18 +228,20 @@ public class TableTests
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
 
         for (int i = 0; i < 3; i++)
-        {
             Assert.That(reader.ReadInt32(), Is.EqualTo(Unsafe.SizeOf<int>() + Unsafe.SizeOf<long>())); // Size of blob
+        Assert.That(reader.ReadInt32(), Is.EqualTo(42));
+        expectedPosition += 4 + 4 * 3;
+        Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
+        
+        for (int i = 0; i < 3; i++)
+        {
             Assert.That(reader.ReadInt32(), Is.EqualTo(length * Unsafe.SizeOf<int>())); // PhysicalSize
             Assert.That(reader.ReadInt64(), Is.Not.EqualTo(0)); // Offset, although the Column is not written out
         }
-        expectedPosition += (4 + 4 + 8) * 3;
+        expectedPosition += (4 + 8) * 3;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
         
-        Assert.That(reader.ReadInt32(), Is.EqualTo(42));
-        expectedPosition += 4;
-        Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         Assert.That(reader.ReadInt32(), Is.EqualTo(5));
         Assert.That(Encoding.UTF8.GetString(reader.ReadBytes(5)), Is.EqualTo("table"));
         Assert.That(reader.ReadInt32(), Is.EqualTo(7));

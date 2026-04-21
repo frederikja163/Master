@@ -63,7 +63,7 @@ internal sealed class EncodingTests
             CascadingEncodings = 2,
         };
 
-        DataColumn expected = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(data));
+        SplitColumn expected = Assert.InstanceOf<SplitColumn>(ColumnBuilder.Create(data));
         IColumn column = encoder.Encode(expected);
         // TODO: Read
         // DataColumnBuilder builder = new DataColumnBuilder(100);
