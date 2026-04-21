@@ -15,9 +15,7 @@ internal sealed class SplitEncodingTests
         string str1 = "Hello world";
         string str2 = "testing1234";
         string[] strs = [str1, str2];
-        SplitEncoding encoder = new SplitEncoding();
-        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strs));
-        SplitColumn columns = Assert.InstanceOf<SplitColumn>(encoder.Encode(dataColumn));
+        SplitColumn columns = Assert.InstanceOf<SplitColumn>(ColumnBuilder.Create(strs));
         Assert.That(columns.GetChildColumns().Count(), Is.EqualTo(2));
         DataColumn lengthColumn = Assert.InstanceOf<DataColumn>(columns.LengthColumn);
         IColumnReader<int> lengthReader = lengthColumn.OpenReader<int>();
@@ -38,9 +36,8 @@ internal sealed class SplitEncodingTests
         string str2 = "testing1234";
         string[] strs = [str1, str2];
         SplitEncoding encoding = new SplitEncoding();
-        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strs));
-        SplitColumn columns = Assert.InstanceOf<SplitColumn>(encoding.Encode(dataColumn));
-        IColumnReader<string> reader = columns.OpenReader<string>();
+        SplitColumn column = Assert.InstanceOf<SplitColumn>(ColumnBuilder.Create(strs));
+        IColumnReader<string> reader = column.OpenReader<string>();
         Assert.That(reader.Read(2), Is.EqualTo(strs));
         Assert.That(reader.IsAtEnd, Is.True);
     }

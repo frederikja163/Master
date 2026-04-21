@@ -117,13 +117,10 @@ public sealed class Encoder
 
     private IColumn Encode(IColumn inData, IColumn metadataSample)
     {
-        if (metadataSample is DataColumn)
-        {
-            return inData;
-        }
         EncodingType type = metadataSample.EncodingType;
-        
-        IEncoding encoding = _encodingsById[type];
+        if (metadataSample is DataColumn || !_encodingsById.TryGetValue(type, out IEncoding? encoding))
+            return inData;
+
         IColumn columns = encoding.Encode(inData);
         if (columns is not IColumnParent parent || metadataSample is not IColumnParent parentMeta)
             return columns;
@@ -199,7 +196,7 @@ public sealed class Encoder
         sampleLength = Math.Min(sampleLength, SampleMaxLength);
         var totalSampleLength = sampleLength * SampleCount;
         int size = reader.Type.TryGetSize(out int s) ? s : 1;
-        ColumnBuilder builder = new ColumnBuilder(reader.Type, totalSampleLength * size);
+        ColumnBuilder<T> builder = new (totalSampleLength * size);
         
         int sectionLength = length / SampleCount;
         for (int i = 0; i < SampleCount; i++)
@@ -210,6 +207,6 @@ public sealed class Encoder
             reader.Advance(sectionLength - index - sampleLength);
         }
 
-        return builder.BuildDataColumn();
+        return builder.Build(reader.Type);
     }
 }
