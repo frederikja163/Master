@@ -19,10 +19,10 @@ public sealed class NullEncoding : IEncoding
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();
         if (!childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not IColumnReader<byte> nulls ||
-            !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is {} values ||
+            !childColumnEnumerator.MoveNext() || childColumnEnumerator.Current is not {} values ||
             childColumnEnumerator.MoveNext())
             throw new Exception("Child columns not configured correctly for null column.");
-        return new NullColumn(type, nulls, values, length);
+        return NullColumn.ColumnReader(type, length, nulls, values);
     }
 
     public IEnumerable<LogicalType> GetSupportedTypes()
