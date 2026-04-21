@@ -8,6 +8,7 @@ internal sealed class SplitColumn : IColumnParent
     public IColumn LengthColumn { get; set; }
     public IColumn ByteColumn { get; set; }
     public LogicalType LogicalType { get; }
+    public int LogicalLength => LengthColumn.LogicalLength;
     public EncodingType EncodingType => EncodingType.Split;
 
     public SplitColumn(IColumn lengthColumn, IColumn byteColumn, LogicalType logicalType)
@@ -18,9 +19,8 @@ internal sealed class SplitColumn : IColumnParent
     }
 
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.WriteBlob(ReadOnlySpan<byte>.Empty);
     }
 
     public IColumnReader OpenReader()

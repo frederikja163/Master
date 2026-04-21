@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text;
 using TapResult.Columns;
 using TapResult.Readers;
 
@@ -10,23 +12,33 @@ namespace TapResult.Encodings;
 public sealed class SplitEncoding : IEncoding
 {
     public EncodingType Type { get; } = EncodingType.Split;
-    public IColumn Encode(in DataColumn dataColumn)
+    public IColumn Encode<T>(IColumnReader<T> reader) where T : notnull
     {
-        GenericReader columnReader = dataColumn.OpenGenericReader();
-        int length = dataColumn.LogicalLength;
-        ColumnBuilder lengthBuilder = new ColumnBuilder(LogicalType.SInt32, dataColumn.LogicalLength * Unsafe.SizeOf<int>());
-        ColumnBuilder byteBuilder = new ColumnBuilder(LogicalType.UInt8, dataColumn.PhysicalSize - lengthBuilder.PhysicalSize);
-        for (int i = 0; i < length; i++)
+        ColumnBuilder lengthBuilder = new ColumnBuilder(LogicalType.SInt32, reader.Length * Unsafe.SizeOf<int>());
+        ColumnBuilder byteBuilder = new ColumnBuilder(LogicalType.UInt8, reader.Length - lengthBuilder.PhysicalSize);
+        for (int i = 0; i < reader.Length; i++)
         {
-            ReadOnlySpan<byte> blob = columnReader.ReadUnits(dataColumn.LogicalType);
-            lengthBuilder.WriteRaw(blob.Slice(0, Unsafe.SizeOf<int>()), 1);
-            byteBuilder.Write(blob.Slice(Unsafe.SizeOf<int>()));
+            byte[] values;
+            if (reader is IColumnReader<byte[]> bReader)
+            {
+                values = bReader.Read();
+            }
+            else if (reader is IColumnReader<string> strReader)
+            {
+                values = Encoding.UTF8.GetBytes(strReader.Read());
+            }
+            else
+            {
+                throw new UnreachableException();
+            }
+            lengthBuilder.WriteValue(values.Length);
+            byteBuilder.WriteValues(values);
         }
 
-        return new SplitColumn(lengthBuilder.BuildDataColumn(), byteBuilder.BuildDataColumn(), dataColumn.LogicalType);
+        return new SplitColumn(lengthBuilder.BuildDataColumn(), byteBuilder.BuildDataColumn(), typeof(T).ToLogicalType());
     }
 
-    public IColumnReader CreateDecoder(LogicalType type,
+    public IColumnReader CreateDecoder(LogicalType type, int length,
         GenericReader metadataReader, IEnumerable<IColumnReader> childColumns)
     {
         using IEnumerator<IColumnReader> childColumnEnumerator = childColumns.GetEnumerator();

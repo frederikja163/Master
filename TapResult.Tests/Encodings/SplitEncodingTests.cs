@@ -3,6 +3,7 @@ using TapResult;
 using TapResult.Columns;
 using TapResult.Encodings;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests.Encodings;
 
@@ -15,7 +16,7 @@ internal sealed class SplitEncodingTests
         string str2 = "testing1234";
         string[] strs = [str1, str2];
         SplitEncoding encoder = new SplitEncoding();
-        DataColumn dataColumn = ColumnBuilder.Create(strs);
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strs));
         SplitColumn columns = Assert.InstanceOf<SplitColumn>(encoder.Encode(dataColumn));
         Assert.That(columns.GetChildColumns().Count(), Is.EqualTo(2));
         DataColumn lengthColumn = Assert.InstanceOf<DataColumn>(columns.LengthColumn);
@@ -37,14 +38,9 @@ internal sealed class SplitEncodingTests
         string str2 = "testing1234";
         string[] strs = [str1, str2];
         SplitEncoding encoding = new SplitEncoding();
-        DataColumn dataColumn = ColumnBuilder.Create(strs);
+        DataColumn dataColumn = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strs));
         SplitColumn columns = Assert.InstanceOf<SplitColumn>(encoding.Encode(dataColumn));
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, 100);
-        columns.WriteMetadata(builder);
-        DataColumn metadataColumn = builder.BuildDataColumn();
-        GenericReader genericReader = metadataColumn.OpenGenericReader();
-        IColumnReader<string> reader = Assert.InstanceOf<IColumnReader<string>>(encoding.CreateDecoder(LogicalType.String, genericReader,
-            columns.GetChildColumns().OfType<DataColumn>().Select(c => c.OpenReader())));
+        IColumnReader<string> reader = columns.OpenReader<string>();
         Assert.That(reader.Read(2), Is.EqualTo(strs));
         Assert.That(reader.IsAtEnd, Is.True);
     }

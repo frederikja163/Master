@@ -4,6 +4,7 @@ using TapResult;
 using TapResult.Columns;
 using TapResult.Extensions;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests;
 
@@ -13,7 +14,7 @@ internal sealed class DataColumnTests
     public void CreateStringsTest()
     {
         string[] strings = ["Abcd", "1234", "Hello world!", "CSharp"];
-        DataColumn column = ColumnBuilder.Create(strings);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(strings));
         int physicalLength = strings.Select(str => Unsafe.SizeOf<int>() + Encoding.UTF8.GetByteCount(str)).Sum();
         Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.String));
@@ -27,7 +28,7 @@ internal sealed class DataColumnTests
     public void CreateBlobsTest()
     {
         byte[][] blobs = [[0, 1, 2], [1,2,3], [2,3,4]];
-        DataColumn column = ColumnBuilder.Create(blobs);
+        DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(blobs));
         int physicalLength = blobs.Select(blob => Unsafe.SizeOf<int>() + blob.Length).Sum();
         Assert.That(column.PhysicalSize, Is.EqualTo(physicalLength));
         Assert.That(column.LogicalType, Is.EqualTo(LogicalType.Blob));
@@ -89,7 +90,7 @@ internal sealed class DataColumnTests
     public void CreatePrimitivesTest((Array array, LogicalType type) tuple)
     {
         (Array array, LogicalType type) = tuple;
-        IColumn column = ColumnBuilder.Create(array, out _);
+        IColumn column = ColumnBuilder.Create(array);
         IColumnReader reader = column.OpenReader();
         Assert.That(column.LogicalType, Is.EqualTo(type));
         Assert.That(reader.Read(reader.Length), Is.EqualTo(array));
@@ -99,6 +100,6 @@ internal sealed class DataColumnTests
     [Test]
     public void DataColumnCreateFailsOnInvalidType()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColumnBuilder.Create(Array.Empty<object>(), out _));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ColumnBuilder.Create(Array.Empty<object>()));
     }
 }

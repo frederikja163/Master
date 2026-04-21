@@ -1,6 +1,7 @@
 ﻿using TapResult;
 using TapResult.Columns;
 using TapResult.Readers;
+using TapResult.Tests.Extensions;
 
 namespace TapResult.Tests.Encodings;
 
@@ -20,7 +21,8 @@ internal sealed class EncodingTests
             SamplePercentage = samplePercentage,
         };
         int[] data = Enumerable.Range(0, dataSize).ToArray();
-        DataColumn sample = encoder.CreateSample(ColumnBuilder.Create<int>(data));
+        IColumn column = ColumnBuilder.Create<int>(data);
+        IColumn sample = encoder.CreateSample<int>(column.OpenReader<int>()) ?? column;
 
         int sampleLength = (int)(dataSize * samplePercentage / sampleCount);
         int totalSampleLength = sampleLength * sampleCount;
@@ -61,7 +63,7 @@ internal sealed class EncodingTests
             CascadingEncodings = 2,
         };
 
-        DataColumn expected = ColumnBuilder.Create(data);
+        DataColumn expected = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create(data));
         IColumn column = encoder.Encode(expected);
         // TODO: Read
         // DataColumnBuilder builder = new DataColumnBuilder(100);
@@ -78,7 +80,7 @@ internal sealed class EncodingTests
         
         Encoder encoder = new Encoder();
 
-        DataColumn expected = ColumnBuilder.Create<int>(data);
+        DataColumn expected = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<int>(data));
         IColumn column = encoder.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);
@@ -92,7 +94,7 @@ internal sealed class EncodingTests
         
         Encoder encoder = new Encoder();
 
-        DataColumn expected = ColumnBuilder.Create<uint>(data);
+        DataColumn expected = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<uint>(data));
         IColumn column = encoder.Encode(expected);
         //TODO: read
         //DataColumn dataColumn = serializer.Decode(column);

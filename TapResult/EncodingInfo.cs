@@ -25,6 +25,10 @@ public sealed class EncodingInfo
     /// </summary>
     public LogicalType Type { get; }
     /// <summary>
+    /// The logical length of this encoded column.
+    /// </summary>
+    public int Length { get; }
+    /// <summary>
     /// A blob containing metadata for this encoding.
     /// </summary>
     public ReadOnlyMemory<byte> Blob { get; }
@@ -33,12 +37,13 @@ public sealed class EncodingInfo
     /// </summary>
     public EncodingInfo? ParentEncoding { get; private set; } = null;
 
-    internal EncodingInfo(int id, int parentId, EncodingType encoding, LogicalType type, ReadOnlyMemory<byte> blob)
+    internal EncodingInfo(int id, int parentId, EncodingType encoding, LogicalType type, int length, ReadOnlyMemory<byte> blob)
     {
         Id = id;
         ParentId = parentId;
         Encoding = encoding;
         Type = type;
+        Length = length;
         Blob = blob;
     }
 

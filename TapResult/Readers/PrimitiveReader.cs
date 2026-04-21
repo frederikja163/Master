@@ -3,17 +3,19 @@ using System.Runtime.CompilerServices;
 
 namespace TapResult.Readers;
 
-internal struct PrimitiveReader<T> : IColumnReader<T>
+internal sealed class PrimitiveReader<T> : IColumnReader<T>
     where T : unmanaged
 {
     private ReadOnlyMemory<byte> _data;
     public int Length { get; }
     public int Index { get; private set; } = 0;
+    public LogicalType Type { get; }
 
-    internal PrimitiveReader(ReadOnlyMemory<byte> data)
+    internal PrimitiveReader(ReadOnlyMemory<byte> data, LogicalType type)
     {
         Length = data.Length / Unsafe.SizeOf<T>();
         _data = data;
+        Type = type;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -36,6 +38,19 @@ internal struct PrimitiveReader<T> : IColumnReader<T>
     IEnumerable<object> IColumnReader.Peek(int offset, int count)
     {
         return Peek(offset, count).OfType<object>();
+    }
+
+    public IColumnReader<T> Clone()
+    {
+        return new PrimitiveReader<T>(_data, Type)
+        {
+            Index = Index,
+        };
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
     }
 
     object IColumnReader.Peek(int offset)

@@ -7,10 +7,15 @@
         <TargetFramework>net9.0</TargetFramework>
         <OpenTapPackageDefinitionPath>package.xml</OpenTapPackageDefinitionPath>
         <CreateOpenTapPackage>false</CreateOpenTapPackage>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     
     <ItemGroup>
         <PackageReference Include="OpenTAP" Version="9.31.1"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\TapResult\TapResult.csproj" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

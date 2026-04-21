@@ -19,42 +19,33 @@ internal sealed class NullColumn : IColumnParent
     public int LogicalLength { get; }
     public EncodingType EncodingType { get; } = EncodingType.Null;
     public LogicalType LogicalType { get; }
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.Write(Unsafe.SizeOf<int>());
-        blobBuilder.Write(LogicalLength);
+        blobBuilder.WriteValue(LogicalLength);
     }
 
-    public IColumnReader OpenReader() => LogicalType switch
+    public IColumnReader OpenReader()
     {
-        LogicalType.SInt8 => new NullReaderValType<sbyte>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.SInt16 => new NullReaderValType<short>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.SInt32 => new NullReaderValType<int>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.SInt64 => new NullReaderValType<long>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.UInt8 => new NullReaderValType<byte>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.UInt16 => new NullReaderValType<ushort>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.UInt32 => new NullReaderValType<uint>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.UInt64 => new NullReaderValType<ulong>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.Float16 => new NullReaderValType<Half>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.Float32 => new NullReaderValType<float>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.Float64 => new NullReaderValType<double>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.Blob => new NullReaderRefType<byte[]>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        LogicalType.String => new NullReaderRefType<string>(_nullColumn.OpenReader<byte>(), _valueColumn.OpenReader(),
-            LogicalLength),
-        _ => throw new ArgumentOutOfRangeException()
-    };
+        IColumnReader<byte> nullReader = _nullColumn.OpenReader<byte>();
+        IColumnReader valueReader = _valueColumn.OpenReader();
+        return LogicalType switch
+        {
+            LogicalType.SInt8 => new NullReaderValType<sbyte>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.SInt16 => new NullReaderValType<short>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.SInt32 => new NullReaderValType<int>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.SInt64 => new NullReaderValType<long>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.UInt8 => new NullReaderValType<byte>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.UInt16 => new NullReaderValType<ushort>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.UInt32 => new NullReaderValType<uint>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.UInt64 => new NullReaderValType<ulong>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.Float16 => new NullReaderValType<Half>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.Float32 => new NullReaderValType<float>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.Float64 => new NullReaderValType<double>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.Blob => new NullReaderRefType<byte[]>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.String => new NullReaderRefType<string>(nullReader, valueReader, LogicalLength, LogicalType),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
 
     public IEnumerable<IColumn> GetChildColumns()
     {

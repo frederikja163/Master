@@ -1,4 +1,4 @@
-namespace TapResult.Tests.Encodings;
+namespace TapResult.Tests.Extensions;
 
 internal static class AssertExtensions
 {

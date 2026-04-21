@@ -13,94 +13,80 @@ public sealed class BitPacking : IEncoding
 {
     public EncodingType Type { get; } = EncodingType.BitPacking;
     
-    public IColumn Encode(in DataColumn dataColumn)
+    public IColumn Encode<T>(IColumnReader<T> dataColumn) where T : notnull
     {
-        if (!dataColumn.LogicalType.TryGetSize(out int size))
+        return dataColumn switch
         {
-            throw new Exception("Type must be a primitive.");
-        }
-        
-        IColumn column = size switch
-        {
-            1 => Encode<byte>(dataColumn),
-            2 => Encode<ushort>(dataColumn),
-            4 => Encode<uint>(dataColumn),
-            8 => Encode<ulong>(dataColumn),
-            _ => throw new Exception("Logical type size must be either 1, 2, 4 or 8."),
+            IColumnReader<sbyte> reader => EncodeData(reader),
+            IColumnReader<short> reader => EncodeData(reader),
+            IColumnReader<int> reader => EncodeData(reader),
+            IColumnReader<long> reader => EncodeData(reader),
+            IColumnReader<byte> reader => EncodeData(reader),
+            IColumnReader<ushort> reader => EncodeData(reader),
+            IColumnReader<uint> reader => EncodeData(reader),
+            IColumnReader<ulong> reader => EncodeData(reader),
+            _ => throw new ArgumentOutOfRangeException(nameof(dataColumn)),
         };
-
-        return column;
     }
 
-    public IColumnReader CreateDecoder(LogicalType type, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
+    public IColumnReader CreateDecoder(LogicalType type, int length, GenericReader metadataReader, IEnumerable<IColumnReader> childReader)
     {
         IColumnReader? reader = childReader.FirstOrDefault();
         if (reader is null)
             throw new Exception("Expected a child column to a bitpack encoded column, but found none.");
         byte prefixLength = metadataReader.Read<byte>();
         ulong prefix = metadataReader.Read<ulong>();
-        int logicalLength = metadataReader.Read<int>();
-        return OpenReader(reader, logicalLength, type, prefixLength, prefix);
+        return OpenReader(reader, length, type, prefixLength, prefix);
     }
 
-    private static IColumn Encode<T>(in DataColumn dataColumn)
+    private static IColumn EncodeData<T>(IColumnReader<T> reader)
         where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        BitPackingColumn metadata = GetMetadata<T>(dataColumn);
-        EncodeData<T>(dataColumn, metadata);
-        return metadata;
-    }
-
-    private static void EncodeData<T>(in DataColumn dataColumn, BitPackingColumn metadata)
-        where T : unmanaged, INumber<T>, IBinaryInteger<T>, IMinMaxValue<T>
-    {
-        IColumnReader<T> reader = new PrimitiveReader<T>(dataColumn.Data);
+        GetMetadata<T>(reader.Clone(), out byte prefixLength, out ulong prefix);
         int size = Unsafe.SizeOf<T>() * 8;
-        int packedSize = size - metadata.PrefixLength;
-        int length = (int)double.Ceiling(dataColumn.PhysicalSize * (packedSize / (double)size)) + 1;
-        ColumnBuilder builder = new ColumnBuilder(dataColumn.LogicalType, length * Unsafe.SizeOf<T>());
-        T flag = (T.AllBitsSet << metadata.PrefixLength) >>> metadata.PrefixLength;
+        int packedSize = size - prefixLength;
+        int length = (int)double.Ceiling(reader.Length / (double)packedSize) + 1;
+        ColumnBuilder builder = new ColumnBuilder(typeof(T).ToLogicalType(), length * Unsafe.SizeOf<T>());
+        T flag = (T.AllBitsSet << prefixLength) >>> prefixLength;
         T currentValue = default;
         int shift = 0;
         while (!reader.IsAtEnd)
         {
-             T value = reader.Read() & flag;
-             if (shift + packedSize < size)
-             {
-                 currentValue = (currentValue << packedSize) | value;
-                 shift += packedSize;
-             }
-             else
-             {
-                 shift = size - shift;
-                 T value1 = value >> (packedSize - shift);
-                 currentValue = (currentValue << shift) | value1;
-                 builder.Write(currentValue);
+            T value = reader.Read() & flag;
+            if (shift + packedSize < size)
+            {
+                currentValue = (currentValue << packedSize) | value;
+                shift += packedSize;
+            }
+            else
+            {
+                shift = size - shift;
+                T value1 = value >> (packedSize - shift);
+                currentValue = (currentValue << shift) | value1;
+                builder.WriteValue(currentValue);
 
-                 currentValue = value;
-                 shift = packedSize - shift;
-             }
+                currentValue = value;
+                shift = packedSize - shift;
+            }
         }
 
         currentValue <<= size - shift;
-        builder.Write(currentValue);
-
-        metadata.Column = builder.BuildDataColumn();
+        builder.WriteValue(currentValue);
+        return new BitPackingColumn(builder.Build(), prefixLength, prefix, builder.PhysicalSize);
     }
 
-    internal static BitPackingColumn GetMetadata<T>(in DataColumn data) where T : unmanaged, IBinaryInteger<T>
+    internal static void GetMetadata<T>(IColumnReader<T> data, out byte prefixLength, out ulong prefix) where T : unmanaged, IBinaryInteger<T>
     {
         Span<int> bitCounts = stackalloc int[Unsafe.SizeOf<ulong>() * 8];
         GetBitCounts<T>(data, bitCounts);
-        int count = data.LogicalLength;
-        
-        byte prefixLength = 0;
-        ulong prefix = 0;
 
+        prefixLength = 0;
+        prefix = 0;
+        
         for (int i = 0; i < Unsafe.SizeOf<T>() * 8 - 1; i++)
         {
             int bitCount = bitCounts[i];
-            if (bitCount == count)
+            if (bitCount == data.Length)
             {
                 prefixLength += 1;
                 prefix = (prefix << 1) | 1;
@@ -115,16 +101,14 @@ public sealed class BitPacking : IEncoding
                 break;
             }
         }
-        return new BitPackingColumn(data, prefixLength, prefix);
     }
 
-    internal static void GetBitCounts<T>(in DataColumn column, Span<int> bitCounts)
+    internal static void GetBitCounts<T>(IColumnReader<T> reader, Span<int> bitCounts)
         where T : unmanaged, INumber<T>, IBinaryInteger<T>
     {
         // TODO: Optimize using SIMD and PopCount.
-        IColumnReader<T> reader = new PrimitiveReader<T>(column.Data);
         int size = Unsafe.SizeOf<T>() * 8;
-        for (int i = 0; i < column.LogicalLength; i++)
+        for (int i = 0; i < reader.Length; i++)
         {
             T value = reader.Read();
             // TODO: Skip leading zeros.

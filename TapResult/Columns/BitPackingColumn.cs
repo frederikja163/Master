@@ -12,10 +12,7 @@ internal sealed class BitPackingColumn : IColumnParent
     public int LogicalLength { get; }
     public LogicalType LogicalType { get; }
     public EncodingType EncodingType => EncodingType.BitPacking;
-    public IColumn Column { get; set; }
-    internal static readonly int Size = Unsafe.SizeOf<byte>() +
-                                       Unsafe.SizeOf<ulong>() +
-                                       Unsafe.SizeOf<int>();
+    public IColumn Column { get; private set; }
 
     public BitPackingColumn(IColumn column, byte prefixLength, ulong prefix, int logicalLength)
     {
@@ -24,11 +21,7 @@ internal sealed class BitPackingColumn : IColumnParent
         Prefix = prefix;
         LogicalLength = logicalLength;
         LogicalType = column.LogicalType;
-        
     }
-    
-    public BitPackingColumn(DataColumn column, byte prefixLength, ulong prefix) : this(column, prefixLength, prefix, column.LogicalLength)
-    { }
 
     public IEnumerable<IColumn> GetChildColumns()
     {
@@ -43,12 +36,10 @@ internal sealed class BitPackingColumn : IColumnParent
         return true;
     }
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.Write(Size);
-        blobBuilder.WriteRaw(PrefixLength);
-        blobBuilder.WriteRaw(Prefix);
-        blobBuilder.WriteRaw(LogicalLength);
+        blobBuilder.WriteValue(PrefixLength);
+        blobBuilder.WriteValue(Prefix);
     }
 
     public IColumnReader OpenReader()

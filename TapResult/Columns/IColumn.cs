@@ -1,4 +1,5 @@
-﻿using TapResult.Encodings;
+﻿using System.Diagnostics.CodeAnalysis;
+using TapResult.Encodings;
 using TapResult.Readers;
 
 namespace TapResult.Columns;
@@ -16,7 +17,8 @@ public interface IColumn
     /// The logical type of this column.
     /// </summary>
     public LogicalType LogicalType { get; }
-    internal void WriteMetadata(ColumnBuilder blobBuilder);
+    public int LogicalLength { get; }
+    internal void WriteMetadata(IBlobBuilder blobBuilder);
 
     /// <summary>
     /// Opens a reader that reads the values of this Column.

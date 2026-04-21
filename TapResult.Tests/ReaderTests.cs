@@ -12,6 +12,8 @@ internal sealed class MyColumn : IColumnParent
 
     public required EncodingType EncodingType { get; set; } = EncodingType.Binary;
     public required LogicalType LogicalType { get; set; } = LogicalType.UInt8;
+    public int LogicalLength { get; } = 0;
+
     public IEnumerable<DataColumn> GetDataColumns()
     {
         yield break;
@@ -21,9 +23,9 @@ internal sealed class MyColumn : IColumnParent
         return 0;
     }
 
-    public void WriteMetadata(ColumnBuilder blobBuilder)
+    public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.WriteBlob(Blob);
+        blobBuilder.WriteRaw(Blob);
     }
 
     public IColumnReader OpenReader()

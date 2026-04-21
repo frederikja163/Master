@@ -2,17 +2,27 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using TapResult.Columns;
 
 namespace TapResult;
 
+internal interface IRawWriter
+{
+    public void WriteRaw<T>(ReadOnlySpan<T> bytes, int count = 0) where T : unmanaged;
+    public void WriteRaw<T>(T bytes);
+    public void CloseBlob();
+}
+
+
 /// <summary>
 /// Helper type for making <see cref="DataColumn"/>.
 /// </summary>
-public sealed class ColumnBuilder
+public sealed partial class ColumnBuilder : IRawWriter
 {
     private readonly LogicalType _type;
+    private BlobBuilder? _blobBuilder = null;
     private byte[]? _nulls = null;
     private byte[] _data;
     private int _byteIndex = 0;
@@ -42,6 +52,11 @@ public sealed class ColumnBuilder
     /// Returns the size currently written, not the total capacity.
     /// </summary>
     public int PhysicalSize => _byteIndex;
+
+    /// <summary>
+    /// The current logical length of this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    public int LogicalLength => _logicalLength;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private Span<byte> Slice(int size)
@@ -93,81 +108,53 @@ public sealed class ColumnBuilder
     /// <summary>
     /// Write a value of type T to the DataColumn. This increases the length by 1 as opposed to <see cref="WriteRaw{T}(T)"/>
     /// </summary>
-    public void Write<T>(T value)
-        where T : unmanaged
+    public void WriteValue<T>(T value)
     {
         WriteRaw(value);
         
-        if (!_type.TryGetSize(out int size))
-            size = Unsafe.SizeOf<T>();
-        _logicalLength += Unsafe.SizeOf<T>() / size;
-        _valuesLength += Unsafe.SizeOf<T>() / size;
+        _logicalLength += 1;
+        _valuesLength += 1;
     }
 
     /// <summary>
     /// Write a value of type T to the DataColumn. This increases the length by values.Length as opposed to <see cref="WriteRaw{T}(System.ReadOnlySpan{T},int)"/>
     /// </summary>
-    public void Write<T>(ReadOnlySpan<T> values)
+    public void WriteValues<T>(ReadOnlySpan<T> values)
         where T : unmanaged
     {
         WriteRaw(values, values.Length);
     }
 
+    public void WriteValues<T>(IEnumerable<T> values)
+    {
+        foreach (T value in values)
+        {
+            WriteValue(value);
+        }
+    }
+
     /// <summary>
     /// Writes a single blob to the DataColumn.
     /// </summary>
-    public void WriteBlob(ReadOnlySpan<byte> blob)
+    private void WriteBlob(ReadOnlySpan<byte> blob)
     {
-        Write(blob.Length);
-        WriteRaw(blob, 0);
-    }
-
-    /// <summary>
-    /// Writes blobs to the DataColumn.
-    /// </summary>
-    public void WriteBlobs(IEnumerable<ReadOnlyMemory<byte>> blobs)
-    {
-        foreach (ReadOnlyMemory<byte> blob in blobs)
-        {
-            WriteBlob(blob.Span);
-        }
-    }
-
-    /// <summary>
-    /// Writes multiple blobs to the DataColumn.
-    /// </summary>
-    public void WriteBlobs(IEnumerable<byte[]> blobs)
-    {
-        foreach (ReadOnlyMemory<byte> blob in blobs)
-        {
-            WriteBlob(blob.Span);
-        }
+        WriteRaw(blob.Length);
+        WriteRaw(blob);
     }
     
     /// <summary>
     /// Writes a string to the DataColumn.
     /// </summary>
-    public void WriteString(string str)
+    private void WriteString(string str)
     {
-        WriteBlob(Encoding.UTF8.GetBytes(str));
-    }
-    
-    /// <summary>
-    /// Writes multiple strings to the DataColumn.
-    /// </summary>
-    public void WriteStrings(IEnumerable<string> strs)
-    {
-        foreach (string str in strs)
-        {
-            WriteString(str);
-        }
+        WriteRaw(Encoding.UTF8.GetBytes(str));
     }
 
     /// <summary>
     /// Writes multiple values to the DataColumn, this only increases LogicalLength by the provided value.
-    /// Generally use <see cref="Write{T}(ReadOnlySpan{T})"/> unless you have a good reason to override the added length.
+    /// Generally use <see cref="WriteValue{T}"/> unless you have a good reason to override the added length.
     /// </summary>
-    public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength)
+    public void WriteRaw<T>(ReadOnlySpan<T> values, int logicalLength = 0)
         where T : unmanaged
     {
         _logicalLength += logicalLength;
@@ -189,25 +176,25 @@ public sealed class ColumnBuilder
     
     /// <summary>
     /// Writes a single value to the DataColumn, this does not increase the logical length.
-    /// Generally use <see cref="Write{T}(T)"/> unless you have a good reason to not increase the logical length.
+    /// Generally use <see cref="WriteValue{T}"/> unless you have a good reason to not increase the logical length.
     /// </summary>
     public void WriteRaw<T>(T value)
-        where T : unmanaged
     {
-        Span<byte> slice = Slice(Unsafe.SizeOf<T>());
         switch (value)
         {
-            case sbyte sInt8: slice[0] = (byte)sInt8; break;
-            case short sInt16: BinaryPrimitives.WriteInt16LittleEndian(slice, sInt16); break;
-            case int sInt32: BinaryPrimitives.WriteInt32LittleEndian(slice, sInt32); break;
-            case long sInt64: BinaryPrimitives.WriteInt64LittleEndian(slice, sInt64); break;
-            case byte uInt8: slice[0] = uInt8; break;
-            case ushort uInt16: BinaryPrimitives.WriteUInt16LittleEndian(slice, uInt16); break;
-            case uint uInt32: BinaryPrimitives.WriteUInt32LittleEndian(slice, uInt32); break;
-            case ulong uInt64: BinaryPrimitives.WriteUInt64LittleEndian(slice, uInt64); break;
-            case Half float16: BinaryPrimitives.WriteHalfLittleEndian(slice, float16); break;
-            case float float32: BinaryPrimitives.WriteSingleLittleEndian(slice, float32); break;
-            case double float64: BinaryPrimitives.WriteDoubleLittleEndian(slice, float64); break;
+            case sbyte sInt8: Slice(Unsafe.SizeOf<T>())[0] = (byte)sInt8; break;
+            case short sInt16: BinaryPrimitives.WriteInt16LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt16); break;
+            case int sInt32: BinaryPrimitives.WriteInt32LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt32); break;
+            case long sInt64: BinaryPrimitives.WriteInt64LittleEndian(Slice(Unsafe.SizeOf<T>()), sInt64); break;
+            case byte uInt8: Slice(Unsafe.SizeOf<T>())[0] = uInt8; break;
+            case ushort uInt16: BinaryPrimitives.WriteUInt16LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt16); break;
+            case uint uInt32: BinaryPrimitives.WriteUInt32LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt32); break;
+            case ulong uInt64: BinaryPrimitives.WriteUInt64LittleEndian(Slice(Unsafe.SizeOf<T>()), uInt64); break;
+            case Half float16: BinaryPrimitives.WriteHalfLittleEndian(Slice(Unsafe.SizeOf<T>()), float16); break;
+            case float float32: BinaryPrimitives.WriteSingleLittleEndian(Slice(Unsafe.SizeOf<T>()), float32); break;
+            case double float64: BinaryPrimitives.WriteDoubleLittleEndian(Slice(Unsafe.SizeOf<T>()), float64); break;
+            case string str: WriteString(str); break;
+            case byte[] blob: WriteBlob(blob); break;
             default: throw new ArgumentOutOfRangeException(nameof(T), typeof(T), null);
         }
     }
@@ -235,7 +222,49 @@ public sealed class ColumnBuilder
     {
         return new DataColumn(_type,  new Memory<byte>(_data, 0, _byteIndex), _logicalLength);
     }
-    
+
+    /// <summary>
+    /// Opens a new <see cref="BlobBuilder"/> on this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    public BlobBuilder OpenBlob()
+    {
+        if (_blobBuilder is not null)
+        {
+            throw new Exception($"Cannot open more than one blob on a {nameof(ColumnBuilder)} at a time.");
+        }
+
+        Slice(Unsafe.SizeOf<int>());
+        _blobBuilder = new BlobBuilder(this)
+        {
+            StartIndex = _byteIndex
+        };
+        // Make sure there is space for an integer later.
+        return _blobBuilder;
+    }
+
+    /// <summary>
+    /// Closes the currently open <see cref="BlobBuilder"/>, if one exists, on this <see cref="ColumnBuilder"/>.
+    /// </summary>
+    void IRawWriter.CloseBlob()
+    {
+        if (_blobBuilder is null)
+        {
+            throw new Exception(
+                $"This {nameof(ColumnBuilder)} does not have an open {nameof(BlobBuilder)}");
+        }
+
+        int startIndex = _blobBuilder.StartIndex;
+        int length = _byteIndex - _blobBuilder.StartIndex;
+        Span<byte> span = _data.AsSpan(startIndex - Unsafe.SizeOf<int>(), Unsafe.SizeOf<int>());
+        BinaryPrimitives.WriteInt32LittleEndian(span, length);
+        _blobBuilder = null;
+        _logicalLength += 1;
+        _valuesLength += 1;
+    }
+}
+
+public sealed partial class ColumnBuilder
+{
     private static DataColumn Create<T>(ReadOnlySpan<T> data, LogicalType type) where T : unmanaged
     {
         if (!BitConverter.IsLittleEndian)
@@ -243,7 +272,7 @@ public sealed class ColumnBuilder
             ColumnBuilder builder = new ColumnBuilder(type, data.Length * Unsafe.SizeOf<T>());
             foreach (T var in data)
             {
-                builder.Write(var);
+                builder.WriteValue(var);
             }
             return builder.BuildDataColumn();
         }
@@ -251,63 +280,36 @@ public sealed class ColumnBuilder
         ReadOnlySpan<byte> reinterpretedData = MemoryMarshal.Cast<T, byte>(data);
         return new DataColumn(type, new ReadOnlyMemory<byte>(reinterpretedData.ToArray()), data.Length);
     }
-
-    // TODO: Switch all create methods to return an IColumn instead of DataColumn.
+    
     /// <summary>
     /// Create a new DataColumn from a span of data.
     /// </summary>
-    public static DataColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
+    public static IColumn Create<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         return Create(data, typeof(T).ToLogicalType());
     }
 
-    /// <summary>
-    /// Create a new DataColumn from any collection of strings.
-    /// </summary>
-    private static DataColumn CreateFromString(ICollection<string> data)
+    public static IColumn Create<T>(IEnumerable<T> values)
     {
-        int length = 0;
-        foreach (string str in data)
+        if (!values.TryGetNonEnumeratedCount(out int count))
         {
-            length += Encoding.UTF8.GetByteCount(str);
+            count = 16;
         }
 
-        ColumnBuilder builder = new ColumnBuilder(LogicalType.String, length + sizeof(int) * data.Count);
-        builder.WriteStrings(data);
-
-        return builder.BuildDataColumn();
-    }
-
-    /// <summary>
-    /// Create a new DataColumn from an IEnumerable of blobs.
-    /// </summary>
-    public static DataColumn Create(IEnumerable<byte[]> data)
-    {
-        return CreateFromBlobs(data.Select(d => new ReadOnlyMemory<byte>(d)).ToArray());
-    }
-    
-    /// <summary>
-    /// Create a new DataColumn from a collection of blobs.
-    /// </summary>
-    private static DataColumn CreateFromBlobs(ICollection<ReadOnlyMemory<byte>> data)
-    {
-        int length = 0;
-        foreach (ReadOnlyMemory<byte> blob in data)
+        int size = count * Unsafe.SizeOf<T>();
+        ColumnBuilder builder = new ColumnBuilder(typeof(T).ToLogicalType(), size);
+        foreach (T value in values)
         {
-            length += blob.Length;
+            if (value is null)
+            {
+                builder.WriteNull();
+            }
+            else
+            {
+                builder.WriteValue(value);
+            }
         }
-
-        byte[] bytes = new byte[length + sizeof(int) * data.Count];
-        int index = 0;
-        foreach (ReadOnlyMemory<byte> blob in data)
-        {
-            BitConverter.TryWriteBytes(bytes.AsSpan(index, sizeof(int)), blob.Length);
-            index += 4;
-            blob.Span.CopyTo(bytes.AsSpan(index));
-            index += blob.Length;
-        }
-
-        return new DataColumn(LogicalType.Blob, bytes, data.Count);
+        return builder.Build();
     }
 
     /// <summary>
@@ -315,18 +317,19 @@ public sealed class ColumnBuilder
     /// The array can either contain primitive types from <see cref="LogicalType"/>, or strings.
     /// A separate nulls DataColumn is created if the underlying type is nullable.
     /// </summary>
+    [OverloadResolutionPriority(1)]
     public static IColumn Create(Array array)
     {
+        nulls = null;
         return array switch
         {
             sbyte[] values => Create<sbyte>(values, array.GetType().GetElementType()! == typeof(sbyte) ? LogicalType.SInt8 : LogicalType.UInt8),
             short[] values => Create<short>(values, array.GetType().GetElementType()! == typeof(short) ? LogicalType.SInt16 : LogicalType.UInt16),
             int[] values => Create<int>(values, array.GetType().GetElementType()! == typeof(int) ? LogicalType.SInt32 : LogicalType.UInt32),
             long[] values => Create<long>(values, array.GetType().GetElementType()! == typeof(long) ? LogicalType.SInt64 : LogicalType.UInt64),
-            Half[] values => Create<Half>(values),
-            float[] values => Create<float>(values),
-            double[] values => Create<double>(values),
-            string[] str => CreateFromString(str), // TODO: Split nulls for strings.
+            Half[] values => Create<Half>(values.AsSpan()),
+            float[] values => Create<float>(values.AsSpan()),
+            double[] values => Create<double>(values.AsSpan()),
             sbyte?[] values => SplitNulls<sbyte>(values),
             short?[] values => SplitNulls<short>(values),
             int?[] values => SplitNulls<int>(values),
@@ -338,6 +341,8 @@ public sealed class ColumnBuilder
             Half?[] values => SplitNulls<Half>(values),
             float?[] values => SplitNulls<float>(values),
             double?[] values => SplitNulls<double>(values),
+            string[] str => Create<string>(str),
+            byte[][] blobs => Create<byte[]>(blobs),
             _ => throw new ArgumentOutOfRangeException(nameof(array))
         };
     }
@@ -353,7 +358,7 @@ public sealed class ColumnBuilder
             T? value = array[i];
             if (value is { } val)
             {
-                valueBuilder.Write(val);
+                valueBuilder.WriteValue(val);
             }
             else
             {

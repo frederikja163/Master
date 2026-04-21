@@ -58,6 +58,19 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
         return Peek(offset, count).OfType<object>();
     }
 
+    public IColumnReader<T> Clone()
+    {
+        return new BitPackingColumnReader<T>(ColumnReader.Clone(), Length, Type, PrefixLength, Prefix)
+        {
+            Index = Index,
+        };
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
+    }
+
     object IColumnReader.Peek(int offset)
     {
         return Peek(offset);
