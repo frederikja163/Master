@@ -2,26 +2,28 @@
 
 internal abstract class NullReaderBase : IColumnReader
 {
-    private readonly IColumnReader<byte> _nullReader;
-    private readonly IColumnReader _valueReader;
+    protected IColumnReader<byte> NullReader { get; }
+    protected IColumnReader ValueReader { get; }
 
-    protected NullReaderBase(IColumnReader<byte> nullReader, IColumnReader valueReader, int length)
+    protected NullReaderBase(IColumnReader<byte> nullReader, IColumnReader valueReader, int length, LogicalType type)
     {
-        _nullReader = nullReader;
-        _valueReader = valueReader;
+        NullReader = nullReader;
+        ValueReader = valueReader;
         Length = length;
+        Type = type;
     }
 
     public int Length { get; }
-    public int Index { get; private set; } = 0;
+    public int Index { get; protected set; } = 0;
+    public LogicalType Type { get; }
 
-    
+
     private int IsNull(int offset)
     {
         int index = Index + offset;
         int byteIndex = index / 8;
         int bitIndex = index % 8;
-        byte currentNulls = _nullReader.Peek(_nullReader.Index - byteIndex);
+        byte currentNulls = NullReader.Peek(NullReader.Index - byteIndex);
 
         // We want to advance if the value is 0, so we use xor to flip the bit after shifting.
         return (currentNulls >> bitIndex) & 1;
@@ -36,13 +38,13 @@ internal abstract class NullReaderBase : IColumnReader
             Index += 1;
             if (Index % 8 == 0)
             {
-                _nullReader.Advance(1);
+                NullReader.Advance(1);
             }
         }
 
         if (advancedUnits > 0)
         {
-            _valueReader.Advance(advancedUnits);
+            ValueReader.Advance(advancedUnits);
         }
     }
 
@@ -59,7 +61,7 @@ internal abstract class NullReaderBase : IColumnReader
             valueOffset += IsNull(i) ^ 1;
         }
 
-        return _valueReader.Peek(valueOffset);
+        return ValueReader.Peek(valueOffset);
     }
 
     public IEnumerable<object?> Peek(int offset, int count)
@@ -79,16 +81,19 @@ internal abstract class NullReaderBase : IColumnReader
             else
             {
                 valueOffset += 1;
-                yield return _valueReader.Peek(valueOffset);
+                yield return ValueReader.Peek(valueOffset);
             }
         }
     }
+
+    public abstract IColumnReader Clone();
 }
 
 internal sealed class NullReaderValType<T> : NullReaderBase, IColumnReader<T?>
     where T : struct
 {
-    public NullReaderValType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length) : base(nullReader, valueReader, length)
+    public NullReaderValType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length, LogicalType type)
+        : base(nullReader, valueReader, length, type)
     {
     }
 
@@ -102,12 +107,26 @@ internal sealed class NullReaderValType<T> : NullReaderBase, IColumnReader<T?>
     {
         return base.Peek(offset, count).Cast<T?>();
     }
+
+    IColumnReader<T?> IColumnReader<T?>.Clone()
+    {
+        return new NullReaderValType<T>(NullReader.Clone(), ValueReader.Clone(), Length, Type)
+        {
+            Index = Index,
+        };
+    }
+
+    public override IColumnReader Clone()
+    {
+        return ((IColumnReader<T?>)this).Clone();
+    }
 }
 
 internal sealed class NullReaderRefType<T> : NullReaderBase, IColumnReader<T?>
     where T : class
 {
-    public NullReaderRefType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length) : base(nullReader, valueReader, length)
+    public NullReaderRefType(IColumnReader<byte> nullReader, IColumnReader valueReader, int length, LogicalType type)
+        : base(nullReader, valueReader, length, type)
     {
     }
 
@@ -119,5 +138,18 @@ internal sealed class NullReaderRefType<T> : NullReaderBase, IColumnReader<T?>
     public new IEnumerable<T?> Peek(int offset, int count)
     {
         return base.Peek(offset, count).Cast<T?>();
+    }
+
+    IColumnReader<T?> IColumnReader<T?>.Clone()
+    {
+        return new NullReaderRefType<T>(NullReader.Clone(), ValueReader.Clone(), Length, Type)
+        {
+            Index = Index,
+        };
+    }
+
+    public override IColumnReader Clone()
+    {
+        return ((IColumnReader<T?>)this).Clone();
     }
 }

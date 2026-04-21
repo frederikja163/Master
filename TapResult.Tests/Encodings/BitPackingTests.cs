@@ -31,7 +31,7 @@ internal sealed class BitPackingTests
     {
         Span<int> bitCounts = stackalloc int[sizeof(ulong) * 8];
         DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
-        BitPacking.GetBitCounts<byte>(column,
+        BitPacking.GetBitCounts<byte>(column.OpenReader<byte>(),
             bitCounts);
         Assert.That(bitCounts.Slice(0, 8).ToArray(), Is.EqualTo(new int[8] {21, 0, 0, 5, 8, 9, 10, 10 }));
         Assert.That(bitCounts.Slice(8).ToArray().All(i => i == 0), Is.True);
@@ -41,10 +41,8 @@ internal sealed class BitPackingTests
     public void GetMetadataTest()
     {
         DataColumn column = Assert.InstanceOf<DataColumn>(ColumnBuilder.Create<byte>(Enumerable.Range(128, 21).Select(i => (byte)i).ToArray().AsSpan()));
-        BitPackingColumn metadata = BitPacking.GetMetadata<byte>(column);
-        Assert.That(metadata.LogicalLength, Is.EqualTo(21));
-        Assert.That(metadata.LogicalType, Is.EqualTo(LogicalType.UInt8));
-        Assert.That(metadata.Prefix, Is.EqualTo(0b100));
-        Assert.That(metadata.PrefixLength, Is.EqualTo(3));
+        BitPacking.GetMetadata<byte>(column.OpenReader<byte>(), out byte prefixLength, out ulong prefix);
+        Assert.That(prefix, Is.EqualTo(0b100));
+        Assert.That(prefixLength, Is.EqualTo(3));
     }
 }

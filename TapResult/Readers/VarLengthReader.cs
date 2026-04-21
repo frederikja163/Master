@@ -5,18 +5,18 @@ using System.Text;
 
 namespace TapResult.Readers;
 
-internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
+internal sealed class VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 {
     private readonly ReadOnlyMemory<byte> _data;
-    private readonly LogicalType _type;
     private int _byteIndex;
     public int Length { get; }
     public int Index { get; private set; }
+    public LogicalType Type { get; }
 
     internal VarLengthReader(ReadOnlyMemory<byte> data, int length, LogicalType type)
     {
         _data = data;
-        _type = type;
+        Type = type;
         Length = length;
     }
 
@@ -52,11 +52,11 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 
     IEnumerable<object> IColumnReader.Peek(int offset, int count)
     {
-        if (_type == LogicalType.Blob)
+        if (Type == LogicalType.Blob)
         {
             return ((IColumnReader<byte[]>)this).Peek(offset, count);
         }
-        if (_type == LogicalType.String)
+        if (Type == LogicalType.String)
         {
             return ((IColumnReader<string>)this).Peek(offset, count);
         }
@@ -66,11 +66,11 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
 
     object IColumnReader.Peek(int offset)
     {
-        if (_type == LogicalType.Blob)
+        if (Type == LogicalType.Blob)
         {
             return ((IColumnReader<byte[]>)this).Peek(offset);
         }
-        if (_type == LogicalType.String)
+        if (Type == LogicalType.String)
         {
             return ((IColumnReader<string>)this).Peek(offset);
         }
@@ -104,5 +104,28 @@ internal struct VarLengthReader : IColumnReader<string>, IColumnReader<byte[]>
         {
             yield return blobReader.Peek(offset + i);
         }
+    }
+
+    private VarLengthReader Clone()
+    {
+        return new VarLengthReader(_data, Length, Type)
+        {
+            Index = Index,
+        };
+    }
+
+    IColumnReader<byte[]> IColumnReader<byte[]>.Clone()
+    {
+        return Clone();
+    }
+
+    IColumnReader<string> IColumnReader<string>.Clone()
+    {
+        return Clone();
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
     }
 }

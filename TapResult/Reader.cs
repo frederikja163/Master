@@ -63,6 +63,7 @@ public sealed class Reader
         ReadOnlySpan<int> parentIds = schemaReader.Read<int>(logicalLength);
         ReadOnlySpan<byte> encodingIds = schemaReader.Read<byte>(logicalLength);
         ReadOnlySpan<byte> types = schemaReader.Read<byte>(logicalLength);
+        ReadOnlySpan<int> lengths = schemaReader.Read<int>(logicalLength);
 
         Dictionary<int, EncodingInfo> encodingsById = new Dictionary<int, EncodingInfo>();
         for (int i = 0; i < logicalLength; i++)
@@ -70,7 +71,7 @@ public sealed class Reader
             int blobLength = schemaReader.Read<int>();
             ReadOnlyMemory<byte> blob = new ReadOnlyMemory<byte>(schema, schemaReader.ByteIndex, blobLength);
             schemaReader.Advance(blobLength);
-            encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingType)encodingIds[i], (LogicalType)types[i], blob));
+            encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingType)encodingIds[i], (LogicalType)types[i], lengths[i], blob));
         }
         
         List<EncodingInfo> tableEncodings = new List<EncodingInfo>();
@@ -116,16 +117,15 @@ public sealed class Reader
         if (encodingInfo.Encoding == EncodingType.Binary)
         {
             int physicalSize = reader.Read<int>();
-            int logicalLength = reader.Read<int>();
             long offset = reader.Read<long>();
             _stream.Seek(offset, SeekOrigin.Begin);
             byte[] data = new byte[physicalSize];
             _stream.ReadExactly(data);
-            DataColumn col = new DataColumn(encodingInfo.Type, data, logicalLength);
+            DataColumn col = new DataColumn(encodingInfo.Type, data, encodingInfo.Length);
             return col.OpenReader();
         }
         
         IEnumerable<IColumnReader> childReaders = encodingInfo.GetSubEncodings().Select(CreateReader);
-        return _encoder.Decode(encodingInfo.Encoding, encodingInfo.Type, ref reader, childReaders);
+        return _encoder.Decode(encodingInfo.Encoding, encodingInfo.Type, encodingInfo.Length, ref reader, childReaders);
     }
 }

@@ -7,17 +7,19 @@ public class RunLengthReader<T> : IColumnReader<T>
     private readonly IColumnReader<T> _byteColumn;
     private readonly IColumnReader<int> _repeatColumn;
 
-    public RunLengthReader(IColumnReader byteColumn, IColumnReader<int> repeatColumn, int length)
+    public RunLengthReader(IColumnReader byteColumn, IColumnReader<int> repeatColumn, int length, LogicalType type)
     {
         if (byteColumn is not IColumnReader<T> columnReader)
             throw new ArgumentException($"{nameof(columnReader)} not a {nameof(IColumnReader<T>)}");
         _byteColumn = columnReader;
         _repeatColumn = repeatColumn;
         Length = length;
+        Type = type;
     }
 
     public int Length { get; }
     public int Index { get; private set; }
+    public LogicalType Type { get; }
     private int _repeatIndex = 0;
 
     public void Advance(int units)
@@ -40,6 +42,20 @@ public class RunLengthReader<T> : IColumnReader<T>
     IEnumerable<object?> IColumnReader.Peek(int offset, int count)
     {
         return Peek(offset, count).OfType<object?>();
+    }
+
+    public IColumnReader<T> Clone()
+    {
+        return new RunLengthReader<T>(_byteColumn.Clone(), _repeatColumn.Clone(), Length, Type)
+        {
+            Index = Index,
+            _repeatIndex = _repeatIndex,
+        };
+    }
+
+    IColumnReader IColumnReader.Clone()
+    {
+        return Clone();
     }
 
     public T Peek(int offset = 0)

@@ -58,17 +58,17 @@ public sealed class DataColumn : IColumn
     {
         return LogicalType switch
         {
-            LogicalType.SInt8 => new PrimitiveReader<sbyte>(Data),
-            LogicalType.SInt16 => new PrimitiveReader<short>(Data),
-            LogicalType.SInt32 => new PrimitiveReader<int>(Data),
-            LogicalType.SInt64 => new PrimitiveReader<long>(Data),
-            LogicalType.UInt8 => new PrimitiveReader<byte>(Data),
-            LogicalType.UInt16 => new PrimitiveReader<ushort>(Data),
-            LogicalType.UInt32 => new PrimitiveReader<uint>(Data),
-            LogicalType.UInt64 => new PrimitiveReader<ulong>(Data),
-            LogicalType.Float16 => new PrimitiveReader<Half>(Data),
-            LogicalType.Float32 => new PrimitiveReader<float>(Data),
-            LogicalType.Float64 => new PrimitiveReader<double>(Data),
+            LogicalType.SInt8 => new PrimitiveReader<sbyte>(Data, LogicalType),
+            LogicalType.SInt16 => new PrimitiveReader<short>(Data, LogicalType),
+            LogicalType.SInt32 => new PrimitiveReader<int>(Data, LogicalType),
+            LogicalType.SInt64 => new PrimitiveReader<long>(Data, LogicalType),
+            LogicalType.UInt8 => new PrimitiveReader<byte>(Data, LogicalType),
+            LogicalType.UInt16 => new PrimitiveReader<ushort>(Data, LogicalType),
+            LogicalType.UInt32 => new PrimitiveReader<uint>(Data, LogicalType),
+            LogicalType.UInt64 => new PrimitiveReader<ulong>(Data, LogicalType),
+            LogicalType.Float16 => new PrimitiveReader<Half>(Data, LogicalType),
+            LogicalType.Float32 => new PrimitiveReader<float>(Data, LogicalType),
+            LogicalType.Float64 => new PrimitiveReader<double>(Data, LogicalType),
             LogicalType.Blob => new VarLengthReader(Data, LogicalLength, LogicalType),
             LogicalType.String => new VarLengthReader(Data, LogicalLength, LogicalType),
             _ => throw new ArgumentOutOfRangeException(nameof(LogicalType), typeof(LogicalType), null)
@@ -86,7 +86,6 @@ public sealed class DataColumn : IColumn
     void IColumn.WriteMetadata(IBlobBuilder blobBuilder)
     {
         blobBuilder.WriteValue(PhysicalSize);
-        blobBuilder.WriteValue(LogicalLength);
         blobBuilder.WriteValue(_offset);
     }
 

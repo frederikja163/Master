@@ -15,7 +15,8 @@ public sealed class Writer : IDisposable, IAsyncDisposable
     private ColumnBuilder _idBuilder = new (LogicalType.SInt32, 200);
     private ColumnBuilder _parentIdBuilder = new (LogicalType.SInt32, 200);
     private ColumnBuilder _encodingIdBuilder = new (LogicalType.UInt8, 200);
-    private ColumnBuilder _logicalTypeBuilder = new(LogicalType.UInt8, 200);
+    private ColumnBuilder _logicalTypeBuilder = new (LogicalType.UInt8, 200);
+    private ColumnBuilder _lengthBuilder = new (LogicalType.SInt32, 200);
     private ColumnBuilder _blobBuilder = new (LogicalType.Blob, 200);
     
     private const byte MajorVersion = 1;
@@ -59,7 +60,8 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         _parentIdBuilder.BuildDataColumn().Write(_outStream);
         _encodingIdBuilder.BuildDataColumn().Write(_outStream);
         _logicalTypeBuilder.BuildDataColumn().Write(_outStream);
-        _blobBuilder.BuildDataColumn() .Write(_outStream);
+        _lengthBuilder.BuildDataColumn().Write(_outStream);
+        _blobBuilder.BuildDataColumn().Write(_outStream);
         
         // Postscript
         long metadataLength = _outStream.Position - metadataStart;
@@ -123,14 +125,15 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         _parentIdBuilder.WriteValue(parentId);
         _encodingIdBuilder.WriteValue((byte) column.EncodingType);
         _logicalTypeBuilder.WriteValue((byte) column.LogicalType);
-        column.WriteMetadata(_blobBuilder.OpenBlob());
-        _blobBuilder.CloseBlob();
+        _lengthBuilder.WriteValue(column.LogicalLength);
+        using BlobBuilder blobBuilder = _blobBuilder.OpenBlob();
+        column.WriteMetadata(blobBuilder);
     }
     
     internal Table GetMetadata()
     {
-        return new Table([_idBuilder.BuildDataColumn(), _parentIdBuilder.BuildDataColumn(), _encodingIdBuilder.BuildDataColumn(), _logicalTypeBuilder.BuildDataColumn(), _blobBuilder.BuildDataColumn()],
-            ["Id", "ParentId", "Encoding", "LogicalType", "Blob"],
+        return new Table([_idBuilder.BuildDataColumn(), _parentIdBuilder.BuildDataColumn(), _encodingIdBuilder.BuildDataColumn(), _logicalTypeBuilder.BuildDataColumn(), _lengthBuilder.BuildDataColumn(), _blobBuilder.BuildDataColumn()],
+            ["Id", "ParentId", "Encoding", "LogicalType", "Length", "Blob"],
             "schema");
     }
 }

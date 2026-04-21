@@ -27,11 +27,11 @@ public interface IBlobBuilder
 /// </summary>
 public sealed class BlobBuilder : IBlobBuilder, IDisposable
 {
-    private readonly ColumnBuilder _builder;
+    private readonly IRawWriter _writer;
 
-    internal BlobBuilder(ColumnBuilder builder)
+    internal BlobBuilder(IRawWriter writer)
     {
-        _builder = builder;
+        _writer = writer;
     }
     
     internal int StartIndex { get; init; }
@@ -47,23 +47,23 @@ public sealed class BlobBuilder : IBlobBuilder, IDisposable
                 WriteBlob(blob);
                 break;
             default:
-                _builder.WriteRaw(value);
+                _writer.WriteRaw(value);
                 break;
         }
     }
 
     private void WriteBlob(ReadOnlySpan<byte> bytes)
     {
-        _builder.WriteRaw(bytes.Length);
-        _builder.WriteRaw(bytes, 0);
+        _writer.WriteRaw(bytes.Length);
+        _writer.WriteRaw(bytes);
     }
     public void WriteRaw(ReadOnlySpan<byte> bytes)
     {
-        _builder.WriteRaw(bytes, 0);
+        _writer.WriteRaw(bytes);
     }
 
     public void Dispose()
     {
-        _builder.CloseBlob();
+        _writer.CloseBlob();
     }
 }

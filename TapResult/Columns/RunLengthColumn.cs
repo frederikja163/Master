@@ -6,12 +6,12 @@ namespace TapResult.Columns;
 
 internal sealed class RunLengthColumn : IColumnParent
 {
-    public RunLengthColumn(LogicalType logicalType, IColumn byteColumn, IColumn repeatColumn, int length)
+    public RunLengthColumn(LogicalType logicalType, IColumn byteColumn, IColumn repeatColumn, int logicalLength)
     {
         LogicalType = logicalType;
         ByteColumn = byteColumn;
         RepeatColumn = repeatColumn;
-        Length = length;
+        LogicalLength = logicalLength;
     }
 
     public EncodingType EncodingType { get; } = EncodingType.RunLength;
@@ -19,16 +19,15 @@ internal sealed class RunLengthColumn : IColumnParent
 
     public IColumn ByteColumn { get; set; }
     public IColumn RepeatColumn { get; set; }
-    public int Length { get; set; }
+    public int LogicalLength { get; set; }
 
     public void WriteMetadata(IBlobBuilder blobBuilder)
     {
-        blobBuilder.WriteValue(Length);
     }
 
     public IColumnReader OpenReader()
     {
-        return RunLengthEncoding.CreateReader(LogicalType, ByteColumn.OpenReader(), RepeatColumn.OpenReader<int>(), Length);
+        return RunLengthEncoding.CreateReader(LogicalType, ByteColumn.OpenReader(), RepeatColumn.OpenReader<int>(), LogicalLength);
     }
 
     public IEnumerable<IColumn> GetChildColumns()

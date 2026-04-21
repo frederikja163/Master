@@ -17,6 +17,7 @@ public sealed class Table : IColumnParent
 
     public EncodingType EncodingType => EncodingType.Table;
     public LogicalType LogicalType => LogicalType.UInt8;
+    public int LogicalLength { get; }
 
     public IEnumerable<IColumn> GetChildColumns()
     {
@@ -85,6 +86,9 @@ public sealed class Table : IColumnParent
         _columns = columns.ToArray();
         _names = names.ToArray();
         Name = name;
+        Debug.Assert(_columns.Any());
         Debug.Assert(_columns.Count() == _names.Count());
+        LogicalLength = _columns.First().LogicalLength;
+        Debug.Assert(_columns.All(c => c.LogicalLength == LogicalLength));
     }
 }
