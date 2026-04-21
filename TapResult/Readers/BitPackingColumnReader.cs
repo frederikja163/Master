@@ -31,9 +31,9 @@ internal sealed class BitPackingColumnReader<T> : IColumnReader<T>
         _valueMask = (T.AllBitsSet << prefixLength) >>> prefixLength;
     }
     
-    public T Peek(int byteOffset = 0)
+    public T Peek(int offset = 0)
     {
-        int index = (Index + byteOffset) * _valueSize;
+        int index = (Index + offset) * _valueSize;
         int valueIndex = index / BitSize - ColumnReader.Index;
         int shiftAmount = BitSize - _valueSize - index % BitSize;
         T value = ColumnReader.Peek(valueIndex);

@@ -12,30 +12,9 @@ namespace TapResult.Encodings;
 public sealed class SplitEncoding : IEncoding
 {
     public EncodingType Type { get; } = EncodingType.Split;
-    public IColumn Encode<T>(IColumnReader<T> reader) where T : notnull
+    public IColumn? Encode<T>(IColumnReader<T> reader) where T : notnull
     {
-        ColumnBuilder<int> lengthBuilder = new (reader.Length * Unsafe.SizeOf<int>());
-        ColumnBuilder<byte> byteBuilder = new (reader.Length - lengthBuilder.PhysicalSize);
-        for (int i = 0; i < reader.Length; i++)
-        {
-            byte[] values;
-            if (reader is IColumnReader<byte[]> bReader)
-            {
-                values = bReader.Read();
-            }
-            else if (reader is IColumnReader<string> strReader)
-            {
-                values = Encoding.UTF8.GetBytes(strReader.Read());
-            }
-            else
-            {
-                throw new UnreachableException();
-            }
-            lengthBuilder.WriteValue(values.Length);
-            byteBuilder.WriteValues(values);
-        }
-
-        return new SplitColumn(lengthBuilder.Build(), byteBuilder.Build(), typeof(T).ToLogicalType());
+        return null;
     }
 
     public IColumnReader CreateDecoder(LogicalType type, int length,
@@ -51,7 +30,6 @@ public sealed class SplitEncoding : IEncoding
 
     public IEnumerable<LogicalType> GetSupportedTypes()
     {
-        yield return LogicalType.Blob;
-        yield return LogicalType.String;
+        yield break;
     }
 }

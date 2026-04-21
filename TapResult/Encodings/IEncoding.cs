@@ -28,7 +28,7 @@ public interface IEncoding
     /// <summary>
     /// Encode a DataColumn using the encoding specified by <see cref="Type"/>.
     /// </summary>
-    IColumn Encode<T>(IColumnReader<T> reader) where T : notnull;
+    IColumn? Encode<T>(IColumnReader<T> reader) where T : notnull;
 
     /// <summary>
     /// Create a decoder for this type of encoding.
@@ -53,7 +53,7 @@ public static class EncodingExtensions
     /// Encode a column on an encoding.
     /// Will call the underlying <see cref="IEncoding.Encode"/> method with the correct type of reader.
     /// </summary>
-    public static IColumn Encode(this IEncoding encoding, IColumn column)
+    public static IColumn? Encode(this IEncoding encoding, IColumn column)
     {
         return column.LogicalType switch
         {
