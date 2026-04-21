@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using Keysight.OpenTap.Plugins.Csv;
+// using Keysight.OpenTap.Plugins.Csv;
 using Keysight.OpenTap.Plugins.ResultListeners;
 using OpenTap;
 using OpenTap.Hdf5;
@@ -59,9 +59,9 @@ public class OpenTAPBenchmarks : AllBenchmarks
         {
             FilePath = Config.FilePath
         };
-        yield return new CsvResultListener()
-        {
-            FilePath = new MacroString() { Text = Config.FilePath }
-        };
+        // yield return new CsvResultListener()
+        // {
+        //     FilePath = new MacroString() { Text = Config.FilePath }
+        // };
     }
 }

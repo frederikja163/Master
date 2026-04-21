@@ -58,6 +58,7 @@ public sealed class Reader : IDisposable, IAsyncDisposable
         // TODO: Check magic number;
         
         stream.Seek(start, SeekOrigin.Begin);
+        Console.WriteLine(length);
         byte[] schema = new byte[length];
         await stream.ReadExactlyAsync(schema);
         GenericReader schemaReader = new GenericReader(schema);

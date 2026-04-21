@@ -11,7 +11,7 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="OpenTAP" Version="9.31.1"/>
+        <PackageReference Include="OpenTAP" Version="9.32.3"/>
     </ItemGroup>
     
     <ItemGroup>

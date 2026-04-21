@@ -12,7 +12,7 @@
     <ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.9.1" />
       <PackageReference Include="Csv" Version="2.0.217" />
-      <PackageReference Include="Parquet.Net" Version="5.5.0" />
+      <PackageReference Include="Parquet.Net" Version="5.2.0" />
     </ItemGroup>
 
     <ItemGroup>
