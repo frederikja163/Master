@@ -8,9 +8,9 @@ namespace TapResult.CLI.Converters;
 
 public sealed class Parquets
 {
-    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileStream output)
+    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileStream output, bool verbose)
     {
-        if (Program.Verbose)
+        if (verbose)
         {
             Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
         }

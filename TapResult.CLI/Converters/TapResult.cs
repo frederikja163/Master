@@ -7,20 +7,20 @@ namespace TapResult.CLI.Converters;
 
 internal static class TapResult
 {
-    internal static async Task Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output)
+    internal static async Task Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output, bool verbose)
     {
         Console.WriteLine($"Converting from {Constants.FileType.TapResult} to {fileType.ToDisplayString()}");
         
         switch (fileType)
         {
             case Constants.FileType.Csv:
-                await ConvertToCsv(input, output);
+                await ConvertToCsv(input, output, verbose);
                 break;
             case Constants.FileType.Parquet:
                 await ConvertToParquet(input, output);
                 break;
             case Constants.FileType.TapResult:
-                if (Program.Verbose)
+                if (verbose)
                 {
                     Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
                 }
@@ -32,7 +32,7 @@ internal static class TapResult
         }
     }
 
-    private static async Task ConvertToCsv(FileStream input, FileInfo output)
+    private static async Task ConvertToCsv(FileStream input, FileInfo output, bool verbose)
     {
         await using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
 
@@ -53,7 +53,7 @@ internal static class TapResult
                 while (!readers[0].IsAtEnd)
                 {
                     var line = string.Join(",", readers.Select(columnReader => columnReader.Read())) + "\n";
-                    if (Program.Verbose)
+                    if (verbose)
                     {
                         Console.WriteLine($"reader at {readers[0].Index} out of {readers[0].Length}");
                         Console.Write(line);
@@ -61,7 +61,7 @@ internal static class TapResult
                     await writer.WriteAsync(line);
                 }
 
-                if (Program.Verbose)
+                if (verbose)
                 {
                     Console.WriteLine($"Finished writing columns from table {i}");
                 }

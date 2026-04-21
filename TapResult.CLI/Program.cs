@@ -5,8 +5,6 @@ namespace TapResult.CLI;
 
 public static class Program
 {
-    public static bool Verbose = false;
-
     private static async Task Main(string[] args)
     {
         await Parser.Default.ParseArguments<ConvertOptions, DescribeOptions>(args).MapResult(

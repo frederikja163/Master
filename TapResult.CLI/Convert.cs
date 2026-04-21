@@ -13,7 +13,6 @@ public class Convert
             Console.WriteLine($"Input file: {opts.InputFile} filetype: {opts.InputFileType}");
             Console.WriteLine($"output file: {opts.OutputFile} filetype: {opts.OutputFileType}");
             Console.WriteLine("--------");
-            Program.Verbose = true;
         }
         var encoder = ParseEncodings(opts);
         
@@ -32,23 +31,23 @@ public class Convert
         switch (opts.InputFileType.ToLower())
         {
             case Constants.Csv:
-                Converters.Csv.Convert(outputFileType, encoder, inputStream, outputPath);
+                Converters.Csv.Convert(outputFileType, encoder, inputStream, outputPath, opts.Verbose);
                 break;
             case Constants.Parquet:
                 throw new NotImplementedException();
             case Constants.TapResult:
-                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath);
+                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath, opts.Verbose);
                 break;
             case Constants.Auto:
                 switch (GetFileTypeFromPath(inputPath.FullName))
                 {
                     case Constants.FileType.Csv:
-                        Converters.Csv.Convert(outputFileType, encoder, inputStream, outputPath);
+                        Converters.Csv.Convert(outputFileType, encoder, inputStream, outputPath, opts.Verbose);
                         break;
                     case Constants.FileType.Parquet:
                         throw new NotImplementedException();
                     case Constants.FileType.TapResult:
-                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath);
+                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath, opts.Verbose);
                         break;
                     case Constants.FileType.Unknown:
                         throw new NotImplementedException();

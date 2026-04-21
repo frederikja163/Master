@@ -15,7 +15,6 @@ public class Describe
             Console.WriteLine("Verbose output enabled. Current Arguments:");
             Console.WriteLine($"Input file: {opts.InputFile} filetype: {opts.InputFileType}");
             Console.WriteLine("--------");
-            Program.Verbose = true;
         }
         var inputPath = new FileInfo(opts.InputFile);
         await using var inputStream = inputPath.Open(FileMode.Open, FileAccess.Read, FileShare.Read);

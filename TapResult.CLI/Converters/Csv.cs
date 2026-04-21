@@ -6,9 +6,9 @@ namespace TapResult.CLI.Converters;
 
 internal static class Csv
 {
-    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output)
+    internal static void Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output, bool verbose)
     {
-        if (Program.Verbose)
+        if (verbose)
         {
             Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
         }
