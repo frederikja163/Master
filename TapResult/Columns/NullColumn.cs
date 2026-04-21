@@ -28,21 +28,26 @@ internal sealed class NullColumn : IColumnParent
     {
         IColumnReader<byte> nullReader = _nullColumn.OpenReader<byte>();
         IColumnReader valueReader = _valueColumn.OpenReader();
-        return LogicalType switch
+        return ColumnReader(LogicalType, LogicalLength, nullReader, valueReader);
+    }
+
+    internal static IColumnReader ColumnReader(LogicalType type, int length, IColumnReader<byte> nullReader, IColumnReader valueReader)
+    {
+        return type switch
         {
-            LogicalType.SInt8 => new NullReaderValType<sbyte>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.SInt16 => new NullReaderValType<short>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.SInt32 => new NullReaderValType<int>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.SInt64 => new NullReaderValType<long>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.UInt8 => new NullReaderValType<byte>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.UInt16 => new NullReaderValType<ushort>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.UInt32 => new NullReaderValType<uint>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.UInt64 => new NullReaderValType<ulong>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.Float16 => new NullReaderValType<Half>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.Float32 => new NullReaderValType<float>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.Float64 => new NullReaderValType<double>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.Blob => new NullReaderRefType<byte[]>(nullReader, valueReader, LogicalLength, LogicalType),
-            LogicalType.String => new NullReaderRefType<string>(nullReader, valueReader, LogicalLength, LogicalType),
+            LogicalType.SInt8 => new NullReaderValType<sbyte>(nullReader, valueReader, length, type),
+            LogicalType.SInt16 => new NullReaderValType<short>(nullReader, valueReader, length, type),
+            LogicalType.SInt32 => new NullReaderValType<int>(nullReader, valueReader, length, type),
+            LogicalType.SInt64 => new NullReaderValType<long>(nullReader, valueReader, length, type),
+            LogicalType.UInt8 => new NullReaderValType<byte>(nullReader, valueReader, length, type),
+            LogicalType.UInt16 => new NullReaderValType<ushort>(nullReader, valueReader, length, type),
+            LogicalType.UInt32 => new NullReaderValType<uint>(nullReader, valueReader, length, type),
+            LogicalType.UInt64 => new NullReaderValType<ulong>(nullReader, valueReader, length, type),
+            LogicalType.Float16 => new NullReaderValType<Half>(nullReader, valueReader, length, type),
+            LogicalType.Float32 => new NullReaderValType<float>(nullReader, valueReader, length, type),
+            LogicalType.Float64 => new NullReaderValType<double>(nullReader, valueReader, length, type),
+            LogicalType.Blob => new NullReaderRefType<byte[]>(nullReader, valueReader, length, type),
+            LogicalType.String => new NullReaderRefType<string>(nullReader, valueReader, length, type),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

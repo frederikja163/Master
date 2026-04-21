@@ -10,17 +10,19 @@ namespace TapResult;
 /// Reader for a TapResult file,
 /// can open new columns to read and read the metadata to figure out what columns and types exist.
 /// </summary>
-public sealed class Reader
+public sealed class Reader : IDisposable, IAsyncDisposable
 {
+    private readonly bool _leaveOpen;
     private readonly Stream _stream;
     private readonly Dictionary<string, TableInfo> _tables;
     private readonly Encoder _encoder;
     
-    private Reader(Stream stream, IEnumerable<TableInfo> tables, Encoder encoder)
+    private Reader(Stream stream, IEnumerable<TableInfo> tables, Encoder encoder, bool leaveOpen)
     {
         _stream = stream;
         _tables = tables.ToDictionary(t => t.Name, t => t);
         _encoder = encoder;
+        _leaveOpen = leaveOpen;
     }
 
     /// <summary>
@@ -42,7 +44,7 @@ public sealed class Reader
     /// <summary>
     /// Creates a new reader asynchronously.
     /// </summary>
-    public static async Task<Reader> CreateReaderAsync(Stream stream, Encoder? encoder = null)
+    public static async Task<Reader> CreateReaderAsync(Stream stream, Encoder? encoder = null, bool leaveOpen = true)
     {
         int postfixSize = Unsafe.SizeOf<long>() * 4;
         stream.Seek(-postfixSize, SeekOrigin.End);
@@ -91,7 +93,7 @@ public sealed class Reader
             parent.AddSubEncoding(value);
         }
         
-        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encoder ?? Encoder.Default);
+        return new Reader(stream, tableEncodings.Select(e => new TableInfo(e)), encoder ?? Encoder.Default, leaveOpen);
     }
 
     /// <summary>
@@ -128,5 +130,15 @@ public sealed class Reader
         
         IEnumerable<IColumnReader> childReaders = encodingInfo.GetSubEncodings().Select(CreateReader);
         return _encoder.Decode(encodingInfo.Encoding, encodingInfo.Type, encodingInfo.Length, ref reader, childReaders);
+    }
+
+    public void Dispose()
+    {
+        _stream.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _stream.DisposeAsync();
     }
 }
