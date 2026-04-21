@@ -41,22 +41,22 @@ internal static class Csv
 
         var headers = enumerator.Current.Headers;
         // TODO: we likely want to convert to other logicaltypes. A specific encoder is likely the best solution
-        var datacolumns = headers.Select(header => new ColumnBuilder(LogicalType.String, 512)).ToArray(); 
+        var datacolumns = headers.Select(header => new ColumnBuilder<string>(512)).ToArray(); 
 
         do
         {
             for (int i = 0; i < enumerator.Current.ColumnCount; i++)
             {
-                datacolumns[i].WriteString(enumerator.Current[i]);
+                datacolumns[i].WriteValue(enumerator.Current[i]);
             }
 
             for (int i = 0; i < headers.Length - enumerator.Current.ColumnCount; i++)
             {
-                datacolumns[i].WriteString("");
+                datacolumns[i].WriteValue("");
             }
         } while (enumerator.MoveNext());
 
-        Table table = new Table(datacolumns.Select(datacolumn => datacolumn.BuildDataColumn()), headers, "CSVTable");
+        Table table = new Table(datacolumns.Select(datacolumn => datacolumn.Build()), headers, "CSVTable");
         table.Compress(encoder);
         
         using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);

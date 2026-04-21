@@ -49,8 +49,12 @@ public class Describe
         {
             Console.WriteLine("---------------------------------------------------------------");
             Console.WriteLine($"| {Center(tableInfo.Name, opts.MaxColDescribeCharLength)} |");
+
+            EncodingInfo[] dataColumnInfos = opts.LimitTableLength ? 
+                GetDataColumnInfos(tableInfo.Encoding.GetSubEncodings())
+                    .Take(Console.BufferWidth / (opts.MaxColDescribeCharLength + 4)).ToArray() 
+                : GetDataColumnInfos(tableInfo.Encoding.GetSubEncodings()).ToArray();
             
-            EncodingInfo[] dataColumnInfos = GetDataColumnInfos(tableInfo.Encoding.GetSubEncodings()).ToArray();
             Console.Write("| ");
             foreach (EncodingInfo info in dataColumnInfos)
             {
@@ -108,12 +112,11 @@ public class Describe
     {
         GenericReader genericReader = new GenericReader(encodingInfo.Blob);
         int physicalSize = genericReader.Read<int>();
-        int logicalLength = genericReader.Read<int>();
         long offset = genericReader.Read<long>();
         inputStream.Seek(offset, SeekOrigin.Begin);
         byte[] data = new byte[physicalSize];
         inputStream.ReadExactly(data);
-        DataColumn col = new DataColumn(encodingInfo.Type, data, logicalLength);
+        DataColumn col = new DataColumn(encodingInfo.Type, data, encodingInfo.Length);
         return col;
     }
 
@@ -139,15 +142,14 @@ public class Describe
             case EncodingType.BitPacking:
                 byte prefixLength = reader.Read<byte>();
                 ulong prefix = reader.Read<ulong>();
-                int logicalLength = reader.Read<int>();
-                blob = $"{{ prefixLn: {prefixLength}, prefix: {prefix}, ln: {logicalLength} }}";
+                blob = $"{{ prefixLn: {prefixLength}, prefix: {prefix} }}";
                 break;
             case EncodingType.Binary:
                 int physicalSize = reader.Read<int>();
-                int logLength = reader.Read<int>();
                 long offset = reader.Read<long>();
-                blob = $"{{ physicalLn: {physicalSize}, ln: {logLength}, offset: {offset} }}";
+                blob = $"{{ physicalLn: {physicalSize}, offset: {offset} }}";
                 break;
+            case EncodingType.RunLength:
             case EncodingType.Split:
             case EncodingType.Null:
                 break;

@@ -29,4 +29,7 @@ internal sealed class DescribeOptions : GeneralOptions
     public int MaxColDescribeLength { get; set; } = 15;
     [Value(9, MetaName = "maxcoldescribecharlength", Required = false, HelpText = "max amount of characters in file description")]
     public int MaxColDescribeCharLength { get; set; } = 12;
+    
+    [Option('l', "limittablelength", Required = false, HelpText = "limits the length of the file table to the size of the console window. Disable to show all columns")]
+    public bool LimitTableLength { get; set; } = true;
 }

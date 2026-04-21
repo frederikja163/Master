@@ -348,7 +348,6 @@ public static class ColumnBuilder
     [OverloadResolutionPriority(1)]
     public static IColumn Create(Array array)
     {
-        nulls = null;
         return array switch
         {
             sbyte[] values => array.GetType().GetElementType()! == typeof(sbyte) ? Create<sbyte>(values) : Create<byte>(Unsafe.As<byte[]>(values)),
