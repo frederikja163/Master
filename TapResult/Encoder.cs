@@ -16,6 +16,7 @@ public sealed class Encoder
     {
         yield return new BitPacking();
         yield return new RunLengthEncoding();
+        yield return new SplitEncoding();
     }
     
     /// <summary>
@@ -121,7 +122,9 @@ public sealed class Encoder
         if (metadataSample is DataColumn || !_encodingsById.TryGetValue(type, out IEncoding? encoding))
             return inData;
 
-        IColumn columns = encoding.Encode(inData);
+        IColumn? columns = encoding.Encode(inData);
+        if (columns is null)
+            return inData;
         if (columns is not IColumnParent parent || metadataSample is not IColumnParent parentMeta)
             return columns;
         
