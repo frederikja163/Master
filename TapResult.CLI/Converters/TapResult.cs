@@ -52,7 +52,7 @@ internal static class TapResult
                 var readers = columns.Select(combinedColumn => reader.OpenColumnReader<string>(combinedColumn[i])).ToArray();
                 while (!readers[0].IsAtEnd)
                 {
-                    var line = string.Join(",", readers.Select(columnReader => columnReader.Read())) + "\n";
+                    var line = string.Join(",", readers.Select(columnReader => columnReader.Read().ToString())) + "\n";
                     if (verbose)
                     {
                         Console.WriteLine($"reader at {readers[0].Index} out of {readers[0].Length}");
