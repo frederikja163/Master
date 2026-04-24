@@ -46,7 +46,6 @@ public class Describe
             return 0;
         foreach (TableInfo tableInfo in reader.GetTables())
         {
-            Console.WriteLine("---------------------------------------------------------------");
             Console.WriteLine($"| {Center(tableInfo.Name, opts.MaxColDescribeCharLength)} |");
 
             EncodingInfo[] dataColumnInfos = opts.LimitTableLength ? 
@@ -72,6 +71,7 @@ public class Describe
             {
                 rows[i] = "| ";
             }
+            rows[^2] = "|";
             
             foreach (EncodingInfo encodingInfo in dataColumnInfos)
             {
@@ -88,16 +88,13 @@ public class Describe
                         rows[i] += $"{str.Substring(0, Math.Min(str.Length, opts.MaxColDescribeCharLength)).PadRight(opts.MaxColDescribeCharLength)} | ";
                 }
 
-                if (col.LogicalLength > opts.MaxColDescribeLength)
+                for (int i = col.LogicalLength; i < opts.MaxColDescribeLength; i++)
                 {
-                    rows[^2] += " ...".PadRight(opts.MaxColDescribeCharLength) + " | ";
-                    rows[^1] += $"{$"[ln: {col.LogicalLength}]".PadRight(opts.MaxColDescribeCharLength)} | ";
+                    rows[i] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
                 }
-                else
-                {
-                    rows[^2] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
-                    rows[^1] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
-                }
+
+                rows[^2] += new string('-', opts.MaxColDescribeCharLength + 2) + "|";
+                rows[^1] += $"{$"[ln: {col.LogicalLength}]".PadRight(opts.MaxColDescribeCharLength)} | ";
             }
 
             foreach (string row in rows)
