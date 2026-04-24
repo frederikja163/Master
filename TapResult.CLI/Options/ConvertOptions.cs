@@ -21,6 +21,9 @@ internal sealed class ConvertOptions : GeneralOptions
         
     [Option('r', "runlength", Required = false, HelpText = "WIP Enable Run Length Encoding(RLE). Specifying one enables only that encoding; otherwise all encodings are enabled.")]
     public bool RunLength { get; set; }
+    
+    [Option('m', "multipleFiles", Required = false, HelpText = "Makes it so that TapResult Files are converted to multiple files")]
+    public bool MultipleFiles { get; set; }
 
     //[Option("noextension", Required = false, HelpText = "WIP Disables the automation addition of file extensions if not specified in outputfile")]
     //public bool NoOutputFileTypeName { get; set; }

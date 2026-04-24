@@ -72,7 +72,7 @@ public sealed class BitPacking : IEncoding
 
         currentValue <<= size - shift;
         builder.WriteValue(currentValue);
-        return new BitPackingColumn(builder.Build(), prefixLength, prefix, builder.PhysicalSize);
+        return new BitPackingColumn(builder.Build(), prefixLength, prefix, reader.Length);
     }
 
     internal static void GetMetadata<T>(IColumnReader<T> data, out byte prefixLength, out ulong prefix) where T : unmanaged, IBinaryInteger<T>

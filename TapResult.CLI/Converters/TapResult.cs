@@ -1,5 +1,6 @@
 ﻿using Parquet;
 using Parquet.Schema;
+using TapResult.CLI.Options;
 using TapResult.Readers;
 using DataColumn = Parquet.Data.DataColumn;
 
@@ -7,20 +8,20 @@ namespace TapResult.CLI.Converters;
 
 internal static class TapResult
 {
-    internal static async Task Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output, bool verbose)
+    internal static async Task Convert(Constants.FileType fileType, Encoder encoder, FileStream input, FileInfo output, ConvertOptions opts)
     {
         Console.WriteLine($"Converting from {Constants.FileType.TapResult} to {fileType.ToDisplayString()}");
         
         switch (fileType)
         {
             case Constants.FileType.Csv:
-                await ConvertToCsv(input, output, verbose);
+                await ConvertToCsv(input, output, opts);
                 break;
             case Constants.FileType.Parquet:
                 await ConvertToParquet(input, output);
                 break;
             case Constants.FileType.TapResult:
-                if (verbose)
+                if (opts.Verbose)
                 {
                     Console.WriteLine($"Encodings: {string.Join(", ", encoder.EncodingsById.Select(encoding => $"({encoding.Key}: {encoding.Value})"))}");
                 }
@@ -32,38 +33,46 @@ internal static class TapResult
         }
     }
 
-    private static async Task ConvertToCsv(FileStream input, FileInfo output, bool verbose)
+    private static async Task ConvertToCsv(FileStream input, FileInfo output, ConvertOptions opts)
     {
-        await using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
-
         try
         {
             Reader reader = await Reader.CreateReaderAsync(input);
-            await using StreamWriter writer = new StreamWriter(outputStream);
 
-            var columns = CombineColumns(reader.GetTables()).ToList();
-        
-            // write columnNames
-            await writer.WriteLineAsync(string.Join(",", columns.Select(combinedColumn => combinedColumn[0].Name)));
-        
-            // Input is in columns so we need to flip columns to rows
-            for (int i = 0; i < columns[0].Count; i++) // Amount of combined columns across tables
+            if (opts.MultipleFiles)
             {
-                var readers = columns.Select(combinedColumn => reader.OpenColumnReader<string>(combinedColumn[i])).ToArray();
-                while (!readers[0].IsAtEnd)
+                foreach (TableInfo tableInfo in reader.GetTables())
                 {
-                    var line = string.Join(",", readers.Select(columnReader => columnReader.Read())) + "\n";
-                    if (verbose)
+                    FileInfo fileInfo;
+                    if (tableInfo.Name.ContainsAny(['/', '\\']))
                     {
-                        Console.WriteLine($"reader at {readers[0].Index} out of {readers[0].Length}");
-                        Console.Write(line);
+                        if (opts.Verbose)
+                        {
+                            Console.WriteLine($"Table {tableInfo.Name} contains a path, creating directory");
+                        }
+                        var directory = Directory.CreateDirectory(Path.Combine(output.DirectoryName ?? string.Empty, Path.GetDirectoryName(tableInfo.Name) ?? string.Empty));
+                        fileInfo = new FileInfo(Path.Combine(directory.FullName, $"{Path.GetFileName(tableInfo.Name)}{output.Extension}"));
                     }
-                    await writer.WriteAsync(line);
+                    else
+                    {
+                        fileInfo = new FileInfo(
+                            Path.Combine(
+                                output.DirectoryName ?? string.Empty,
+                                $"{Path.GetFileNameWithoutExtension(output.Name)}_{tableInfo.Name}{output.Extension}"
+                            ));
+                    }
+                    await using var outputStream = fileInfo.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+                    await using StreamWriter writer = new StreamWriter(outputStream);
+                    await WriteTableToCsv(tableInfo, writer, reader, opts.Verbose, includeTableName: false);
                 }
-
-                if (verbose)
+            }
+            else
+            {
+                await using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
+                await using StreamWriter writer = new StreamWriter(outputStream);
+                foreach (TableInfo tableInfo in reader.GetTables())
                 {
-                    Console.WriteLine($"Finished writing columns from table {i}");
+                    await WriteTableToCsv(tableInfo, writer, reader, opts.Verbose);
                 }
             }
         }
@@ -72,28 +81,32 @@ internal static class TapResult
             Console.WriteLine("Failed to Convert TapResult file to CSV: " + e);
         }
     }
-    
-    private static IEnumerable<List<ColumnInfo>> CombineColumns(IEnumerable<TableInfo> tables) //TODO: make this optional
-    {
-        Dictionary<(LogicalType, string), List<ColumnInfo>> dict = new();
-        foreach (TableInfo tableInfo in tables)
-        {
-            foreach (ColumnInfo columnInfo in tableInfo.GetColumns())
-            {
-                if (dict.TryGetValue((columnInfo.Encoding.Type, columnInfo.Name), out var list))
-                {
-                    list.Add(columnInfo);
-                }
-                else
-                {
-                    List<ColumnInfo> newList = new List<ColumnInfo>();
-                    newList.Add(columnInfo);
-                    dict.Add((columnInfo.Encoding.Type, columnInfo.Name), newList);
-                }
-            }
-        }
 
-        return dict.Values.AsEnumerable<List<ColumnInfo>>();
+    private static async Task WriteTableToCsv(TableInfo tableInfo, StreamWriter writer, Reader reader, bool verbose, bool includeTableName = true)
+    {
+        if (verbose)
+        {
+            Console.WriteLine($"Starting write of table {tableInfo.Name}");
+        }
+        if (includeTableName)
+            await writer.WriteLineAsync(tableInfo.Name);
+        await writer.WriteLineAsync(string.Join(",", tableInfo.GetColumns().Select(column => column.Name)));
+        IColumnReader[] readers = tableInfo.GetColumns().Select(column => reader.OpenColumnReader(column)).ToArray();
+        while (!readers.All(read => read.IsAtEnd))
+        {
+            var line = string.Join(",", readers.Select(columnReader => !columnReader.IsAtEnd ? columnReader.Read()?.ToString() ?? "" : "")
+                .Select(str => str.Contains(',') ? $"\"{str}\"" : str)) + "\n";
+            if (verbose)
+            {
+                Console.WriteLine($"reader at {readers[0].Index} out of {readers[0].Length}");
+                Console.Write(line);
+            }
+            await writer.WriteAsync(line);
+        }
+        if (verbose)
+        {
+            Console.WriteLine($"Finished writing columns from table {tableInfo.Name}");
+        }
     }
     
     private static async Task ConvertToParquet(FileStream input, FileInfo output)

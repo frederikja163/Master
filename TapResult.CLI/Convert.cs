@@ -36,7 +36,7 @@ public class Convert
             case Constants.Parquet:
                 throw new NotImplementedException();
             case Constants.TapResult:
-                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath, opts.Verbose);
+                await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath, opts);
                 break;
             case Constants.Auto:
                 switch (GetFileTypeFromPath(inputPath.FullName))
@@ -47,7 +47,7 @@ public class Convert
                     case Constants.FileType.Parquet:
                         throw new NotImplementedException();
                     case Constants.FileType.TapResult:
-                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath, opts.Verbose);
+                        await Converters.TapResult.Convert(outputFileType, encoder, inputStream, outputPath, opts);
                         break;
                     case Constants.FileType.Unknown:
                         throw new NotImplementedException();

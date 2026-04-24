@@ -82,7 +82,10 @@ public class Describe
                 for (int i = 0; i < length; i++)
                 {
                     var str = columnReader.Read()?.ToString();
-                    rows[i] += $"{str?.Substring(0, Math.Min(str.Length, opts.MaxColDescribeCharLength)).PadRight(opts.MaxColDescribeCharLength)} | ";
+                    if (str is null)
+                        rows[i] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
+                    else 
+                        rows[i] += $"{str.Substring(0, Math.Min(str.Length, opts.MaxColDescribeCharLength)).PadRight(opts.MaxColDescribeCharLength)} | ";
                 }
 
                 if (col.LogicalLength > opts.MaxColDescribeLength)
