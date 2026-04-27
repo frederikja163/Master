@@ -34,6 +34,11 @@ public sealed class Reader : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// Gets the amount of tables in the file.
+    /// </summary>
+    public int TableCount => _tables.Count;
+
+    /// <summary>
     /// Tries to get a table by name, returning true and the table if any is found. Otherwise returns false and null.
     /// </summary>
     public bool TryGetTable(string name, [NotNullWhen(true)] out TableInfo? table)

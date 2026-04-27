@@ -1,5 +1,4 @@
-﻿using Csv;
-using Parquet;
+﻿using Parquet;
 using Parquet.Schema;
 using TapResult.Columns;
 using DataColumn = Parquet.Data.DataColumn;

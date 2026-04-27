@@ -155,7 +155,12 @@ public sealed class Encoder
         
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            IColumn encodedColumn = encoding.Encode(sample);
+            IColumn? encodedColumn = encoding.Encode(sample);
+            if (encodedColumn is null)
+            {
+                continue;
+            }
+            
             if (encodedColumn is IColumnParent parent)
             {
                 foreach (DataColumn child in parent.GetChildColumns().OfType<DataColumn>())

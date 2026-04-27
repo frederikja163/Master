@@ -46,7 +46,7 @@ public class Describe
             return 0;
         foreach (TableInfo tableInfo in reader.GetTables())
         {
-            Console.WriteLine($"| {Center(tableInfo.Name, opts.MaxColDescribeCharLength)} |");
+            Console.WriteLine($"## {Center(tableInfo.Name, opts.MaxColDescribeCharLength)}");
 
             EncodingInfo[] dataColumnInfos = opts.LimitTableLength ? 
                 GetDataColumnInfos(tableInfo.Encoding.GetSubEncodings())
@@ -66,12 +66,11 @@ public class Describe
             }
             Console.WriteLine();
 
-            string[] rows = new string[opts.MaxColDescribeLength + 2];
+            string[] rows = new string[opts.MaxColDescribeLength + 1];
             for (int i = 0; i < rows.Length; i++)
             {
                 rows[i] = "| ";
             }
-            rows[^2] = "|";
             
             foreach (EncodingInfo encodingInfo in dataColumnInfos)
             {
@@ -93,7 +92,6 @@ public class Describe
                     rows[i] += new string(' ', opts.MaxColDescribeCharLength) + " | ";
                 }
 
-                rows[^2] += new string('-', opts.MaxColDescribeCharLength + 2) + "|";
                 rows[^1] += $"{$"[ln: {col.LogicalLength}]".PadRight(opts.MaxColDescribeCharLength)} | ";
             }
 

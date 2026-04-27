@@ -51,14 +51,14 @@ internal static class TapResult
                             Console.WriteLine($"Table {tableInfo.Name} contains a path, creating directory");
                         }
                         var directory = Directory.CreateDirectory(Path.Combine(output.DirectoryName ?? string.Empty, Path.GetDirectoryName(tableInfo.Name) ?? string.Empty));
-                        fileInfo = new FileInfo(Path.Combine(directory.FullName, $"{Path.GetFileName(tableInfo.Name)}{output.Extension}"));
+                        fileInfo = new FileInfo(Path.Combine(directory.FullName, $"{Path.GetFileName(tableInfo.Name)}.csv"));
                     }
                     else
                     {
                         fileInfo = new FileInfo(
                             Path.Combine(
                                 output.DirectoryName ?? string.Empty,
-                                $"{Path.GetFileNameWithoutExtension(output.Name)}_{tableInfo.Name}{output.Extension}"
+                                $"{tableInfo.Name}.csv"
                             ));
                     }
                     await using var outputStream = fileInfo.Open(FileMode.Create, FileAccess.Write, FileShare.None);
@@ -70,9 +70,10 @@ internal static class TapResult
             {
                 await using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
                 await using StreamWriter writer = new StreamWriter(outputStream);
+                int tableCount = reader.TableCount;
                 foreach (TableInfo tableInfo in reader.GetTables())
                 {
-                    await WriteTableToCsv(tableInfo, writer, reader, opts.Verbose);
+                    await WriteTableToCsv(tableInfo, writer, reader, opts.Verbose, includeTableName: tableCount != 1);
                 }
             }
         }
@@ -133,7 +134,7 @@ internal static class TapResult
                     var columnReader = reader.OpenColumnReader(columnInfo);
                     var values = columnReader.Read(columnReader.Length).ToArray();
 
-                    Array typedValues = Array.CreateInstance(field.ClrType, values.Length);
+                    Array typedValues = Array.CreateInstanceFromArrayType(field.ClrType, values.Length);
 
                     for (int i = 0; i < values.Length; i++)
                     {
