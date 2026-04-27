@@ -1,4 +1,7 @@
-﻿using TapResult.Columns;
+﻿using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Text;
+using TapResult.Columns;
 
 namespace TapResult;
 
@@ -66,12 +69,13 @@ public sealed class Writer : IDisposable, IAsyncDisposable
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = _idBuilder.LogicalLength;
         
-        ColumnBuilder<long> postScript = new(24);
-        postScript.WriteValue(metadataStart);
-        postScript.WriteValue(metadataLength);
-        postScript.WriteValue(metadataLogicalLength);
-        
-        _outStream.Write(postScript.BuildDataColumn().Data.Span);
+        Span<byte> data = stackalloc byte[Unsafe.SizeOf<long>()];
+        BinaryPrimitives.WriteInt64LittleEndian(data, metadataStart);
+        _outStream.Write(data);
+        BinaryPrimitives.WriteInt64LittleEndian(data, metadataLength);
+        _outStream.Write(data);
+        BinaryPrimitives.WriteInt64LittleEndian(data, metadataLogicalLength);
+        _outStream.Write(data);
         _outStream.Write(MagicNumber);
         
         if (_leaveOpen)

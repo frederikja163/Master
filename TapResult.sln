@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TapResult.Benchmarks", "Tap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TapResult", "TapResult\TapResult.csproj", "{CD01D81F-A2DB-431E-8510-08296BE49A6C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TapResult.CLI", "TapResult.CLI\TapResult.CLI.csproj", "{9A727A74-7B23-47E8-A81D-E9A4C3641320}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{CD01D81F-A2DB-431E-8510-08296BE49A6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD01D81F-A2DB-431E-8510-08296BE49A6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD01D81F-A2DB-431E-8510-08296BE49A6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A727A74-7B23-47E8-A81D-E9A4C3641320}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A727A74-7B23-47E8-A81D-E9A4C3641320}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A727A74-7B23-47E8-A81D-E9A4C3641320}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A727A74-7B23-47E8-A81D-E9A4C3641320}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

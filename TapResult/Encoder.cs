@@ -27,6 +27,7 @@ public sealed class Encoder
     
     private readonly ILookup<LogicalType, IEncoding> _encodingsByType;
     private readonly Dictionary<EncodingType, IEncoding> _encodingsById;
+    public IReadOnlyDictionary<EncodingType, IEncoding> EncodingsById => _encodingsById;
     
     /// <summary>
     /// Creates a new default encoder.
@@ -154,7 +155,12 @@ public sealed class Encoder
         
         foreach (IEncoding encoding in _encodingsByType[sample.LogicalType])
         {
-            IColumn encodedColumn = encoding.Encode(sample);
+            IColumn? encodedColumn = encoding.Encode(sample);
+            if (encodedColumn is null)
+            {
+                continue;
+            }
+            
             if (encodedColumn is IColumnParent parent)
             {
                 foreach (DataColumn child in parent.GetChildColumns().OfType<DataColumn>())

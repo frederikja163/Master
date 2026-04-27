@@ -98,7 +98,7 @@ public sealed class ColumnBuilder<T> : IRawWriter
         int index = _valuesLength;
         if (index >= _lengths.Length)
         {
-            Array.Resize(ref _lengths, Math.Max(index, _lengths.Length * 2));
+            Array.Resize(ref _lengths, Math.Max(index + 1, _lengths.Length * 2));
         }
         _lengths[index] = length;
     }

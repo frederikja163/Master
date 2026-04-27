@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace TapResult;
 
@@ -103,6 +104,110 @@ public static class TypeHelper
     /// Converts a <see cref="System.Type"/> to a <see cref="LogicalType"/>.
     /// </summary>
     public static LogicalType ToLogicalType(this Type type) => PhysicalTypes[type];
+    
+        /// <summary>
+        /// Tries to guess the type and promotes if higher than previousGuess.
+        /// String > UInt64 > UInt32 > UInt16 > UInt8 > Blob
+        /// String > SInt64 > SInt32 > SInt16 > SInt8 > Blob
+        /// String > Float64 > Float32 > Float16 > Blob
+        /// Float > SInt (no decimal) > UInt (no minus, no decimal)
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="previousGuess"></param>
+        /// <returns></returns>
+        public static LogicalType GuessTypeFromSpan(this ReadOnlySpan<char> input, LogicalType previousGuess = LogicalType.Blob)
+        {
+            if (input.IsEmpty)
+                return previousGuess;
+
+            if (previousGuess == LogicalType.String)
+                return LogicalType.String;
+            
+            // Float-like values first: decimal point or exponent.
+            if (input.IndexOfAny(['.', 'e', 'E']) >= 0)
+            {
+                if (!double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
+                    return LogicalType.String;
+
+                return previousGuess switch
+                {
+                    LogicalType.Blob => LogicalType.Float16,
+                    LogicalType.Float16 => LogicalType.Float16,
+                    LogicalType.Float32 => LogicalType.Float32,
+                    LogicalType.Float64 => LogicalType.Float64,
+                    _ when IsFloat(previousGuess) => previousGuess,
+                    _ => LogicalType.String
+                };
+            }
+
+            // Signed Integers
+            if (input[0] == '-')
+            {
+                if (!long.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integer))
+                    return LogicalType.String;
+                var promoteSigned = PromoteSigned(integer, previousGuess);
+                return IsSigned(promoteSigned) ? promoteSigned : LogicalType.String;
+            }
+
+            // Try signed first for consistency, then unsigned for large values.
+            if (long.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out var signedValue))
+            {
+                if (signedValue < 0)
+                {
+                    var promoteSigned = PromoteSigned(signedValue, previousGuess);
+                    return IsSigned(promoteSigned) ? promoteSigned : LogicalType.String;
+                }
+
+                var promoteUnsigned = PromoteUnsigned((ulong)signedValue, previousGuess);
+                return IsUnsigned(promoteUnsigned) ? promoteUnsigned : LogicalType.String;
+            }
+
+            if (!ulong.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out var unsignedValue))
+                return LogicalType.String;
+            var promoted = PromoteUnsigned(unsignedValue, previousGuess);
+            return IsUnsigned(promoted) ? promoted : LogicalType.String;
+            
+
+            static bool IsSigned(LogicalType t) => t is LogicalType.SInt8 or LogicalType.SInt16 or LogicalType.SInt32 or LogicalType.SInt64;
+            static bool IsUnsigned(LogicalType t) => t is LogicalType.UInt8 or LogicalType.UInt16 or LogicalType.UInt32 or LogicalType.UInt64;
+            static bool IsFloat(LogicalType t) => t is LogicalType.Float16 or LogicalType.Float32 or LogicalType.Float64;
+
+            static LogicalType PromoteSigned(long value, LogicalType previous)
+            {
+                return value switch
+                {
+                    >= sbyte.MinValue and <= sbyte.MaxValue => 
+                        previous is LogicalType.Blob or LogicalType.SInt8 
+                            ? LogicalType.SInt8 : previous,
+                    >= short.MinValue and <= short.MaxValue => 
+                        previous is LogicalType.Blob or LogicalType.SInt8 or LogicalType.SInt16 
+                            ? LogicalType.SInt16 : previous,
+                    >= int.MinValue and <= int.MaxValue => 
+                        previous is LogicalType.Blob or LogicalType.SInt8 or LogicalType.SInt16 or LogicalType.SInt32 
+                            ? LogicalType.SInt32 : previous,
+                    _ => previous is LogicalType.Blob or LogicalType.SInt8 or LogicalType.SInt16 or LogicalType.SInt32 or LogicalType.SInt64
+                        ? LogicalType.SInt64 : previous
+                };
+            }
+
+            static LogicalType PromoteUnsigned(ulong value, LogicalType previous)
+            {
+                return value switch
+                {
+                    <= byte.MaxValue => 
+                        previous is LogicalType.Blob or LogicalType.UInt8 
+                            ? LogicalType.UInt8 : previous,
+                    <= ushort.MaxValue => 
+                        previous is LogicalType.Blob or LogicalType.UInt8 or LogicalType.UInt16 
+                            ? LogicalType.UInt16 : previous,
+                    <= uint.MaxValue => 
+                        previous is LogicalType.Blob or LogicalType.UInt8 or LogicalType.UInt16 or LogicalType.UInt32 
+                            ? LogicalType.UInt32 : previous,
+                    _ => previous is LogicalType.Blob or LogicalType.UInt8 or LogicalType.UInt16 or LogicalType.UInt32 or LogicalType.UInt64 
+                        ? LogicalType.UInt64 : previous
+                };
+            }
+        }
 
     private static readonly Dictionary<LogicalType, HashSet<LogicalType>> CompatibilityGroups = GetCompatibilityLookup();
 
