@@ -76,11 +76,12 @@ public sealed class TapResultListener : ResultListener
         Text = "Results/<Date>-<Verdict>.TapResult",
     };
 
+    public Func<string, WriterBase> WriterCreator { get; set; } = (path) => new TapResultWriter(path);
+
     private ParameterBuilder? _paramBuilder = null;
     private AncestryBuilder? _ancestryBuilder = null;
     private readonly object _lock = new object();
-    private Stream? _stream;
-    private TapResultWriter? _writer = null;
+    private WriterBase? _writer = null;
     private ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
 
     public TapResultListener()
@@ -100,8 +101,7 @@ public sealed class TapResultListener : ResultListener
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
         }
 
-        _stream = File.Create(path);
-        _writer = new TapResultWriter(_stream);
+        _writer = WriterCreator(path);
         _tasks.Clear();
     }
 
@@ -125,10 +125,10 @@ public sealed class TapResultListener : ResultListener
         _tasks.Clear();
         _ancestryBuilder = null;
         _paramBuilder = null;
-        _writer?.Dispose();
-        _writer = null;
-        _stream?.Dispose();
-        _stream = null;
+        if (_writer is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
     }
 
     public override void OnTestStepRunCompleted(TestStepRun stepRun)

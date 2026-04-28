@@ -6,9 +6,13 @@ using TapResult.Readers;
 
 namespace TapResult;
 
+/// <summary>
+/// Provides a common base for tap result readers.
+/// Most likely you want to use a class that derives from this class instead of the base class.
+/// </summary>
 public abstract class ReaderBase
 {
-    private readonly Dictionary<string, TableInfo> _tables;
+    private readonly ILookup<string, TableInfo> _tables;
     private readonly Encoder _encoder;
 
     protected ReaderBase(Encoder encoder, ReadOnlyMemory<byte> schema, int logicalLength)
@@ -45,7 +49,7 @@ public abstract class ReaderBase
             EncodingInfo parent = info;
             parent.AddSubEncoding(value);
         }
-        _tables = tableEncodings.Select(e => new TableInfo(e)).ToDictionary(t => t.Name);
+        _tables = tableEncodings.Select(e => new TableInfo(e)).ToLookup(t => t.Name);
         _encoder = encoder;
     }
 
@@ -54,7 +58,13 @@ public abstract class ReaderBase
     /// </summary>
     public IEnumerable<TableInfo> GetTables()
     {
-        return _tables.Values;
+        foreach (IGrouping<string, TableInfo> table in _tables)
+        {
+            foreach (TableInfo info in table)
+            {
+                yield return info;
+            }
+        }
     }
 
     /// <summary>
@@ -67,7 +77,8 @@ public abstract class ReaderBase
     /// </summary>
     public bool TryGetTable(string name, [NotNullWhen(true)] out TableInfo? table)
     {
-        return _tables.TryGetValue(name, out table);
+        table = _tables[name].FirstOrDefault();
+        return table is not null;
     }
 
     /// <summary>
@@ -88,6 +99,10 @@ public abstract class ReaderBase
         return CreateReader(column.Encoding);
     }
 
+    /// <summary>
+    /// Creates a reader of a specific encoding type.
+    /// Subclasses should handle binary encodings depending on how they read the data.
+    /// </summary>
     protected virtual IColumnReader CreateReader(EncodingInfo encodingInfo)
     {
         GenericReader reader = new GenericReader(encodingInfo.Blob);
@@ -120,7 +135,7 @@ public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
         stream.Seek(-postfixSize, SeekOrigin.End);
         byte[] postfix = new byte[postfixSize];
         stream.ReadExactly(postfix);
-        var start = Bootstrap.ParseTapResultPostfix(postfix, out var length, out var logicalLength, out var magicNumber);
+        var start = Bootstrap.ParseTapResultPostfix(postfix, out long length, out long logicalLength, out ulong magicNumber);
 
         if (!Bootstrap.TryParseMagicNumber(magicNumber, out FileType type, out byte major, out _, out _) &&
             type != FileType.TapResult && major != 1)
@@ -132,7 +147,7 @@ public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
         byte[] schema = new byte[length];
         await stream.ReadExactlyAsync(schema);
         
-        return new TapResultReader(encoder ?? Encoder.Default, schema, logicalLength, stream, leaveOpen);
+        return new TapResultReader(encoder ?? Encoder.Default, schema, (int)logicalLength, stream, leaveOpen);
     }
 
     protected override IColumnReader CreateReader(EncodingInfo encodingInfo)

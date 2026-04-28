@@ -35,19 +35,20 @@ public static class Bootstrap
         major = (byte)((magicNumber >> (2 * 8)) & byte.MaxValue);
         type = (FileType)((magicNumber >> (3 * 8)) & byte.MaxValue);
         ulong start = magicNumber >> (4 * 8);
-        return MagicNumberStart != start;
+        return MagicNumberStart == start;
     }
 
-    public static void SerializeTapResultPostfix(long metadataStart, long length, int logicalLength, ulong magicNumber)
+    public static byte[] SerializeTapResultPostfix(long metadataStart, long length, long logicalLength, ulong magicNumber)
     {
         byte[] data = new byte[Unsafe.SizeOf<ulong>() * 4];
-        BinaryPrimitives.WriteInt64LittleEndian(data, metadataStart);
-        BinaryPrimitives.WriteInt64LittleEndian(data, length);
-        BinaryPrimitives.WriteInt64LittleEndian(data, logicalLength);
-        BinaryPrimitives.WriteUInt64BigEndian(data, magicNumber);
+        BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(0 * Unsafe.SizeOf<ulong>()), metadataStart);
+        BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(1 * Unsafe.SizeOf<ulong>()), length);
+        BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(2 * Unsafe.SizeOf<ulong>()), logicalLength);
+        BinaryPrimitives.WriteUInt64LittleEndian(data.AsSpan(3 * Unsafe.SizeOf<ulong>()), magicNumber);
+        return data;
     }
     
-    public static long ParseTapResultPostfix(ReadOnlyMemory<byte> postfix, out long length, out int logicalLength, out ulong magicNumber)
+    public static long ParseTapResultPostfix(ReadOnlyMemory<byte> postfix, out long length, out long logicalLength, out ulong magicNumber)
     {
         GenericReader postfixReader = new (postfix);
         long start = postfixReader.Read<long>();

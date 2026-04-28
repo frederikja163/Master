@@ -97,24 +97,15 @@ public sealed class TapResultWriter : WriterBase, IDisposable, IAsyncDisposable
 {
     private readonly Stream _outStream;
     private readonly bool _leaveOpen;
-    
-    private const byte MajorVersion = 1;
-    private const byte MinorVersion = 0;
-    private const byte PatchVersion = 0;
-    internal static ReadOnlySpan<byte> MagicNumber =>
-    [
-        (byte)'O',
-        (byte)'T',
-        (byte)'A',
-        (byte)'P',
-        (byte)'R',
-        MajorVersion,
-        MinorVersion,
-        PatchVersion
-    ]; // OTAP R100
 
     /// <summary>
-    /// Create a new TableWriter. optionally leaving the stream open.
+    /// Create a new TapResultWriter from a path.
+    /// </summary>
+    public TapResultWriter(string path) : this(File.Create(path))
+    { }
+    
+    /// <summary>
+    /// Create a new TapResultWriter. optionally leaving the stream open.
     /// </summary>
     public TapResultWriter(Stream output, bool leaveOpen = false)
     {
@@ -125,8 +116,11 @@ public sealed class TapResultWriter : WriterBase, IDisposable, IAsyncDisposable
 
         _outStream = output;
         _leaveOpen = leaveOpen;
-        
-        _outStream.Write(MagicNumber);
+
+        Span<byte> data = stackalloc byte[Unsafe.SizeOf<ulong>()];
+        ulong magicNumber = Bootstrap.SerializeMagicNumber(FileType.TapResult, 1, 0, 0);
+        BinaryPrimitives.WriteUInt64LittleEndian(data, magicNumber);
+        _outStream.Write(data);
     }
 
     public void Dispose()
@@ -140,14 +134,9 @@ public sealed class TapResultWriter : WriterBase, IDisposable, IAsyncDisposable
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = Length;
         
-        Span<byte> data = stackalloc byte[Unsafe.SizeOf<long>()];
-        BinaryPrimitives.WriteInt64LittleEndian(data, metadataStart);
+        ulong magicNumber = Bootstrap.SerializeMagicNumber(FileType.TapResult, 1, 0, 0);
+        byte[] data = Bootstrap.SerializeTapResultPostfix(metadataStart, metadataLength, metadataLogicalLength, magicNumber);
         _outStream.Write(data);
-        BinaryPrimitives.WriteInt64LittleEndian(data, metadataLength);
-        _outStream.Write(data);
-        BinaryPrimitives.WriteInt64LittleEndian(data, metadataLogicalLength);
-        _outStream.Write(data);
-        _outStream.Write(MagicNumber);
         
         _outStream.Flush();
         if (_leaveOpen)

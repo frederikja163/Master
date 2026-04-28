@@ -2,5 +2,5 @@
 
 internal static class Config
 {
-    public static readonly string FilePath = "File";
+    public static string FilePath = "File";
 }

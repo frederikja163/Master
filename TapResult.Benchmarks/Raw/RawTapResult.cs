@@ -5,26 +5,38 @@ using IColumn = TapResult.Columns.IColumn;
 
 namespace TapResult.Benchmarks.Raw;
 
-internal abstract class TapResultBenchmark : IRawBenchmark
+internal abstract class TapResultBenchmarkBase : IRawBenchmark
 {
-    protected TapResultWriter? Writer;
+    protected WriterBase? Writer;
+    private Func<string, WriterBase> _writerCreator;
 
+    public TapResultBenchmarkBase(Func<string, WriterBase> writerCreator)
+    {
+        _writerCreator = writerCreator;
+    }
+    
     public void Open(string filePath)
     {
-        Writer = new TapResultWriter(File.Create(filePath));
+        Writer = _writerCreator(filePath);
     }
 
     public abstract void Write(ICustomData data);
 
     public virtual void Close()
     {
-        Writer?.Dispose();
+        if (Writer is IDisposable disposable)
+        {
+            disposable?.Dispose();
+        }
     }
 }
 
-internal sealed class CascadingBenchmark : TapResultBenchmark
+internal sealed class CompressedTapResultBenchmark : TapResultBenchmarkBase
 {
-    
+    public CompressedTapResultBenchmark(Func<string, WriterBase> writerCreator) : base(writerCreator)
+    {
+    }
+
     public override void Write(ICustomData data)
     {
         Table table = new Table(data.Columns.Select(ColumnBuilder.Create), data.ColumnNames, data.Name);
@@ -39,10 +51,14 @@ internal sealed class CascadingBenchmark : TapResultBenchmark
 }
 
 
-internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
+internal sealed class AsyncTapResultBenchmark : TapResultBenchmarkBase
 {
     private readonly List<Task> _tasks = new List<Task>();
-    
+
+    public AsyncTapResultBenchmark(Func<string, WriterBase> writerCreator) : base(writerCreator)
+    {
+    }
+
     public override void Write(ICustomData data)
     {
         _tasks.Add(Task.Run(async () =>
@@ -68,8 +84,12 @@ internal sealed class CascadingAsyncBenchmark : TapResultBenchmark
     }
 }
 
-internal sealed class EncodingBenchmark : TapResultBenchmark
+internal sealed class TapResultBenchmark : TapResultBenchmarkBase
 {
+    public TapResultBenchmark(Func<string, WriterBase> writerCreator) : base(writerCreator)
+    {
+    }
+
     public override void Write(ICustomData data)
     {
         Table table = new Table(data.Columns.Select(ColumnBuilder.Create), data.ColumnNames, data.Name);
@@ -79,5 +99,13 @@ internal sealed class EncodingBenchmark : TapResultBenchmark
     public override string ToString()
     {
         return "TapResult";
+    }
+}
+
+internal static class TapResultCreators
+{
+    public static WriterBase CreateBase(string path)
+    {
+        return new TapResultWriter(File.Create(path));
     }
 }
