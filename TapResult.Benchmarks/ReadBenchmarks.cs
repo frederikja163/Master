@@ -29,10 +29,10 @@ public class ReadBenchmarks
     [Benchmark]
     public async Task<object?> ReadSingleTapResult()
     {
-        using Reader reader = await Reader.CreateReaderAsync(File.OpenRead("Results.TapResult"), leaveOpen: false);
-        TableInfo table = reader.GetTables().PickRandom();
+        using TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(File.OpenRead("Results.TapResult"), leaveOpen: false);
+        TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();
-        IColumnReader colReader = reader.OpenColumnReader(column);
+        IColumnReader colReader = tapResultReader.OpenColumnReader(column);
         int index = Random.Shared.Next(0, colReader.Length);
         return colReader.Peek(index);
     }

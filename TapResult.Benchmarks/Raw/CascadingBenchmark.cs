@@ -7,11 +7,11 @@ namespace TapResult.Benchmarks.Raw;
 
 internal abstract class TapResultBenchmark : IRawBenchmark
 {
-    protected Writer? Writer;
+    protected TapResultWriter? Writer;
 
     public void Open(string filePath)
     {
-        Writer = new Writer(File.Create(filePath));
+        Writer = new TapResultWriter(File.Create(filePath));
     }
 
     public abstract void Write(ICustomData data);

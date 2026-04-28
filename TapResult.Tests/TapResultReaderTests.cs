@@ -54,7 +54,7 @@ internal sealed class MyColumn : IColumnParent
     }
 }
 
-public sealed class ReaderTests
+public sealed class TapResultReaderTests
 {
     [Test]
     public async Task MetadataRoundtripTest()
@@ -83,18 +83,18 @@ public sealed class ReaderTests
             Columns = [],
         };
         using MemoryStream stream = new MemoryStream();
-        Writer writer = new Writer(stream, true);
+        TapResultWriter tapResultWriter = new TapResultWriter(stream, true);
         Table tab1 = new Table([column1, column2], ["col1", "col2"], "table1");
-        writer.Write(tab1);
+        tapResultWriter.Write(tab1);
         Table tab2 = new Table([column2], ["col3"], "table2");
-        writer.Write(tab2);
-        writer.Dispose();
+        tapResultWriter.Write(tab2);
+        tapResultWriter.Dispose();
 
         stream.Seek(0, SeekOrigin.Begin);
-        Reader reader = await Reader.CreateReaderAsync(stream);
-        Assert.That(reader.GetTables().Count(), Is.EqualTo(2));
+        TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(stream);
+        Assert.That(tapResultReader.GetTables().Count(), Is.EqualTo(2));
         
-        Assert.That(reader.TryGetTable("table1", out TableInfo? table1), Is.True);
+        Assert.That(tapResultReader.TryGetTable("table1", out TableInfo? table1), Is.True);
         Assert.That(table1!.GetColumns().Count(), Is.EqualTo(2));
         
         Assert.That(table1.TryGetColumn("col1", out ColumnInfo? col1), Is.True);
@@ -118,7 +118,7 @@ public sealed class ReaderTests
         Assert.That(enc2.GetSubEncodings().Count(), Is.EqualTo(0));
         
         
-        Assert.That(reader.TryGetTable("table2", out TableInfo? table2), Is.True);
+        Assert.That(tapResultReader.TryGetTable("table2", out TableInfo? table2), Is.True);
         
         Assert.That(table2!.TryGetColumn("col3", out ColumnInfo? col3), Is.True);
         EncodingInfo enc3 = col3!.Encoding;
@@ -134,16 +134,16 @@ public sealed class ReaderTests
         int[] data = Enumerable.Range(0, 1000).Select(t => Random.Shared.Next(0, 255)).ToArray();
         Table table = new Table([ColumnBuilder.Create(data)], ["integers"], "table");
         using Stream stream = new MemoryStream();
-        using (Writer writer = new Writer(stream, leaveOpen: true))
+        using (TapResultWriter tapResultWriter = new TapResultWriter(stream, leaveOpen: true))
         {
-            writer.Write(table);
+            tapResultWriter.Write(table);
         }
 
         stream.Seek(0, SeekOrigin.Begin);
-        Reader reader = await Reader.CreateReaderAsync(stream);
-        Assert.That(reader.TryGetTable("table", out var tableInfo), Is.True);
+        TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(stream);
+        Assert.That(tapResultReader.TryGetTable("table", out var tableInfo), Is.True);
         Assert.That(tableInfo!.TryGetColumn("integers", out var columnInfo), Is.True);
-        IColumnReader<int> colReader = reader.OpenColumnReader<int>(columnInfo!);
+        IColumnReader<int> colReader = tapResultReader.OpenColumnReader<int>(columnInfo!);
         Assert.That(colReader.Read(data.Length).ToArray(), Is.EqualTo(data));
     }
 }

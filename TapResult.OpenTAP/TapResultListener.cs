@@ -80,7 +80,7 @@ public sealed class TapResultListener : ResultListener
     private AncestryBuilder? _ancestryBuilder = null;
     private readonly object _lock = new object();
     private Stream? _stream;
-    private Writer? _writer = null;
+    private TapResultWriter? _writer = null;
     private ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
 
     public TapResultListener()
@@ -101,7 +101,7 @@ public sealed class TapResultListener : ResultListener
         }
 
         _stream = File.Create(path);
-        _writer = new Writer(_stream);
+        _writer = new TapResultWriter(_stream);
         _tasks.Clear();
     }
 
