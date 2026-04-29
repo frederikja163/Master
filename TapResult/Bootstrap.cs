@@ -13,13 +13,15 @@ public enum FileType : byte
 
 public static class Bootstrap
 {
-    private static ulong MagicNumberStart =
+    private const ulong MagicNumberStart =
         ((ulong)'O' << (7 * 8)) |
         ((ulong)'T' << (6 * 8)) |
         ((ulong)'A' << (5 * 8)) |
         ((ulong)'P' << (4 * 8));
 
-    public static ulong SerializeMagicNumber(FileType type, byte major, byte minor, byte patch)
+    public static readonly int BootstrapSize = Unsafe.SizeOf<long>() * 4;
+    
+    public static ulong GetMagicNumber(FileType type, byte major, byte minor, byte patch)
     {
         return MagicNumberStart | 
                ((ulong)type << (3 * 8)) |
@@ -27,6 +29,7 @@ public static class Bootstrap
                ((ulong)minor << (1 * 8)) |
                ((ulong)patch << (0 * 8));
     }
+    
 
     public static bool TryParseMagicNumber(ulong magicNumber, out FileType type, out byte major, out byte minor, out byte patch)
     {
@@ -38,23 +41,33 @@ public static class Bootstrap
         return MagicNumberStart == start;
     }
 
-    public static byte[] SerializeTapResultPostfix(long metadataStart, long length, long logicalLength, ulong magicNumber)
+    public static void SerializePostfix(Span<byte> bootstrap, long start, long length, long logicalLength, ulong magicNumber)
     {
-        byte[] data = new byte[Unsafe.SizeOf<ulong>() * 4];
-        BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(0 * Unsafe.SizeOf<ulong>()), metadataStart);
-        BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(1 * Unsafe.SizeOf<ulong>()), length);
-        BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(2 * Unsafe.SizeOf<ulong>()), logicalLength);
-        BinaryPrimitives.WriteUInt64LittleEndian(data.AsSpan(3 * Unsafe.SizeOf<ulong>()), magicNumber);
-        return data;
+        BinaryPrimitives.WriteInt64LittleEndian(bootstrap.Slice(0 * Unsafe.SizeOf<ulong>()), start);
+        BinaryPrimitives.WriteInt64LittleEndian(bootstrap.Slice(1 * Unsafe.SizeOf<ulong>()), length);
+        BinaryPrimitives.WriteInt64LittleEndian(bootstrap.Slice(2 * Unsafe.SizeOf<ulong>()), logicalLength);
+        BinaryPrimitives.WriteUInt64LittleEndian(bootstrap.Slice(3 * Unsafe.SizeOf<ulong>()), magicNumber);
     }
     
-    public static long ParseTapResultPostfix(ReadOnlyMemory<byte> postfix, out long length, out long logicalLength, out ulong magicNumber)
+    public static void ParsePostfix(ReadOnlySpan<byte> bootstrap, out long start, out long length, out long logicalLength, out ulong magicNumber)
     {
-        GenericReader postfixReader = new (postfix);
-        long start = postfixReader.Read<long>();
-        length = postfixReader.Read<long>();
-        logicalLength = (int)postfixReader.Read<long>();
-        magicNumber = postfixReader.Read<ulong>();
-        return start;
+        start = BinaryPrimitives.ReadInt64LittleEndian(bootstrap.Slice(0 * Unsafe.SizeOf<ulong>()));
+        length = BinaryPrimitives.ReadInt64LittleEndian(bootstrap.Slice(1 * Unsafe.SizeOf<ulong>()));
+        logicalLength = BinaryPrimitives.ReadInt64LittleEndian(bootstrap.Slice(2 * Unsafe.SizeOf<ulong>()));
+        magicNumber = BinaryPrimitives.ReadUInt64LittleEndian(bootstrap.Slice(3 * Unsafe.SizeOf<ulong>()));
+    }
+
+    public static void SerializePrefix(Span<byte> bootstrap, long start, long length, long logicalLength)
+    {
+        BinaryPrimitives.WriteInt64LittleEndian(bootstrap.Slice(0 * Unsafe.SizeOf<ulong>()), start);
+        BinaryPrimitives.WriteInt64LittleEndian(bootstrap.Slice(1 * Unsafe.SizeOf<ulong>()), length);
+        BinaryPrimitives.WriteInt64LittleEndian(bootstrap.Slice(2 * Unsafe.SizeOf<ulong>()), logicalLength);
+    }
+    
+    public static void ParsePrefix(ReadOnlySpan<byte> bootstrap, out long start, out long length, out long logicalLength)
+    {
+        start = BinaryPrimitives.ReadInt64LittleEndian(bootstrap.Slice(0 * Unsafe.SizeOf<ulong>()));
+        length = BinaryPrimitives.ReadInt64LittleEndian(bootstrap.Slice(1 * Unsafe.SizeOf<ulong>()));
+        logicalLength = BinaryPrimitives.ReadInt64LittleEndian(bootstrap.Slice(2 * Unsafe.SizeOf<ulong>()));
     }
 }

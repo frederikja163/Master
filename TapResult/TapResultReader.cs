@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using TapResult.Columns;
 using TapResult.Encodings;
@@ -131,12 +132,11 @@ public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
     /// </summary>
     public static async Task<TapResultReader> CreateReaderAsync(Stream stream, Encoder? encoder = null, bool leaveOpen = true)
     {
-        int postfixSize = Unsafe.SizeOf<long>() * 4;
-        stream.Seek(-postfixSize, SeekOrigin.End);
-        byte[] postfix = new byte[postfixSize];
+        stream.Seek(-Bootstrap.BootstrapSize, SeekOrigin.End);
+        Span<byte> postfix = stackalloc byte[Bootstrap.BootstrapSize];
         stream.ReadExactly(postfix);
-        var start = Bootstrap.ParseTapResultPostfix(postfix, out long length, out long logicalLength, out ulong magicNumber);
-
+        Bootstrap.ParsePostfix(postfix, out long start, out long length, out long logicalLength, out ulong magicNumber);
+        
         if (!Bootstrap.TryParseMagicNumber(magicNumber, out FileType type, out byte major, out _, out _) &&
             type != FileType.TapResult && major != 1)
         {

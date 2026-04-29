@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using TapResult.Columns;
+using TapResult.Extensions;
 using TapResult.Readers;
 
 namespace TapResult;
@@ -25,7 +26,7 @@ public abstract class WriterBase
     
     protected WriterBase()
     {
-        Clear();
+        ClearMetadata();
     }
 
     internal Table GetMetadata()
@@ -35,7 +36,7 @@ public abstract class WriterBase
         "schema");
     }
 
-    protected void Clear()
+    protected void ClearMetadata()
     {
         _idBuilder = new (200);
         _parentIdBuilder = new (200);
@@ -48,7 +49,7 @@ public abstract class WriterBase
     /// <summary>
     /// Write a table to this writer.
     /// </summary>
-    public void Write(Table table)
+    public virtual void Write(Table table)
     {
         Write(table, false);
 
@@ -117,10 +118,7 @@ public sealed class TapResultWriter : WriterBase, IDisposable, IAsyncDisposable
         _outStream = output;
         _leaveOpen = leaveOpen;
 
-        Span<byte> data = stackalloc byte[Unsafe.SizeOf<ulong>()];
-        ulong magicNumber = Bootstrap.SerializeMagicNumber(FileType.TapResult, 1, 0, 0);
-        BinaryPrimitives.WriteUInt64LittleEndian(data, magicNumber);
-        _outStream.Write(data);
+        _outStream.WriteUInt64(Bootstrap.GetMagicNumber(FileType.TapResult, 1, 0, 0));
     }
 
     public void Dispose()
@@ -133,10 +131,11 @@ public sealed class TapResultWriter : WriterBase, IDisposable, IAsyncDisposable
         // Postscript
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = Length;
-        
-        ulong magicNumber = Bootstrap.SerializeMagicNumber(FileType.TapResult, 1, 0, 0);
-        byte[] data = Bootstrap.SerializeTapResultPostfix(metadataStart, metadataLength, metadataLogicalLength, magicNumber);
-        _outStream.Write(data);
+
+        Span<byte> bootstrap = stackalloc byte[Bootstrap.BootstrapSize];
+        ulong magicNumber = Bootstrap.GetMagicNumber(FileType.TapResult, 1, 0, 0);
+        Bootstrap.SerializePostfix(bootstrap, metadataStart, metadataLength, metadataLogicalLength, magicNumber);
+        _outStream.Write(bootstrap);
         
         _outStream.Flush();
         if (_leaveOpen)

@@ -175,7 +175,7 @@ public class TableTests
         int expectedPosition = 0;
         
         // Magic Number
-        Assert.That(reader.ReadBytes(8), Is.EqualTo(TapResultWriter.MagicNumber.ToArray()));
+        Assert.That(reader.ReadInt64(), Is.EqualTo(Bootstrap.GetMagicNumber(FileType.TapResult, 1, 0, 0)));
         expectedPosition += 8;
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
@@ -265,7 +265,7 @@ public class TableTests
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));
         
         // Magic Number
-        Assert.That(reader.ReadChars(8), Is.EqualTo(TapResultWriter.MagicNumber.ToArray()));
+        Assert.That(reader.ReadInt64(), Is.EqualTo(Bootstrap.GetMagicNumber(FileType.TapResult, 1, 0, 0)));
         expectedPosition += 8;
         
         Assert.That(reader.BaseStream.Position, Is.EqualTo(expectedPosition));

@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
+using TapResult.Benchmarks.Raw;
 using TapResult.OpenTAP;
 
 namespace TapResult.Benchmarks;
@@ -7,8 +8,7 @@ internal static class Program
 {
     internal static void Main(string[] args)
     {
-        new ReadBenchmarks().Setup();
-        new ReadBenchmarks().ReadSingleTapResult().GetAwaiter().GetResult();
+        new RawBenchmarks(){Data = AllBenchmarks.GetData().First()}.WriteRaw(new RawBinaryStream());
         switch (args[0])
         {
             case nameof(OpenTAPBenchmarks):
