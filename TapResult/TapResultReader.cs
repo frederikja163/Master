@@ -13,10 +13,61 @@ namespace TapResult;
 /// </summary>
 public abstract class ReaderBase
 {
-    private readonly ILookup<string, TableInfo> _tables;
+    private readonly Dictionary<string, List<TableInfo>> _tables;
     private readonly Encoder _encoder;
 
-    protected ReaderBase(Encoder encoder, ReadOnlyMemory<byte> schema, int logicalLength)
+    protected ReaderBase(Encoder encoder)
+    {
+        _tables = new Dictionary<string, List<TableInfo>>();
+        _encoder = encoder;
+    }
+
+    protected void AddEncodings(ReadOnlyMemory<byte> schema, int logicalLength)
+    {
+        var encodingsById = GetEncodings(schema, logicalLength);
+
+        var tableEncodings = PopulateSubEncodings(encodingsById);
+
+        CreateTableEncodings(tableEncodings);
+    }
+
+    private void CreateTableEncodings(List<EncodingInfo> tableEncodings)
+    {
+        foreach (EncodingInfo encodingInfo in tableEncodings)
+        {
+            TableInfo tableInfo = new TableInfo(encodingInfo);
+            if (!_tables.TryGetValue(tableInfo.Name, out List<TableInfo>? tables))
+            {
+                tables = new List<TableInfo>();
+                _tables[tableInfo.Name] = tables;
+            }
+
+            tables.Add(tableInfo);
+        }
+    }
+
+    private static List<EncodingInfo> PopulateSubEncodings(Dictionary<int, EncodingInfo> encodingsById)
+    {
+        List<EncodingInfo> tableEncodings = new List<EncodingInfo>();
+        foreach (EncodingInfo value in encodingsById.Values)
+        {
+            if (value.ParentId == -1)
+            {
+                // We need to populate all child columns before we create the TableInfo.
+                tableEncodings.Add(value);
+                continue;
+            }
+
+            if (!encodingsById.TryGetValue(value.ParentId, out EncodingInfo? info))
+                throw new Exception($"No parent column (id {value.ParentId}) found for column {value.Id}");
+            EncodingInfo parent = info;
+            parent.AddSubEncoding(value);
+        }
+
+        return tableEncodings;
+    }
+
+    private static Dictionary<int, EncodingInfo> GetEncodings(ReadOnlyMemory<byte> schema, int logicalLength)
     {
         GenericReader schemaReader = new GenericReader(schema);
         ReadOnlySpan<int> ids = schemaReader.Read<int>(logicalLength);
@@ -34,24 +85,8 @@ public abstract class ReaderBase
             schemaReader.Advance(blobLength);
             encodingsById.Add(ids[i], new EncodingInfo(ids[i], parentIds[i], (EncodingType)encodingIds[i], (LogicalType)types[i], lengths[i], blob));
         }
-        
-        List<EncodingInfo> tableEncodings = new List<EncodingInfo>();
-        foreach (EncodingInfo value in encodingsById.Values)
-        {
-            if (value.ParentId == -1)
-            {
-                // We need to populate all child columns before we create the TableInfo.
-                tableEncodings.Add(value);
-                continue;
-            }
 
-            if (!encodingsById.TryGetValue(value.ParentId, out EncodingInfo? info))
-                throw new Exception($"No parent column (id {value.ParentId}) found for column {value.Id}");
-            EncodingInfo parent = info;
-            parent.AddSubEncoding(value);
-        }
-        _tables = tableEncodings.Select(e => new TableInfo(e)).ToLookup(t => t.Name);
-        _encoder = encoder;
+        return encodingsById;
     }
 
     /// <summary>
@@ -59,13 +94,7 @@ public abstract class ReaderBase
     /// </summary>
     public IEnumerable<TableInfo> GetTables()
     {
-        foreach (IGrouping<string, TableInfo> table in _tables)
-        {
-            foreach (TableInfo info in table)
-            {
-                yield return info;
-            }
-        }
+        return _tables.SelectMany(t => t.Value);
     }
 
     /// <summary>
@@ -121,7 +150,7 @@ public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
     private readonly bool _leaveOpen;
     private readonly Stream _stream;
     
-    private TapResultReader(Encoder encoder, ReadOnlyMemory<byte> schema, int length, Stream stream, bool leaveOpen) : base(encoder, schema, length)
+    private TapResultReader(Encoder encoder, Stream stream, bool leaveOpen) : base(encoder)
     {
         _stream = stream;
         _leaveOpen = leaveOpen;
@@ -132,13 +161,15 @@ public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
     /// </summary>
     public static async Task<TapResultReader> CreateReaderAsync(Stream stream, Encoder? encoder = null, bool leaveOpen = true)
     {
-        stream.Seek(-Bootstrap.BootstrapSize, SeekOrigin.End);
-        Span<byte> postfix = stackalloc byte[Bootstrap.BootstrapSize];
+        TapResultReader reader = new TapResultReader(encoder ?? Encoder.Default, stream, leaveOpen);
+        
+        stream.Seek(-Bootstrap.PostfixSize, SeekOrigin.End);
+        Span<byte> postfix = stackalloc byte[Bootstrap.PostfixSize];
         stream.ReadExactly(postfix);
         Bootstrap.ParsePostfix(postfix, out long start, out long length, out long logicalLength, out ulong magicNumber);
         
-        if (!Bootstrap.TryParseMagicNumber(magicNumber, out FileType type, out byte major, out _, out _) &&
-            type != FileType.TapResult && major != 1)
+        if (!Bootstrap.TryParseMagicNumber(magicNumber, out FileType type, out byte major, out _, out _) ||
+            type != FileType.TapResult || major != 1)
         {
             throw new Exception("Magic number is either malformed or this file is of another type.");
         }
@@ -147,7 +178,8 @@ public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
         byte[] schema = new byte[length];
         await stream.ReadExactlyAsync(schema);
         
-        return new TapResultReader(encoder ?? Encoder.Default, schema, (int)logicalLength, stream, leaveOpen);
+        reader.AddEncodings(schema, (int)logicalLength);
+        return reader;
     }
 
     protected override IColumnReader CreateReader(EncodingInfo encodingInfo)

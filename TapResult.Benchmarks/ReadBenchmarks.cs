@@ -10,6 +10,7 @@ using TapResult.Readers;
 
 namespace TapResult.Benchmarks;
 
+[MemoryDiagnoser]
 public class ReadBenchmarks
 {
     [GlobalSetup]
@@ -20,10 +21,26 @@ public class ReadBenchmarks
         {
             FilePath = new MacroString(){Text = "Results.TapResult"}
         });
+        benchmarks.WriteOpenTAP(new TapResultListener()
+        {
+            FilePath = new MacroString(){Text = "Results"},
+            WriterCreator = s => new TapDataWriter(File.Create(s + ".TapData"), File.Create(s + ".TapSchema"))
+        });
         benchmarks.WriteOpenTAP(new ParquetResultListener()
         {
             FilePath = new MacroString(){Text = "Results.Parquet"}
         });
+    }
+
+    [Benchmark]
+    public async Task<object?> ReadSingleTapData()
+    {
+        await using TapDataReader tapResultReader = new TapDataReader(Encoder.Default, File.OpenRead("Results.TapData"), File.OpenRead("Results.TapSchema"));
+        TableInfo table = tapResultReader.GetTables().PickRandom();
+        ColumnInfo column = table.GetColumns().PickRandom();
+        IColumnReader colReader = tapResultReader.OpenColumnReader(column);
+        int index = Random.Shared.Next(0, colReader.Length);
+        return colReader.Peek(index);
     }
 
     [Benchmark]

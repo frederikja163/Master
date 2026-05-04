@@ -11,4 +11,11 @@ internal static class StreamExtensions
         BinaryPrimitives.WriteUInt64LittleEndian(bytes, value);
         stream.Write(bytes);
     }
+    
+    public static ulong ReadUInt64(this Stream stream)
+    {
+        Span<byte> bytes = stackalloc byte[Unsafe.SizeOf<ulong>()];
+        stream.ReadExactly(bytes);
+        return BinaryPrimitives.ReadUInt64LittleEndian(bytes);
+    }
 }

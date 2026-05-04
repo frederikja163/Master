@@ -132,7 +132,7 @@ public sealed class TapResultWriter : WriterBase, IDisposable, IAsyncDisposable
         long metadataLength = _outStream.Position - metadataStart;
         long metadataLogicalLength = Length;
 
-        Span<byte> bootstrap = stackalloc byte[Bootstrap.BootstrapSize];
+        Span<byte> bootstrap = stackalloc byte[Bootstrap.PostfixSize];
         ulong magicNumber = Bootstrap.GetMagicNumber(FileType.TapResult, 1, 0, 0);
         Bootstrap.SerializePostfix(bootstrap, metadataStart, metadataLength, metadataLogicalLength, magicNumber);
         _outStream.Write(bootstrap);

@@ -19,7 +19,8 @@ public static class Bootstrap
         ((ulong)'A' << (5 * 8)) |
         ((ulong)'P' << (4 * 8));
 
-    public static readonly int BootstrapSize = Unsafe.SizeOf<long>() * 4;
+    public static readonly int PostfixSize = Unsafe.SizeOf<long>() * 4;
+    public static readonly int PrefixSize = Unsafe.SizeOf<long>() * 3;
     
     public static ulong GetMagicNumber(FileType type, byte major, byte minor, byte patch)
     {
@@ -37,8 +38,7 @@ public static class Bootstrap
         minor = (byte)((magicNumber >> (1 * 8)) & byte.MaxValue);
         major = (byte)((magicNumber >> (2 * 8)) & byte.MaxValue);
         type = (FileType)((magicNumber >> (3 * 8)) & byte.MaxValue);
-        ulong start = magicNumber >> (4 * 8);
-        return MagicNumberStart == start;
+        return (MagicNumberStart & magicNumber) == MagicNumberStart;
     }
 
     public static void SerializePostfix(Span<byte> bootstrap, long start, long length, long logicalLength, ulong magicNumber)

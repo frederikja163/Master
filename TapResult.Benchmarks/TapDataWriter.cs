@@ -27,16 +27,17 @@ public sealed class TapDataWriter : WriterBase, IDisposable
         _dataStream.WriteUInt64(Bootstrap.GetMagicNumber(FileType.TapData, 1, 0, 0));
 
         long position = _schemaStream.Position;
-        Span<byte> prefix = stackalloc byte[Bootstrap.BootstrapSize - Unsafe.SizeOf<ulong>()];
+        Span<byte> prefix = stackalloc byte[Bootstrap.PrefixSize];
         _schemaStream.Write(prefix);
-        long offset = position - _schemaStream.Position;
+        long offset = _schemaStream.Position - position;
         
-        base.Write(GetMetadata());
+        base.Write(GetMetadata(), true);
         long end = _schemaStream.Position;
 
         _schemaStream.Seek(position, SeekOrigin.Begin);
         long length = end - position - offset;
         Bootstrap.SerializePrefix(prefix, offset, length, Length);
+        _schemaStream.Write(prefix);
         _schemaStream.Seek(end, SeekOrigin.Begin);
         
         _schemaStream.WriteUInt64(Bootstrap.GetMagicNumber(FileType.TapSchema, 1, 0, 0));
