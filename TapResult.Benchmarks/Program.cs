@@ -1,4 +1,3 @@
-﻿using System.Net;
 using BenchmarkDotNet.Running;
 using TapResult.Benchmarks.Raw;
 using TapResult.OpenTAP;
@@ -9,8 +8,6 @@ internal static class Program
 {
     internal static void Main(string[] args)
     {
-        new ReadBenchmarks().Setup();
-        new ReadBenchmarks().ReadSingleTapData().GetAwaiter().GetResult();
         switch (args[0])
         {
             case nameof(OpenTAPBenchmarks):
@@ -27,6 +24,13 @@ internal static class Program
                 break;
             case nameof(ReadBenchmarks):
                 BenchmarkRunner.Run<ReadBenchmarks>();
+                break;
+             case nameof(HttpReadBenchmarks):
+                 BenchmarkRunner.Run<HttpReadBenchmarks>();
+                 break;
+            case "Server":
+                ReadBenchmarks.Setup();
+                Server.StartHttpServer();
                 break;
         }
     }

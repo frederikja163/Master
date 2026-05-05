@@ -145,7 +145,7 @@ public abstract class ReaderBase
 /// Reader for a TapResult file,
 /// can open new columns to read and read the metadata to figure out what columns and types exist.
 /// </summary>
-public sealed class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
+public class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
 {
     private readonly bool _leaveOpen;
     private readonly Stream _stream;
