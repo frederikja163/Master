@@ -159,7 +159,7 @@ public class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
     /// <summary>
     /// Creates a new reader asynchronously.
     /// </summary>
-    public static async Task<TapResultReader> CreateReaderAsync(Stream stream, Encoder? encoder = null, bool leaveOpen = true)
+    public static async Task<TapResultReader> CreateReaderAsync(Stream stream, Encoder? encoder = null, bool leaveOpen = false)
     {
         TapResultReader reader = new TapResultReader(encoder ?? Encoder.Default, stream, leaveOpen);
         

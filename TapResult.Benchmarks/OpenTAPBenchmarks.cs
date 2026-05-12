@@ -45,28 +45,30 @@ public class OpenTAPBenchmarks : AllBenchmarks
         };
         yield return new ParquetResultListener()
         {
-            FilePath = new MacroString() { Text = Config.FilePath }
+            FilePath = new MacroString() { Text = Config.FilePath },
         };
         yield return new TapResultListener()
         {
             FilePath = new MacroString() {Text = Config.FilePath},
-            WriterCreator = s => new TapDataWriter(File.Create(s), File.Create(s + ".TapSchema"))
+            WriterCreator = s => new TapDataWriter(File.Create(s), File.Create(s + ".TapSchema")),
+            Name = "TapData",
         };
         yield return new TapResultListener()
         {
             FilePath = new MacroString() {Text = Config.FilePath},
+            Name = "TapResult",
         };
-        yield return new Hdf5ResultListener()
-        {
-            FilePath = Config.FilePath
-        };
-        yield return new SQLiteDatabase()
-        {
-            FilePath = Config.FilePath
-        };
-        yield return new CsvResultListener()
-        {
-            FilePath = new MacroString() { Text = Config.FilePath }
-        };
+        // yield return new Hdf5ResultListener()
+        // {
+        //     FilePath = Config.FilePath
+        // };
+        // yield return new SQLiteDatabase()
+        // {
+        //     FilePath = Config.FilePath
+        // };
+        // yield return new CsvResultListener()
+        // {
+        //     FilePath = new MacroString() { Text = Config.FilePath }
+        // };
     }
 }

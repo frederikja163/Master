@@ -31,8 +31,8 @@ public class RawBenchmarks : AllBenchmarks
         yield return new RawBinaryStream();
         // yield return new RawParquetMultiFile(CompressionMethod.Snappy);
         // yield return new RawParquetMultiFile(CompressionMethod.None);
-        // yield return new RawParquet(CompressionMethod.Snappy);
-        // yield return new RawParquet(CompressionMethod.None);
+        yield return new RawParquet(CompressionMethod.Snappy);
+        yield return new RawParquet(CompressionMethod.None);
         // yield return new RawParquet(CompressionMethod.Zstd);
         // yield return new RawParquet(CompressionMethod.Gzip);
         // yield return new RawParquet(CompressionMethod.LZ4);

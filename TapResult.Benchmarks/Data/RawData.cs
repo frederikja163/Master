@@ -138,6 +138,6 @@ public sealed class RawData : ICustomData
 
     public override string ToString()
     {
-        return $"{Repeats*Count}x{_columns.Count}x{Sparsity}";
+        return $"{_columnNames.First()}";
     }
 }

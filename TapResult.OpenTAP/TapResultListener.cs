@@ -155,6 +155,6 @@ public sealed class TapResultListener : ResultListener
 
     public override string ToString()
     {
-        return nameof(TapResultListener);
+        return Name;
     }
 }

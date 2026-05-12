@@ -103,7 +103,7 @@ public class HttpReadBenchmarks
     {
         byte[] tapResultBytes = await Server.ReadFileAsync(ServerUrl, "Results.TapResult");
 
-        using TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(new MemoryStream(tapResultBytes), leaveOpen: false);
+        await using TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(new MemoryStream(tapResultBytes), leaveOpen: false);
         TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();
         IColumnReader colReader = tapResultReader.OpenColumnReader(column);
@@ -126,7 +126,7 @@ public class HttpReadBenchmarks
     [Benchmark]
     public async Task<object?> ReadSingleHttpTapResult()
     {
-        using TapResultHttpReader tapResultReader =
+        await using TapResultHttpReader tapResultReader =
             await TapResultHttpReader.CreateReaderAsync(ServerUrl, "Results.TapResult", leaveOpen: false);
         TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();

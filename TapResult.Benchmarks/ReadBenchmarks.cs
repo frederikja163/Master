@@ -16,7 +16,7 @@ public class ReadBenchmarks
     [GlobalSetup]
     public static void Setup()
     {
-        var benchmarks = new OpenTAPBenchmarks() { Data = AllBenchmarks.GetData().Last() };
+        var benchmarks = new OpenTAPBenchmarks() { Data = AllBenchmarks.GetData().Skip(0).First() };
         benchmarks.WriteOpenTAP(new TapResultListener()
         {
             FilePath = new MacroString(){Text = "Read/Results.TapResult"}
@@ -33,9 +33,9 @@ public class ReadBenchmarks
     }
 
     [Benchmark]
-    public async Task<object?> ReadSingleTapData()
+    public object? ReadSingleTapData()
     {
-        await using TapDataReader tapResultReader = new TapDataReader(Encoder.Default, File.OpenRead("Read/Results.TapData"), File.OpenRead("Read/Results.TapSchema"));
+        using TapDataReader tapResultReader = new TapDataReader(Encoder.Default, File.OpenRead("Read/Results.TapData"), File.OpenRead("Read/Results.TapSchema"));
         TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();
         IColumnReader colReader = tapResultReader.OpenColumnReader(column);
@@ -46,7 +46,7 @@ public class ReadBenchmarks
     [Benchmark]
     public async Task<object?> ReadSingleTapResult()
     {
-        using TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(File.OpenRead("Read/Results.TapResult"), leaveOpen: false);
+        await using TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(File.OpenRead("Read/Results.TapResult"), leaveOpen: false);
         TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();
         IColumnReader colReader = tapResultReader.OpenColumnReader(column);

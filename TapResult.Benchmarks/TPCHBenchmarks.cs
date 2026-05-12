@@ -122,20 +122,21 @@ public class TPCHBenchmarks
     public static IEnumerable<Implementation> GetImplementations()
     {
         TpchData[] data = GetData().ToArray();
-        // TpchData[] data = [GetData().First()];
-        yield return new Implementation(new RawBinaryStream(), data);
-        yield return new Implementation(new TapResultBenchmark(TapResultCreators.CreateBase), data);
-        yield return new Implementation(new AsyncTapResultBenchmark(TapResultCreators.CreateBase), data);
-        yield return new Implementation(new CompressedTapResultBenchmark(TapResultCreators.CreateBase), data);
+        return data.Select(d => new Implementation(new RawParquetMultiFile(CompressionMethod.Snappy), [d]));
+        // // TpchData[] data = [GetData().First()];
+        // yield return new Implementation(new RawBinaryStream(), data);
+        // yield return new Implementation(new TapResultBenchmark(TapResultCreators.CreateBase), data);
+        // yield return new Implementation(new AsyncTapResultBenchmark(TapResultCreators.CreateBase), data);
+        // yield return new Implementation(new CompressedTapResultBenchmark(TapResultCreators.CreateBase), data);
         // yield return new Implementation(new RawParquet(CompressionMethod.Snappy), data);
         // yield return new Implementation(new RawParquet(CompressionMethod.Zstd), data);
-        // yield return new Implementation(new RawParquet(CompressionMethod.Gzip), data);
-        yield return new Implementation(new RawParquet(CompressionMethod.None), data);
-        // yield return new Implementation(new RawParquet(CompressionMethod.LZ4), data);
-        // yield return new Implementation(new RawParquet(CompressionMethod.Lz4Raw), data);
-        // yield return new Implementation(new RawParquet(CompressionMethod.Brotli), data);
-        yield return new Implementation(new RawCsv(), data);
-        yield return new Implementation(new RawSqlite(), data);
-        yield return new Implementation(new RawHdf5Benchmark(), data);
+        // // yield return new Implementation(new RawParquet(CompressionMethod.Gzip), data);
+        // yield return new Implementation(new RawParquet(CompressionMethod.None), data);
+        // // yield return new Implementation(new RawParquet(CompressionMethod.LZ4), data);
+        // // yield return new Implementation(new RawParquet(CompressionMethod.Lz4Raw), data);
+        // // yield return new Implementation(new RawParquet(CompressionMethod.Brotli), data);
+        // yield return new Implementation(new RawCsv(), data);
+        // yield return new Implementation(new RawSqlite(), data);
+        // yield return new Implementation(new RawHdf5Benchmark(), data);
     }
 }

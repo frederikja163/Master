@@ -27,10 +27,16 @@ public abstract class AllBenchmarks
 
     public static IEnumerable<ICustomData> GetData()
     {
+        yield return new RawData(1_000, 1_000, 1).PopulateRandomNatoAlphabetStrings();
+        yield return new RawData(1_000, 1_000, 1).PopulateRandomGuidStrings();
+        yield return new RawData(1_000, 1_000, 1).PopulateOrderedInts();
+        yield return new RawData(1_000, 1_000, 1).PopulateRandomInts();
+        yield return new RawData(1_000, 1_000, 1).PopulateRandomDoubles();
+        yield break;
         bool isRows = true;
         bool isColumns = false;
         bool isSparsity = false;
-        int totalCount = 3;
+        int totalCount = 4;
         for (int i = 0; i < totalCount; i++)
         {
             int rows = isRows ? (int)Math.Pow(10, i) : 10;

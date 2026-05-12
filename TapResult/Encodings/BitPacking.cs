@@ -45,7 +45,7 @@ public sealed class BitPacking : IEncoding
         GetMetadata<T>(reader.Clone(), out byte prefixLength, out ulong prefix);
         int size = Unsafe.SizeOf<T>() * 8;
         int packedSize = size - prefixLength;
-        int length = (int)double.Ceiling(reader.Length / (double)packedSize) + 1;
+        int length = (reader.Length + packedSize) / packedSize;
         ColumnBuilder<T> builder = new (length * Unsafe.SizeOf<T>());
         T flag = (T.AllBitsSet << prefixLength) >>> prefixLength;
         T currentValue = default;
