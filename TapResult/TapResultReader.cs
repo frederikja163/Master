@@ -164,8 +164,8 @@ public class TapResultReader : ReaderBase, IDisposable, IAsyncDisposable
         TapResultReader reader = new TapResultReader(encoder ?? Encoder.Default, stream, leaveOpen);
         
         stream.Seek(-Bootstrap.PostfixSize, SeekOrigin.End);
-        Span<byte> postfix = stackalloc byte[Bootstrap.PostfixSize];
-        stream.ReadExactly(postfix);
+        byte[] postfix = new byte[Bootstrap.PostfixSize];
+        await stream.ReadExactlyAsync(postfix);
         Bootstrap.ParsePostfix(postfix, out long start, out long length, out long logicalLength, out ulong magicNumber);
         
         if (!Bootstrap.TryParseMagicNumber(magicNumber, out FileType type, out byte major, out _, out _) ||

@@ -24,7 +24,7 @@ internal sealed class AncestryBuilder
         }
         else
         {
-            _parent.WriteNull();
+            _parent.WriteValue(string.Empty);
         }
         _name.WriteValue(name);
     }
@@ -88,7 +88,20 @@ public sealed class TapResultListener : ResultListener
     {
         Name = "TapResult";
     }
-    
+
+    public override void Close()
+    {
+        base.Close();
+        Task.WaitAll(_tasks);
+        _tasks.Clear();
+        _ancestryBuilder = null;
+        _paramBuilder = null;
+        if (_writer is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
+
     public override void OnTestPlanRunStart(TestPlanRun planRun)
     {
         base.OnTestPlanRunStart(planRun);
@@ -119,15 +132,6 @@ public sealed class TapResultListener : ResultListener
         {
             _paramBuilder.Add(planRun);
             _tasks.Add(WriteAndCompressAsync(_paramBuilder.Build()));
-        }
-
-        Task.WaitAll(_tasks);
-        _tasks.Clear();
-        _ancestryBuilder = null;
-        _paramBuilder = null;
-        if (_writer is IDisposable disposable)
-        {
-            disposable.Dispose();
         }
     }
 

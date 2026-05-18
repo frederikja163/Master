@@ -14,28 +14,32 @@ namespace TapResult.Benchmarks;
 public class ReadBenchmarks
 {
     [GlobalSetup]
-    public static void Setup()
+    public static void SetupTemp() => Setup(Path.GetTempPath());
+
+    public static void Setup(string path)
     {
-        var benchmarks = new OpenTAPBenchmarks() { Data = AllBenchmarks.GetData().Skip(0).First() };
+        var benchmarks = new OpenTAPBenchmarks() { Data = AllBenchmarks.GetData().Last() };
         benchmarks.WriteOpenTAP(new TapResultListener()
         {
-            FilePath = new MacroString(){Text = "Read/Results.TapResult"}
+            FilePath = new MacroString() { Text = Path.Combine(path, "Results.TapResult") }
         });
         benchmarks.WriteOpenTAP(new TapResultListener()
         {
-            FilePath = new MacroString(){Text = "Read/Results"},
+            FilePath = new MacroString() { Text = Path.Combine(path, "Results") },
             WriterCreator = s => new TapDataWriter(File.Create(s + ".TapData"), File.Create(s + ".TapSchema"))
         });
         benchmarks.WriteOpenTAP(new ParquetResultListener()
         {
-            FilePath = new MacroString(){Text = "Read/Results.Parquet"}
+            FilePath = new MacroString() { Text = Path.Combine(path, "Results.Parquet") }
         });
     }
 
-    [Benchmark]
+    // [Benchmark]
     public object? ReadSingleTapData()
     {
-        using TapDataReader tapResultReader = new TapDataReader(Encoder.Default, File.OpenRead("Read/Results.TapData"), File.OpenRead("Read/Results.TapSchema"));
+        using TapDataReader tapResultReader = new TapDataReader(Encoder.Default,
+            File.OpenRead(Path.Combine(Path.GetTempPath(), "Results.TapData")),
+            File.OpenRead(Path.Combine(Path.GetTempPath(), "Results.TapSchema")));
         TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();
         IColumnReader colReader = tapResultReader.OpenColumnReader(column);
@@ -46,7 +50,9 @@ public class ReadBenchmarks
     [Benchmark]
     public async Task<object?> ReadSingleTapResult()
     {
-        await using TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(File.OpenRead("Read/Results.TapResult"), leaveOpen: false);
+        using TapResultReader tapResultReader =
+            await TapResultReader.CreateReaderAsync(
+                File.OpenRead(Path.Combine(Path.GetTempPath(), "Results.TapResult")), leaveOpen: false);
         TableInfo table = tapResultReader.GetTables().PickRandom();
         ColumnInfo column = table.GetColumns().PickRandom();
         IColumnReader colReader = tapResultReader.OpenColumnReader(column);
@@ -57,7 +63,7 @@ public class ReadBenchmarks
     [Benchmark]
     public async Task<object?> ReadSingleParquet()
     {
-        using ParquetReader reader = await ParquetReader.CreateAsync("Read/Results.Parquet");
+        using ParquetReader reader = await ParquetReader.CreateAsync(Path.Combine(Path.GetTempPath(), "Results.Parquet"));
         int rowgroup = Random.Shared.Next(0, reader.RowGroupCount);
         DataField field = reader.Schema.DataFields.PickRandom();
         using ParquetRowGroupReader groupReader = reader.OpenRowGroupReader(rowgroup);

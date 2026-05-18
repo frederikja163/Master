@@ -19,7 +19,7 @@ public class TapDataReader : ReaderBase, IDisposable, IAsyncDisposable
         _leaveOpen = leaveOpen;
         
         ulong magicNumber = schemaStream.ReadUInt64();
-        Span<byte> bootstrap = stackalloc byte[Bootstrap.PrefixSize];
+        byte[] bootstrap = new byte[Bootstrap.PrefixSize];
         while (Bootstrap.TryParseMagicNumber(magicNumber, out FileType type, out byte major, out _, out _) && type == FileType.TapSchema && major == 1 && _schemaStream.Position < _schemaStream.Length)
         {
             _schemaStream.ReadExactly(bootstrap);

@@ -29,7 +29,7 @@ internal static class Program
                  BenchmarkRunner.Run<HttpReadBenchmarks>();
                  break;
             case "Server":
-                ReadBenchmarks.Setup();
+                ReadBenchmarks.Setup("Read");
                 Server.StartHttpServer();
                 break;
         }
