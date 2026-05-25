@@ -28,9 +28,9 @@ public abstract class AllBenchmarks
     public static IEnumerable<ICustomData> GetData()
     {
         // yield return new RawData(10_000, 1_000, 1).PopulateRandomNatoAlphabetStrings();
-        // yield return new RawData(10_000, 1_000, 1).PopulateRandomGuidStrings();
+        // yield return new RawData(1_000, 10_000, 1).PopulateRandomGuidStrings(2);
         // yield return new RawData(10_000, 1_000, 1).PopulateOrderedInts();
-        // yield return new RawData(10_000, 1_000, 1).PopulateRandomInts();
+        // yield return new RawData(1_000, 10_000, 1).PopulateRandomInts(100);
         // yield return new RawData(10_000, 1_000, 1).PopulateRandomDoubles();
         // yield break;
         bool isRows = true;
@@ -39,8 +39,8 @@ public abstract class AllBenchmarks
         int totalCount = 4;
         for (int i = 0; i < totalCount; i++)
         {
-            int rows = isRows ? (int)Math.Pow(10, i) : 10;
-            int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 100;
+            int rows = isRows ? (int)Math.Pow(10, i) : 1000;
+            int columns = isColumns ? (int)Math.Pow(10, totalCount - i) : 10;
             float sparsity = isSparsity ? MathF.Max((float)i / totalCount, 0.1f) : 1f;
             yield return new RawData(1_000, rows, sparsity)
                 .PopulateRandomNatoAlphabetStrings(columns / 5)

@@ -4,6 +4,7 @@ using OpenTap.Plugins.Parquet;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
+using TapResult.Benchmarks.Raw;
 using TapResult.Extensions;
 using TapResult.OpenTAP;
 using TapResult.Readers;
@@ -18,6 +19,18 @@ public class ReadBenchmarks
 
     public static void Setup(string path)
     {
+        // var data = TPCHBenchmarks.GetData().ToArray();
+        // var benchmarks = new TPCHBenchmarks();
+        // Config.FilePath = Path.Combine(path,  "Results.Parquet");
+        // benchmarks.WriteRaw(new TPCHBenchmarks.Implementation(new RawParquet(CompressionMethod.Snappy), data));
+        // Config.FilePath = Path.Combine(path, "Results");
+        // benchmarks.WriteRaw(new TPCHBenchmarks.Implementation(
+        //     new AsyncTapResultBenchmark(s =>
+        //         new TapDataWriter(File.Create(s + ".TapData"), File.Create(s + ".TapSchema"))), data));
+        // benchmarks.WriteRaw(new TPCHBenchmarks.Implementation(
+        //     new AsyncTapResultBenchmark(s =>
+        //         new TapResultWriter(s + ".TapResult")), data));
+
         var benchmarks = new OpenTAPBenchmarks() { Data = AllBenchmarks.GetData().Last() };
         benchmarks.WriteOpenTAP(new TapResultListener()
         {
