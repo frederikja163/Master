@@ -5,7 +5,7 @@ namespace TapResult.Benchmarks;
 
 internal static class Server
 {
-    public const string DefaultUrl = "http://localhost:8080";
+    public const string DefaultUrl = "http://91.99.184.186:8080";
 
     private static long _bytesSent = 0;
     private static int _counter = 0;

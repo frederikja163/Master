@@ -47,7 +47,7 @@ public class ReadBenchmarks
         });
     }
 
-    // [Benchmark]
+    [Benchmark]
     public object? ReadSingleTapData()
     {
         using TapDataReader tapResultReader = new TapDataReader(Encoder.Default,

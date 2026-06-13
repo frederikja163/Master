@@ -138,6 +138,6 @@ public sealed class RawData : ICustomData
 
     public override string ToString()
     {
-        return $"{_columnNames.First()}";
+        return $"{Count*Repeats}";
     }
 }
