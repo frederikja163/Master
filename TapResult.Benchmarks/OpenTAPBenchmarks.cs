@@ -49,7 +49,12 @@ public class OpenTAPBenchmarks : AllBenchmarks
         };
         yield return new TapResultListener()
         {
-            FilePath = new MacroString() {Text = Config.FilePath}
+            FilePath = new MacroString() {Text = Config.FilePath},
+            WriterCreator = s => new TapDataWriter(File.Create(s), File.Create(s + ".TapSchema"))
+        };
+        yield return new TapResultListener()
+        {
+            FilePath = new MacroString() {Text = Config.FilePath},
         };
         yield return new Hdf5ResultListener()
         {

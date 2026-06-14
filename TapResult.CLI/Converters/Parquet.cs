@@ -37,7 +37,7 @@ public sealed class Parquets
         {
             using ParquetReader parquetReader = await ParquetReader.CreateAsync(input);
 
-            await using Writer writer = new Writer(output);
+            await using TapResultWriter tapResultWriter = new TapResultWriter(output);
 
             for (int i = 0; i < parquetReader.RowGroupCount; i++)
             {
@@ -53,7 +53,7 @@ public sealed class Parquets
                 Table table = new Table(columns, parquetReader.Schema.DataFields.Select(field => field.Name),
                     "Parquetfile");
                 table.Compress(encoder);
-                writer.Write(table); 
+                tapResultWriter.Write(table); 
             }
         }
         catch (Exception e)

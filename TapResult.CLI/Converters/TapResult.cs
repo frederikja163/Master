@@ -37,11 +37,11 @@ internal static class TapResult
     {
         try
         {
-            Reader reader = await Reader.CreateReaderAsync(input);
+            TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(input);
 
             if (opts.MultipleFiles)
             {
-                foreach (TableInfo tableInfo in reader.GetTables())
+                foreach (TableInfo tableInfo in tapResultReader.GetTables())
                 {
                     FileInfo fileInfo;
                     if (tableInfo.Name.ContainsAny(['/', '\\']))
@@ -63,17 +63,17 @@ internal static class TapResult
                     }
                     await using var outputStream = fileInfo.Open(FileMode.Create, FileAccess.Write, FileShare.None);
                     await using StreamWriter writer = new StreamWriter(outputStream);
-                    await WriteTableToCsv(tableInfo, writer, reader, opts.Verbose, includeTableName: false);
+                    await WriteTableToCsv(tableInfo, writer, tapResultReader, opts.Verbose, includeTableName: false);
                 }
             }
             else
             {
                 await using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
                 await using StreamWriter writer = new StreamWriter(outputStream);
-                int tableCount = reader.TableCount;
-                foreach (TableInfo tableInfo in reader.GetTables())
+                int tableCount = tapResultReader.TableCount;
+                foreach (TableInfo tableInfo in tapResultReader.GetTables())
                 {
-                    await WriteTableToCsv(tableInfo, writer, reader, opts.Verbose, includeTableName: tableCount != 1);
+                    await WriteTableToCsv(tableInfo, writer, tapResultReader, opts.Verbose, includeTableName: tableCount != 1);
                 }
             }
         }
@@ -83,7 +83,7 @@ internal static class TapResult
         }
     }
 
-    private static async Task WriteTableToCsv(TableInfo tableInfo, StreamWriter writer, Reader reader, bool verbose, bool includeTableName = true)
+    private static async Task WriteTableToCsv(TableInfo tableInfo, StreamWriter writer, TapResultReader tapResultReader, bool verbose, bool includeTableName = true)
     {
         if (verbose)
         {
@@ -92,7 +92,7 @@ internal static class TapResult
         if (includeTableName)
             await writer.WriteLineAsync(tableInfo.Name);
         await writer.WriteLineAsync(string.Join(",", tableInfo.GetColumns().Select(column => column.Name)));
-        IColumnReader[] readers = tableInfo.GetColumns().Select(column => reader.OpenColumnReader(column)).ToArray();
+        IColumnReader[] readers = tableInfo.GetColumns().Select(column => tapResultReader.OpenColumnReader(column)).ToArray();
         while (!readers.All(read => read.IsAtEnd))
         {
             var line = string.Join(",", readers.Select(columnReader => !columnReader.IsAtEnd ? columnReader.Read()?.ToString() ?? "" : "")
@@ -115,8 +115,8 @@ internal static class TapResult
         try
         {
             // TODO: currently 1 parquet file with n rowgroups => 1 tapresult file with n tables => n parquet files with 1 rowgroup
-            Reader reader = await Reader.CreateReaderAsync(input);
-            foreach (TableInfo tableInfo in reader.GetTables())
+            TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(input);
+            foreach (TableInfo tableInfo in tapResultReader.GetTables())
             {
                 var schema = new ParquetSchema(tableInfo.GetColumns().Select(column => new DataField(column.Name, column.Encoding.Type.ToCsType())));
                 
@@ -131,7 +131,7 @@ internal static class TapResult
                 using ParquetRowGroupWriter groupWriter = writer.CreateRowGroup();
                 foreach ((ColumnInfo columnInfo, DataField field) in tableInfo.GetColumns().Zip(schema.DataFields))
                 {
-                    var columnReader = reader.OpenColumnReader(columnInfo);
+                    var columnReader = tapResultReader.OpenColumnReader(columnInfo);
                     var values = columnReader.Read(columnReader.Length).ToArray();
 
                     Array typedValues = Array.CreateInstanceFromArrayType(field.ClrType, values.Length);

@@ -124,9 +124,9 @@ public class TPCHBenchmarks
         TpchData[] data = GetData().ToArray();
         // TpchData[] data = [GetData().First()];
         yield return new Implementation(new RawBinaryStream(), data);
-        yield return new Implementation(new EncodingBenchmark(), data);
-        yield return new Implementation(new CascadingBenchmark(), data);
-        yield return new Implementation(new CascadingAsyncBenchmark(), data);
+        yield return new Implementation(new TapResultBenchmark(TapResultCreators.CreateBase), data);
+        yield return new Implementation(new AsyncTapResultBenchmark(TapResultCreators.CreateBase), data);
+        yield return new Implementation(new CompressedTapResultBenchmark(TapResultCreators.CreateBase), data);
         // yield return new Implementation(new RawParquet(CompressionMethod.Snappy), data);
         // yield return new Implementation(new RawParquet(CompressionMethod.Zstd), data);
         // yield return new Implementation(new RawParquet(CompressionMethod.Gzip), data);
