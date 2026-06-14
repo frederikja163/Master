@@ -27,7 +27,6 @@ internal sealed class FileSizeDiagnoser : IDiagnoser
         string folderPath = dirInfo.Parent!.FullName;
         string filePath = Path.Combine(folderPath, Config.FilePath);
         
-        
         if (Directory.Exists(filePath))
         {
             DirectoryInfo directory = new DirectoryInfo(filePath);
@@ -40,7 +39,6 @@ internal sealed class FileSizeDiagnoser : IDiagnoser
             FileInfo fileInfo = new FileInfo(filePath);
             yield return new Metric(new FileSizeMetric(), fileInfo.Length);
         }
-        
     }
 
     public void DisplayResults(ILogger logger)
@@ -60,7 +58,7 @@ internal sealed class FileSizeMetric : IMetricDescriptor {
     public string Id { get; } = nameof(FileSizeMetric);
     public string DisplayName { get; } = "File Size";
     public string Legend { get; } = "File size in bytes.";
-    public string NumberFormat { get; } = "#000";
+    public string NumberFormat { get; } = "##,##0.0";
     public UnitType UnitType { get; } = UnitType.Size;
     public string Unit { get; } = "B";
     public bool TheGreaterTheBetter { get; } = false;
