@@ -16,6 +16,7 @@ public sealed class Encoder
     {
         yield return new BitPacking();
         yield return new RunLengthEncoding();
+        yield return new DictionaryEncoding();
         yield return new SplitEncoding();
         yield return new NullEncoding();
     }
