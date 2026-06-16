@@ -14,6 +14,7 @@ public enum EncodingType : byte
     BitPacking = 3,
     Null = 4,
     RunLength = 5,
+    Delta = 6,
 }
 
 /// <summary>
