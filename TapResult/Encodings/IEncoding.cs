@@ -15,6 +15,7 @@ public enum EncodingType : byte
     Null = 4,
     RunLength = 5,
     Dictionary = 6,
+    Delta = 7,
 }
 
 /// <summary>
