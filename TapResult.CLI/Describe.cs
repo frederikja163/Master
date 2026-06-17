@@ -146,6 +146,8 @@ public class Describe
                 long offset = reader.Read<long>();
                 blob = $"{{ physicalLn: {physicalSize}, offset: {offset} }}";
                 break;
+            case EncodingType.Dictionary:
+            case EncodingType.Delta:
             case EncodingType.RunLength:
             case EncodingType.Split:
             case EncodingType.Null:
