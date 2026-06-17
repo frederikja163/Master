@@ -60,7 +60,7 @@ internal static class Csv
         table.Compress(encoder);
         
         using var outputStream = output.Open(FileMode.Create, FileAccess.Write, FileShare.None);
-        using Writer writer = new Writer(outputStream);
-        writer.Write(table);
+        using TapResultWriter tapResultWriter = new TapResultWriter(outputStream);
+        tapResultWriter.Write(table);
     }
 }

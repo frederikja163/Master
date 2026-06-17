@@ -24,7 +24,7 @@ internal sealed class AncestryBuilder
         }
         else
         {
-            _parent.WriteNull();
+            _parent.WriteValue(string.Empty);
         }
         _name.WriteValue(name);
     }
@@ -76,18 +76,32 @@ public sealed class TapResultListener : ResultListener
         Text = "Results/<Date>-<Verdict>.TapResult",
     };
 
+    public Func<string, WriterBase> WriterCreator { get; set; } = (path) => new TapResultWriter(path);
+
     private ParameterBuilder? _paramBuilder = null;
     private AncestryBuilder? _ancestryBuilder = null;
     private readonly object _lock = new object();
-    private Stream? _stream;
-    private Writer? _writer = null;
+    private WriterBase? _writer = null;
     private ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
 
     public TapResultListener()
     {
         Name = "TapResult";
     }
-    
+
+    public override void Close()
+    {
+        base.Close();
+        Task.WaitAll(_tasks);
+        _tasks.Clear();
+        _ancestryBuilder = null;
+        _paramBuilder = null;
+        if (_writer is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
+
     public override void OnTestPlanRunStart(TestPlanRun planRun)
     {
         base.OnTestPlanRunStart(planRun);
@@ -100,8 +114,7 @@ public sealed class TapResultListener : ResultListener
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
         }
 
-        _stream = File.Create(path);
-        _writer = new Writer(_stream);
+        _writer = WriterCreator(path);
         _tasks.Clear();
     }
 
@@ -120,15 +133,6 @@ public sealed class TapResultListener : ResultListener
             _paramBuilder.Add(planRun);
             _tasks.Add(WriteAndCompressAsync(_paramBuilder.Build()));
         }
-
-        Task.WaitAll(_tasks);
-        _tasks.Clear();
-        _ancestryBuilder = null;
-        _paramBuilder = null;
-        _writer?.Dispose();
-        _writer = null;
-        _stream?.Dispose();
-        _stream = null;
     }
 
     public override void OnTestStepRunCompleted(TestStepRun stepRun)
@@ -155,6 +159,6 @@ public sealed class TapResultListener : ResultListener
 
     public override string ToString()
     {
-        return nameof(TapResultListener);
+        return Name;
     }
 }

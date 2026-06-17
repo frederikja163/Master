@@ -15,7 +15,9 @@ public sealed class Encoder
     public static IEnumerable<IEncoding> GetDefaultEncodings()
     {
         yield return new BitPacking();
+        yield return new DeltaEncoding();
         yield return new RunLengthEncoding();
+        yield return new DictionaryEncoding();
         yield return new SplitEncoding();
         yield return new NullEncoding();
     }

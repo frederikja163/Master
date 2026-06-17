@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <CreateOpenTapPackage>true</CreateOpenTapPackage>
+<!--        <CreateOpenTapPackage>true</CreateOpenTapPackage>-->
     </PropertyGroup>
 
 </Project>

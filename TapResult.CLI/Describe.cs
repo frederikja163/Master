@@ -21,13 +21,13 @@ public class Describe
 
         
 
-        Reader reader = await Reader.CreateReaderAsync(inputStream);
+        TapResultReader tapResultReader = await TapResultReader.CreateReaderAsync(inputStream);
         
         if (opts.DescribeHeader)
         {
             Console.WriteLine($"| {Center("Name",opts.NameWidth)} | {Center("Encoding",opts.EncodingWidth)} | {Center("Type",opts.TypeWidth)} | {Center("Id",opts.IdWidth)} | {Center("ParentId",opts.ParentIdWidth)} | {Center("Blob Values",opts.BlobWidth)} |");
             Console.WriteLine($"|{new string('-', opts.NameWidth + 2)}|{new string('-', opts.EncodingWidth + 2)}|{new string('-', opts.TypeWidth + 2)}|{new string('-', opts.IdWidth + 2)}|{new string('-', opts.ParentIdWidth + 2)}|{new string('-', opts.BlobWidth + 2)}|" );
-            foreach (TableInfo tableInfo in reader.GetTables())
+            foreach (TableInfo tableInfo in tapResultReader.GetTables())
             {
                 Console.WriteLine($"| {tableInfo.Name.PadRight(opts.NameWidth)} | {EncodingToString(tableInfo.Encoding, opts)}");
                 foreach (ColumnInfo columnInfo in tableInfo.GetColumns())
@@ -44,7 +44,7 @@ public class Describe
 
         if (!opts.DescribeFile) 
             return 0;
-        foreach (TableInfo tableInfo in reader.GetTables())
+        foreach (TableInfo tableInfo in tapResultReader.GetTables())
         {
             Console.WriteLine($"## {Center(tableInfo.Name, opts.MaxColDescribeCharLength)}");
 
@@ -146,6 +146,8 @@ public class Describe
                 long offset = reader.Read<long>();
                 blob = $"{{ physicalLn: {physicalSize}, offset: {offset} }}";
                 break;
+            case EncodingType.Dictionary:
+            case EncodingType.Delta:
             case EncodingType.RunLength:
             case EncodingType.Split:
             case EncodingType.Null:

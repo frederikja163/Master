@@ -25,14 +25,14 @@ public class RawBenchmarks : AllBenchmarks
 
     public IEnumerable<IRawBenchmark> GetImplementations()
     {
-        yield return new CascadingBenchmark();
-        yield return new CascadingAsyncBenchmark();
-        yield return new EncodingBenchmark();
+        yield return new TapResultBenchmark(TapResultCreators.CreateBase);
+        yield return new AsyncTapResultBenchmark(TapResultCreators.CreateBase);
+        yield return new CompressedTapResultBenchmark(TapResultCreators.CreateBase);
         yield return new RawBinaryStream();
         // yield return new RawParquetMultiFile(CompressionMethod.Snappy);
         // yield return new RawParquetMultiFile(CompressionMethod.None);
-        // yield return new RawParquet(CompressionMethod.Snappy);
-        // yield return new RawParquet(CompressionMethod.None);
+        yield return new RawParquet(CompressionMethod.Snappy);
+        yield return new RawParquet(CompressionMethod.None);
         // yield return new RawParquet(CompressionMethod.Zstd);
         // yield return new RawParquet(CompressionMethod.Gzip);
         // yield return new RawParquet(CompressionMethod.LZ4);
